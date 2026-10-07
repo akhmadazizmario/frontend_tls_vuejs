@@ -203,7 +203,7 @@ const loading = ref(false);
 const aparList = ref([]);
 const editMode = ref(false);
 
-const form = ref({ 
+const form = ref({
   id: null,
   kode_apar: "",
   kategori: "",

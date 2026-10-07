@@ -101,7 +101,7 @@
           <div class="d-flex justify-content-between align-items-center">
             <div>
               <h1 class="fw-black m-0 display-3 text-white">LOW PERFORMANCE (&lt; 50%)</h1>
-              <p class="m-0 text-white fs-4 fw-bold opacity-75">Operator Masa Kerja > 4 Bulan</p>
+              <p class="m-0 text-white fs-4 fw-bold opacity-75">Operator Masa Kerja > 4 Bulan - {{ new Date().toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' }) }}</p>
             </div>
             <!-- Ganti teks badge menjadi LINE C -->
             <span class="badge bg-white text-danger fs-2 border border-dark px-4 shadow">LINKING LINE C</span>
@@ -147,7 +147,7 @@
           <div>
             <!-- Ganti teks header menjadi LINE C -->
             <h1 class="fw-black m-0 display-4 text-white">HASIL PROD LINKING LINE C</h1>
-            <h4 class="fw-bold text-warning m-0 text-uppercase">MONITORING KHUSUS RATE &lt; 50%</h4>
+            <h4 class="fw-bold text-warning m-0 text-uppercase">MONITORING KHUSUS RATE &lt; 50% - {{ new Date().toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' }) }}</h4>
           </div>
           <div class="bg-warning px-4 py-2 rounded border border-dark fw-black fs-2 text-dark">ACTIVE</div>
         </div>
@@ -173,6 +173,8 @@
                 <th colspan="3" class="bg-success text-white py-1 border-bottom-dark border-start-dark">
                   HASIL PRODUKSI 
                 </th>
+                <!-- KOLOM BARU: total hasil (jam9 + jam12 + jam15) -->
+                <th rowspan="2" class="bg-warning text-dark border-start-dark" style="width: 130px;">HASIL</th>
               </tr>
               <tr class="header-text-white">
                 <th v-for="n in currentHourColumns" :key="n" class="p-0 border-start-dark border-bottom-dark">
@@ -204,6 +206,11 @@
                       {{ item.hourlyQty[n] || 0 }}
                     </div>
                   </div>
+                </td>
+
+                <!-- KOLOM BARU: total hasil operator -->
+                <td class="display-6 fw-black text-dark bg-warning border-start-dark">
+                  {{ item.hasil }}
                 </td>
               </tr>
             </tbody>
@@ -249,48 +256,32 @@ const cleanLineName = (name) => {
   return name.toUpperCase().replace('LINKING', '').replace('LINE', '').trim();
 };
 
+const toNum = (v) => Number(v) || 0;
+
+// Data dari API sudah 1 baris per operator + xMark + proses (hasil & target per sesi sudah dihitung di SQL)
 const groupedData = computed(() => {
-  const groups = {};
+  return rawData.value.map(row => {
+    const h9 = toNum(row.hasil_jam9);
+    const h12 = toNum(row.hasil_jam12);
+    const h15 = toNum(row.hasil_jam15);
 
-  rawData.value.forEach(row => {
-    const key = `${row.xEmplCode}_${row.xGroup}_${row.xMark}_${row.xWorkName}`;
-    
-    if (!groups[key]) {
-      groups[key] = { 
-        xEmplCode: row.xEmplCode,
-        xEmplName: row.xEmplName, 
-        xGroup: row.xGroup, 
-        xMark: row.xMark,
-        xWorkName: row.xWorkName, 
-        xJoinMonth: row.xJoinMonth || 0, 
-        xTRealRate: row.xTRealRate || 0,
-        xTarget: row.xTarget || 0, 
-        hourlyQty: { 9: 0, 12: 0, 15: 0 }, 
-        hourlyTarget: { 9: 0, 12: 0, 15: 0 }
-      };
-    }
-
-    const jamKelompok = row.xTargetJamKelompok;
-    if (jamKelompok === 9 || jamKelompok === 12 || jamKelompok === 15) {
-      groups[key].hourlyQty[jamKelompok] += row.xQty || 0;
-    }
-  });
-
-  return Object.values(groups).map(group => {
-    const baseTarget = group.xTarget;
-    const qty9 = group.hourlyQty[9];
-    const qty12 = group.hourlyQty[12];
-    const qty15 = group.hourlyQty[15];
-
-    group.hourlyQty[9] = qty9;
-    group.hourlyQty[12] = qty9 + qty12;
-    group.hourlyQty[15] = qty9 + qty12 + qty15;
-    
-    group.hourlyTarget[9] = baseTarget * 3;
-    group.hourlyTarget[12] = baseTarget * 6;
-    group.hourlyTarget[15] = baseTarget * 7;
-
-    return group;
+    return {
+      xEmplCode: row.xEmplCode,
+      xEmplName: row.xEmplName,
+      xGroup: row.xGroup,
+      xMark: row.xMark,
+      xWorkName: row.xWorkName,
+      xJoinMonth: row.xJoinMonth || 0,
+      xTRealRate: toNum(row.xTRealRate),
+      xBConvertRate: row.xBConvertRate == null ? null : Number(row.xBConvertRate),
+      hourlyQty: { 9: h9, 12: h12, 15: h15 },
+      hourlyTarget: {
+        9: toNum(row.xTarget9),
+        12: toNum(row.xTarget12),
+        15: toNum(row.xTarget15)
+      },
+      hasil: row.hasil == null ? h9 + h12 + h15 : toNum(row.hasil)
+    };
   });
 });
 
@@ -301,7 +292,7 @@ const filteredProductionData = computed(() => {
     // ✅ PERUBAHAN: Sekarang memfilter murni untuk LINE C saja di Slide 3
     const isLineC = groupName.includes("LINE C");
     
-    return isLineC && item.xTRealRate < 50 && item.xJoinMonth > 4;
+    return isLineC && item.xBConvertRate !== null && item.xBConvertRate < 50 && item.xJoinMonth > 4;
   });
 
   return filtered.sort((a, b) => {
@@ -353,8 +344,9 @@ const fetchAllData = async () => {
       const today = new Date().toISOString().split('T')[0];
       const findPlanning = resP.data.data.find(item => {
         const itemDate = new Date(item.xDate).toISOString().split('T')[0];
-        // ✅ PERUBAHAN: Kategori gedung dicari yang 'C' sesuai kebutuhan data
-        return item.kategori_gedung === 'C' && itemDate === today;
+        
+        // UBAH 'A&B' MENJADI 'linking_AB' DI SINI
+        return item.kategori_gedung === 'linking_C' && itemDate === today; 
       });
       planningData.value = findPlanning ? findPlanning.planning : 0;
     }

@@ -122,18 +122,25 @@
                       >
                     </div>
 
-                    <div v-if="showDropdown" class="dropdown-menu show w-100 shadow-lg border-0 rounded-3 mt-1 py-0 overflow-hidden" style="z-index: 1050;">
-                      <div class="bg-primary-subtle px-3 py-2 small fw-bold text-primary border-bottom">Hasil Pencarian Terakhir</div>
-                      <button
-                        v-for="h in historyItems"
-                        :key="h.id"
-                        @click="selectHistory(h, index)"
-                        class="dropdown-item py-2 border-bottom-light"
-                      >
-                        <div class="fw-bold">{{ h.item_name }}</div>
-                        <div class="extra-small text-muted">{{ h.spesifikasi }} • <span class="text-primary">{{ h.akses_code }}</span></div>
-                      </button>
-                    </div>
+                    <div v-if="showDropdown" class="dropdown-menu show w-100 shadow-lg border-0 rounded-3 mt-1 py-0 shadow" style="z-index: 1050; max-height: 280px; overflow: hidden; display: flex; flex-direction: column;">
+  <!-- Header tetap sticky/diam di atas -->
+  <div class="bg-primary-subtle px-3 py-2 small fw-bold text-primary border-bottom flex-shrink-0">
+    Hasil Pencarian Terakhir
+  </div>
+  
+  <!-- Container List Item (Bisa di-scroll) -->
+  <div class="dropdown-history-list flex-grow-1 overflow-y-auto">
+    <button
+      v-for="h in historyItems"
+      :key="h.id"
+      @click="selectHistory(h, index)"
+      class="dropdown-item py-2 border-bottom-light"
+    >
+      <div class="fw-bold">{{ h.item_name }}</div>
+      <div class="extra-small text-muted">{{ h.spesifikasi }} • <span class="text-primary">{{ h.akses_code }}</span></div>
+    </button>
+  </div>
+</div>
                   </div>
 
                   <div class="col-md-3">
@@ -578,5 +585,29 @@ const logout = () => {
 
 .animate__fadeInUp {
   animation-name: fadeInUp;
+}
+
+/* Custom Scrollbar untuk Dropdown History */
+.dropdown-history-list {
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+/* Mempercantik Tampilan Scrollbar (Opsional) */
+.dropdown-history-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.dropdown-history-list::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+.dropdown-history-list::-webkit-scrollbar-thumb {
+  background: #ccc;
+  border-radius: 4px;
+}
+
+.dropdown-history-list::-webkit-scrollbar-thumb:hover {
+  background: #0d6efd;
 }
 </style>

@@ -7,6 +7,8 @@
 
       <main class="flex-grow-1 main-layout" :style="{ marginLeft: sidebarOpen && windowWidth >= 768 ? '16rem' : '0' }">
 
+        <!-- BUNGKUS DENGAN v-if="hasAccess" UNTUK UAC -->
+      <div v-if="hasAccess" class="container-fluid retur-page max-w-7xl mx-auto p-0">
         <div class="p-4 bg-white border-bottom topbar">
           <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
             <div>
@@ -113,6 +115,14 @@
             </div>
           </div>
         </div>
+        </div>
+
+        <!-- OPSI TAMPILAN BLANK (JIKA TIDAK ADA AKSES) -->
+        <div v-else class="d-flex flex-column align-items-center justify-content-center h-100 pt-5 mt-5">
+           <!-- Halaman Blank, Jika ingin dibuat benar-benar kosong hapus komentar html ini. -->
+            <h1>hi anda tersesat nih, Mohon untuk Logout Segera </h1>
+            <a href="/logout" class="btn btn-primary">back to jungle</a>
+        </div>
       </main>
     </div>
   </div>
@@ -127,6 +137,9 @@ import Sidebar from "../../components/Sidebar.vue";
 
 // --- State & Variables ---
 const API = import.meta.env.VITE_API_BASE_URL;
+
+const hasAccess = ref(false);
+
 const pages = ref([]);
 const users = ref([]);
 const loading = ref(false);
@@ -208,7 +221,24 @@ const toggleSidebar = () => sidebarOpen.value = !sidebarOpen.value;
 const handleResize = () => windowWidth.value = window.innerWidth;
 
 onMounted(() => {
-  loadMatrix();
+  const userData = localStorage.getItem("user");
+  if (userData) user.value = JSON.parse(userData);
+
+  // LOGIKA UAC 
+  try {
+    const pagesData = localStorage.getItem("pages");
+    const pages = pagesData ? JSON.parse(pagesData) : [];
+    // Periksa apakah user memiliki akses ke rute ini 
+    hasAccess.value = pages.includes("userpageaccess");
+  } catch (e) {
+    hasAccess.value = false;
+  }
+
+  // Hanya load item dari API jika user punya akses
+  if (hasAccess.value) {
+    loadMatrix();
+  }
+  //loadMatrix();
   window.addEventListener("resize", handleResize);
 });
 onBeforeUnmount(() => window.removeEventListener("resize", handleResize));

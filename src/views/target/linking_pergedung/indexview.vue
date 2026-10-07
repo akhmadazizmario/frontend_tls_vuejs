@@ -132,8 +132,8 @@
                     </td>
                     <td>
                       <select v-model="group.gedung" class="form-select form-select-sm border-0 bg-light fw-bold rounded-3">
-                        <option value="">- Gedung -</option>
-                        <option v-for="g in ['A&B','A','B','C','D']" :key="g" :value="g">GEDUNG {{g}}</option>
+                        <option value="-">- Select Building a bellow -</option>
+                        <option v-for="g in ['-','A','B', 'A&B','C','D']" :key="g" :value="g">GEDUNG {{g}}</option>
                       </select>
                     </td>
                     <td>

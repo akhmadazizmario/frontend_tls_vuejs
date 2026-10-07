@@ -22,7 +22,7 @@
     <Transition name="fade">
       <div v-if="activeView === 'under60'" class="vh-100 d-flex flex-column p-3 bg-white text-dark overflow-hidden">
         <div class="mb-3 p-3 rounded-4 bg-danger text-white text-center shadow-lg">
-          <h2 class="fw-black display-6 m-0">⚠️ KARYAWAN Hasil < 50% Yesterday</h2>
+          <h2 class="fw-black display-6 m-0">⚠️ KARYAWAN Hasil < 50% </h2>
           <p class="mb-0 fw-bold">DEPT SULAM</p>
         </div>
         <div class="flex-grow-1 shadow-2xl rounded-4 overflow-hidden border border-3 bg-white">
@@ -47,7 +47,7 @@
                 </td>
               </tr>
               <tr v-if="under60Data.length === 0">
-                <td colspan="7" class="text-center text-muted fw-bold py-5 fs-2">✅ Tidak ada karyawan di bawah 80%</td>
+                <td colspan="7" class="text-center text-muted fw-bold py-5 fs-2">✅ Tidak ada karyawan di bawah 50%</td>
               </tr>
             </tbody>
           </table>
@@ -88,49 +88,85 @@
       </div>
     </Transition>
 
-    <Transition name="fade">
-      <div v-if="activeView === 'table'" class="vh-100 d-flex flex-column p-3 bg-white text-dark overflow-hidden">
-        <div class="d-flex justify-content-between align-items-center mb-3 px-5 py-2 bg-light rounded-pill border-start border-warning border-10 shadow-sm">
-          <h2 class="m-0 fw-black text-navy display-6 text-uppercase">Data Hasil Produksi Operator SULAM</h2>
-          <div class="badge bg-navy px-4 py-2 fs-4">Pukul: {{ currentHourColumns.join(', ') }}</div>
-        </div>
-        <div class="flex-grow-1 shadow-2xl rounded-4 overflow-hidden border border-3 bg-white">
-          <table class="table table-bordered m-0 h-100 layout-fixed text-center">
-            <thead class="bg-navy text-white">
-              <tr>
-                <th rowspan="2" class="fs-4 align-middle" style="width: 4%">NO</th>
-                <th rowspan="2" class="fs-4 align-middle" style="width: 5%">LINE</th>
-                <th rowspan="2" class="fs-4 align-middle" style="width: 15%">OPERATOR NAMA</th>
-                <th rowspan="2" class="fs-4 align-middle" style="width: 8%">TGL JOIN</th>
-                <th rowspan="2" class="fs-4 align-middle" style="width: 8%">MASA KERJA</th>
-                <th rowspan="2" class="fs-4 align-middle" style="width: 12%">STYLE</th>
-                <th rowspan="2" class="fs-4 align-middle" style="width: 14%">PROSES</th>
-                <th colspan="3" class="bg-navy-light text-white fs-5 py-2">OUTPUT PER 3 JAM</th>
-                <th rowspan="2" class="bg-dark text-warning fs-5 align-middle" style="width: 6%">TOTAL</th>
-              </tr>
-              <tr class="bg-light text-navy">
-                <th v-for="n in currentHourColumns" :key="n" class="fs-4 py-1">{{ n }}:00</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="(item, index) in paginatedData" :key="index" class="align-middle border-2">
-                <td class="fw-bold fs-5 text-muted">{{ (currentPage - 1) * itemsPerPage + index + 1 }}</td>
-                <td class="fs-3 text-muted fw-bold">{{ formatLineName(item.xGroup) }}</td>
-                <td class="fw-black text-navy fs-2 text-uppercase text-start px-3 text-truncate">{{ item.xEmplName }}</td>
-                <td class="fs-3 text-muted fw-bold">{{ formatJoinDate(item.xJoinDate) }}</td>
-                <td class="fw-bold text-primary fs-3">{{ formatLOS(item.xJoinMonth) }}</td>
-                <td class="fs-3 fw-bold text-truncate text-muted">{{ item.xMark }}</td>
-                <td class="fs-3 fw-bold text-truncate text-muted">{{ item.xWorkName }}</td>
-                <td v-for="n in currentHourColumns" :key="n" class="fs-1 fw-black border-start" :class="{'bg-warning-light': item.hourlyQty[n]}">
-                  {{ item.hourlyQty[n] || '-' }}
-                </td>
-                <td class="fw-black bg-navy text-white fs-1">{{ item.totalQty }}</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+        <Transition name="fade">
+  <div v-if="activeView === 'table'" class="vh-100 d-flex flex-column p-3 bg-white text-dark overflow-hidden">
+    <div class="d-flex justify-content-between align-items-center mb-3 px-5 py-2 bg-light rounded-pill border-start border-warning border-10 shadow-sm">
+      <h2 class="m-0 fw-black text-navy display-6 text-uppercase">Data Hasil Produksi Operator <br> SULAM</h2>
+      <div class="text-end">
+        <div class="badge bg-navy px-4 py-2 fs-4 mb-1 d-block">Tanggal: {{ currentDateTime }}</div>
       </div>
-    </Transition>
+    </div>
+
+    <div class="flex-grow-1 shadow-2xl rounded-4 overflow-hidden border border-3 bg-white">
+      <table class="table table-bordered m-0 h-100 layout-fixed">
+        <thead class="bg-navy text-white text-center">
+          <tr>
+            <th rowspan="2" class="fs-4 align-middle" style="width: 4%">NO</th>
+            <th rowspan="2" class="fs-4 align-middle" style="width: 5%">LINE</th>
+            <th rowspan="2" class="fs-4 align-middle" style="width: 15%">OPERATOR NAMA</th>
+            <!-- <th rowspan="2" class="fs-4 align-middle" style="width: 8%">TGL JOIN</th> -->
+            <th rowspan="2" class="fs-4 align-middle" style="width: 8%">MASA KERJA</th>
+            <th rowspan="2" class="fs-4 align-middle" style="width: 12%">STYLE</th>
+            <th rowspan="2" class="fs-4 align-middle" style="width: 14%">PROSES</th>
+            <th rowspan="2" class="fs-4 align-middle" style="width: 8%">TARGET </th>
+            <th :colspan="activePeriodeHeaders.length" class="bg-navy-light text-white fs-5 py-2">
+              OUTPUT PER PERIODE
+            </th>
+            <th rowspan="2" class="bg-dark text-warning fs-5 align-middle" style="width: 7%">TOTAL</th>
+          </tr>
+          <tr class="bg-light text-navy">
+            <th v-for="periode in activePeriodeHeaders" :key="periode" class="fs-5 py-1">
+              {{ periode }}
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="(item, index) in paginatedData" :key="index" class="align-middle border-2 text-center">
+            <td class="fw-bold fs-5 text-muted">
+              {{ (currentPage - 1) * itemsPerPage + index + 1 }}
+            </td>
+            <td class="fs-3 text-muted fw-bold">
+              {{ formatLineName(item.xGroup) }}
+            </td>
+            <td class="fw-black text-navy fs-2 text-uppercase text-start px-3 text-truncate">
+              {{ item.xEmplName }}
+            </td>
+            <!-- <td class="fs-3 text-muted fw-bold">
+              {{ formatJoinDate(item.xJoinDate) }}
+            </td> -->
+            <td class="fw-bold text-primary fs-3">
+              {{ formatLOS(item.xJoinMonth) }}
+            </td>
+            <td class="fs-3 fw-bold text-truncate text-muted">
+              {{ item.xMark }}
+            </td>
+            <td class="fs-3 fw-bold text-truncate text-muted">
+              {{ item.xWorkName }}
+            </td>
+            <td class="fs-3 fw-bold text-danger">
+      {{ item.xTarget3Jam }}
+    </td>
+            <td v-for="periode in activePeriodeHeaders" :key="periode"
+                class="fs-1 fw-black border-start"
+                :class="{'bg-warning-light': item.periodeQty[periode]}">
+              {{ item.periodeQty[periode] || '-' }}
+            </td>
+
+            <td class="fw-black bg-navy text-white display-6 fs-1">
+              {{ item.currentTotal }}
+            </td>
+          </tr>
+
+          <tr v-if="paginatedData.length === 0">
+            <td :colspan="8 + activePeriodeHeaders.length" class="text-center py-5 fs-2 fw-bold text-muted">
+              Belum ada data produksi untuk periode ini.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</Transition>
 
     <div class="fixed-bottom p-1">
       <div class="progress bg-dark" style="height: 10px; border-radius: 10px;">
@@ -146,202 +182,363 @@ import axios from 'axios';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
-// --- STATE ---
+/* ===============================
+   STATE
+================================= */
 const rawData = ref([]);
 const summaryData = ref({});
 const summaryLines = ref([]);
 const under60Data = ref([]);
+
 const dateHeaders = ref([]);
 const dateRangeText = ref("");
+
 const activeView = ref('summary');
+
 const currentPage = ref(1);
 const currentSummaryPage = ref(1);
 const currentUnder60Page = ref(1);
-const itemsPerPage = ref(8); 
+
+const itemsPerPage = ref(8);
 const scrollProgress = ref(0);
 const currentDateTime = ref('');
 
-// --- LOGIC: NORMALISASI LINE ---
+/* ===============================
+   NORMALIZE / FORMAT LINE
+================================= */
 const normalizeGroup = (name) => {
   if (!name) return "-";
+
   const g = name.toUpperCase();
   const match = g.match(/LINE\s+([A-Z])(\d{2})/);
-  if (match) return `SULAM LINE ${match[1]}${match[2]}`;
+
+  if (match) {
+    return `SULAM LINE ${match[1]}${match[2]}`;
+  }
+
   return g.replace("SULAM.", "").replace("SULAM", "").trim();
 };
 
 const formatLineName = (name) => {
   if (!name) return "-";
+
   const match = name.match(/LINE\s+([A-Z0-9]+)/);
+
   return match ? match[1] : name.replace("SULAM", "").trim();
 };
 
-// --- LOGIC: JAM DINAMIS (SONTEX STYLE) ---
-const currentHourColumns = computed(() => {
-  const now = new Date();
-  let start = now.getHours() - 2;
-  if (start < 6) start = 6;
-  if (start > 20) start = 20;
-  return [start, start + 1, start + 2];
-});
-
-// --- DATA PROCESSING ---
-const groupedData = computed(() => {
-  const groups = {};
-  const currentHour = new Date().getHours();
-  const startHour = currentHour < 14 ? 6 : 11;
-  const endHour = currentHour < 14 ? 17 : 22;
+/* ===============================
+   PERIODE DINAMIS (MODEL SONTEX)
+================================= */
+const activePeriodeHeaders = computed(() => {
+  const periods = new Set();
 
   rawData.value.forEach(row => {
-    const key = `${row.xEmplCode}_${row.xWorkName}`;
-    let realHour = -1;
-    if (row.xDateTime?.includes('T')) {
-      realHour = parseInt(row.xDateTime.split('T')[1].substring(0, 2));
-    }
+    if (row.xPeriode) periods.add(row.xPeriode);
+  });
+
+  return Array.from(periods).sort();
+});
+
+/* ===============================
+   GROUP DATA PRODUKSI
+================================= */
+const groupedData = computed(() => {
+  const groups = {};
+
+  rawData.value.forEach(row => {
+    const key = `${row.xEmplName}_${row.xMark}_${row.xWorkName}`;
 
     if (!groups[key]) {
-      groups[key] = { 
-        xEmplName: row.xEmplName, xJoinDate: row.xJoinDate, xJoinMonth: row.xJoinMonth,
-        xGroup: row.xGroup, xWorkName: row.xWorkName, xMark: row.xMark, 
-        hourlyQty: {}, totalQty: 0 
+      groups[key] = {
+        xEmplCode: row.xEmplCode,
+        xEmplName: row.xEmplName,
+        xTarget3Jam: row.xTarget3Jam || 0,
+        xJoinDate: row.xJoinDate,
+        xJoinMonth: row.xJoinMonth,
+        xGroup: normalizeGroup(row.xGroup),
+        xWorkName: row.xWorkName,
+        xMark: row.xMark,
+        xtRealRate: row.xtRealRate || 0,
+        periodeQty: {} // Objek untuk menyimpan qty per periode
       };
     }
 
-    if (realHour >= startHour && realHour <= endHour && realHour <= currentHour) {
-      groups[key].hourlyQty[realHour] = (groups[key].hourlyQty[realHour] || 0) + row.xQty;
+    if (row.xPeriode) {
+      groups[key].periodeQty[row.xPeriode] =
+        (groups[key].periodeQty[row.xPeriode] || 0) + Number(row.xQty || 0);
     }
   });
+
   return Object.values(groups);
 });
 
+/* ===============================
+   TOTAL OUTPUT
+================================= */
 const filteredByActiveHours = computed(() => {
-  const activeHours = currentHourColumns.value;
-  return groupedData.value.map(item => {
-    const total = activeHours.reduce((acc, h) => acc + (item.hourlyQty[h] || 0), 0);
-    return { ...item, totalQty: total };
-  }).filter(item => item.totalQty > 0);
+  return groupedData.value
+    .map(item => {
+      const total = Object.values(item.periodeQty)
+        .reduce((a, b) => a + b, 0);
+
+      return {
+        ...item,
+        currentTotal: total
+      };
+    })
+    .filter(item => item.currentTotal > 0);
 });
 
-// --- FETCHING ---
+/* ===============================
+   SUMMARY CARDS
+================================= */
+const summaryCards = computed(() => ({
+  "QTY Finish": {
+    value: summaryData.value.today_finish || 0,
+    icon: "bi-check-circle-fill text-success"
+  },
+  "Employee": {
+    value: summaryData.value.attendance || 0,
+    icon: "bi-people-fill text-info"
+  }
+}));
+
+/* ===============================
+   PAGINATION
+================================= */
+const paginatedData = computed(() => {
+  const start = (currentPage.value - 1) * itemsPerPage.value;
+
+  return filteredByActiveHours.value.slice(
+    start,
+    start + itemsPerPage.value
+  );
+});
+
+const paginatedSummaryTable = computed(() => {
+  const start = (currentSummaryPage.value - 1) * itemsPerPage.value;
+
+  return summaryLines.value.slice(
+    start,
+    start + itemsPerPage.value
+  );
+});
+
+const paginatedUnder60 = computed(() => {
+  const start = (currentUnder60Page.value - 1) * itemsPerPage.value;
+
+  return under60Data.value.slice(
+    start,
+    start + itemsPerPage.value
+  );
+});
+
+/* ===============================
+   FORMATTERS
+================================= */
+const formatLOS = (m) => {
+  if (m === null || m === undefined || m < 0) return '-';
+  if (m === 0) return 'Baru';
+
+  const y = Math.floor(m / 12);
+  const mm = m % 12;
+
+  return `${y ? y + ' Th ' : ''}${mm ? mm + ' Bln' : ''}`.trim();
+};
+
+const formatJoinDate = (d) => {
+  if (!d) return '-';
+
+  const dt = new Date(d);
+
+  return isNaN(dt.getTime())
+    ? '-'
+    : dt.toLocaleDateString('id-ID');
+};
+
+const formatDate = (dStr) => {
+  if (!dStr) return '';
+
+  const d = new Date(dStr);
+
+  return `${d.getDate()}/${d.getMonth() + 1}`;
+};
+
+const getHealthClasses = (val) => {
+  const v = Math.round(val || 0);
+
+  if (v === 0) return 'text-secondary opacity-25 bg-light';
+  if (v < 50) return 'bg-danger text-white';
+  if (v <= 70) return 'bg-warning text-dark';
+
+  return 'bg-success text-white';
+};
+
+/* ===============================
+   FETCH DATA
+================================= */
 const fetchAllData = async () => {
   try {
-    const [resSummary, resCards, resDetail, resUnder] = await Promise.all([
+    const [
+      resSummary,
+      resCards,
+      resDetail,
+      resUnder
+    ] = await Promise.all([
       axios.get(`${API_BASE_URL}/tv-target-linkinga/summary-linking`),
       axios.get(`${API_BASE_URL}/tv-target-linkinga/hasil-sulam`),
       axios.get(`${API_BASE_URL}/tv-target-linkinga/hasil-produksi-sulam`),
       axios.get(`${API_BASE_URL}/tv-target-linkinga/karayawansulamunder60persen`)
     ]);
 
-    // Summary
+    /* SUMMARY TABLE */
     if (resSummary.data.success) {
-      const dept = resSummary.data.departments.find(d => d.deptName === "SULAM");
-      if (dept) summaryLines.value = dept.lines.filter(l => l.lineName.includes("SULAM")).map(l => ({...l, lineName: normalizeGroup(l.lineName)}));
-      dateHeaders.value = resSummary.data.meta.dateHeaders || [];
-      dateRangeText.value = `PERIODE: ${resSummary.data.meta.sbDate} S/D ${resSummary.data.meta.seDate}`;
+      const dept = resSummary.data.departments.find(
+        d => d.deptName === "SULAM"
+      );
+
+      if (dept) {
+        summaryLines.value = dept.lines
+          .filter(line =>
+            line.lineName.toUpperCase().includes("SULAM")
+          )
+          .map(line => ({
+            ...line,
+            lineName: normalizeGroup(line.lineName)
+          }));
+      }
+
+      dateHeaders.value =
+        resSummary.data.meta.dateHeaders || [];
+
+      dateRangeText.value =
+        `PERIODE: ${resSummary.data.meta.sbDate} S/D ${resSummary.data.meta.seDate}`;
     }
 
-    summaryData.value = resCards.data;
+    /* SUMMARY CARD */
+    summaryData.value = resCards.data || {};
+
+    /* DETAIL PRODUKSI */
     if (resDetail.data.status === "success") {
-      rawData.value = resDetail.data.data.map(r => ({...r, xGroup: normalizeGroup(r.xGroup)}));
+      rawData.value = (resDetail.data.data || []).map(row => ({
+        ...row,
+        xGroup: normalizeGroup(row.xGroup)
+      }));
     }
 
-    // Under 80% Logic
+    /* UNDER 50 */
     if (resUnder.data.success) {
-      under60Data.value = resUnder.data.data
-        .filter(x => x.xJoinMonth > 4 && x.xTRealRate < 50)
-        .map(x => ({ ...x, xLine: normalizeGroup(x.xGroup) }))
-        .sort((a, b) => a.xRealRate - b.xRealRate);
+      under60Data.value = (resUnder.data.data || [])
+        .filter(x =>
+          x.xJoinMonth > 4 &&
+          x.xTRealRate < 50 &&
+          x.xTRealRate > 0
+        )
+        .map(x => ({
+          ...x,
+          xLine: normalizeGroup(x.xGroup)
+        }))
+        .sort((a, b) => a.xTRealRate - b.xTRealRate);
     }
-  } catch (e) {
-    console.error("Error SULAM:", e);
+
+  } catch (error) {
+    console.error("Error SULAM:", error);
   }
 };
 
-// --- DISPLAY LOOP ---
-const animate = (time) => new Promise(res => {
-  const start = Date.now();
-  const int = setInterval(() => {
-    const elapsed = Date.now() - start;
-    scrollProgress.value = (elapsed / time) * 100;
-    if (elapsed >= time) { clearInterval(int); res(); }
-  }, 50);
-});
+/* ===============================
+   ANIMATION
+================================= */
+const animate = (time) =>
+  new Promise(resolve => {
+    const start = Date.now();
 
+    const int = setInterval(() => {
+      const elapsed = Date.now() - start;
+
+      scrollProgress.value =
+        (elapsed / time) * 100;
+
+      if (elapsed >= time) {
+        clearInterval(int);
+        resolve();
+      }
+    }, 50);
+  });
+
+/* ===============================
+   DISPLAY LOOP
+================================= */
 const startDisplayLoop = async () => {
-  const DURATION = 12000; 
+  const DURATION = 12000;
+
   while (true) {
-    activeView.value = 'summary'; await animate(DURATION);
+
+    activeView.value = 'summary';
+    await animate(DURATION);
 
     activeView.value = 'under60';
-    const uPages = Math.ceil(under60Data.value.length / itemsPerPage.value) || 1;
-    for (let p = 1; p <= uPages; p++) { currentUnder60Page.value = p; await animate(DURATION); }
+    {
+      const totalPages =
+        Math.ceil(
+          under60Data.value.length /
+          itemsPerPage.value
+        ) || 1;
+
+      for (let p = 1; p <= totalPages; p++) {
+        currentUnder60Page.value = p;
+        await animate(DURATION);
+      }
+    }
 
     activeView.value = 'summary-table';
-    const sPages = Math.ceil(summaryLines.value.length / itemsPerPage.value) || 1;
-    for (let p = 1; p <= sPages; p++) { currentSummaryPage.value = p; await animate(DURATION); }
+    {
+      const totalPages =
+        Math.ceil(
+          summaryLines.value.length /
+          itemsPerPage.value
+        ) || 1;
+
+      for (let p = 1; p <= totalPages; p++) {
+        currentSummaryPage.value = p;
+        await animate(DURATION);
+      }
+    }
 
     activeView.value = 'table';
-    const tPages = Math.ceil(filteredByActiveHours.value.length / itemsPerPage.value) || 1;
-    for (let p = 1; p <= tPages; p++) { currentPage.value = p; await animate(DURATION); }
+    {
+      const totalPages =
+        Math.ceil(
+          filteredByActiveHours.value.length /
+          itemsPerPage.value
+        ) || 1;
+
+      for (let p = 1; p <= totalPages; p++) {
+        currentPage.value = p;
+        await animate(DURATION);
+      }
+    }
   }
 };
 
-// --- FORMATTERS & HELPERS ---
-const formatLOS = (m) => {
-  if (!m || m < 1) return '-';
-  const y = Math.floor(m / 12);
-  const mon = m % 12;
-  return y > 0 ? `${y} Th ${mon} Bln` : `${mon} Bln`;
-};
-const formatJoinDate = (d) => d ? new Date(d).toLocaleDateString('id-ID') : '-';
-const formatDate = (d) => d ? `${new Date(d).getDate()}/${new Date(d).getMonth() + 1}` : "";
-const getHealthClasses = (val) => {
-  const v = Math.round(val || 0);
-  if (v === 0) return 'text-secondary opacity-25 bg-light';
-  if (v < 50) return 'bg-danger text-white';
-  if (v <= 70) return 'bg-warning text-dark';
-  return 'bg-success text-white';
-};
-
-const paginatedData = computed(() => {
-  const start = (currentPage.value - 1) * itemsPerPage.value;
-  return filteredByActiveHours.value.slice(start, start + itemsPerPage.value);
-});
-const paginatedSummaryTable = computed(() => {
-  const start = (currentSummaryPage.value - 1) * itemsPerPage.value;
-  return summaryLines.value.slice(start, start + itemsPerPage.value);
-});
-const paginatedUnder60 = computed(() => {
-  const start = (currentUnder60Page.value - 1) * itemsPerPage.value;
-  return under60Data.value.slice(start, start + itemsPerPage.value);
-});
-const summaryCards = computed(() => ({
-  "QTY Finish": { value: summaryData.value.today_finish || 0, icon: "bi-check-circle-fill text-success" },
-  "Employee": { value: summaryData.value.attendance || 0, icon: "bi-people-fill text-info" }
-}));
-
+/* ===============================
+   INIT
+================================= */
 onMounted(async () => {
-  // 1. Tetap jalankan update jam setiap detik
+
   setInterval(() => {
     const now = new Date();
-    currentDateTime.value = `${now.toLocaleDateString('id-ID', {day:'2-digit', month:'long', year:'numeric'})} (time: ${now.toLocaleTimeString('id-ID')})`;
+
+    currentDateTime.value =
+      `${now.toLocaleDateString('id-ID')} (${now.toLocaleTimeString('id-ID')})`;
   }, 1000);
 
-  // 2. Tunggu sampai data benar-benar selesai diambil pertama kali
   await fetchAllData();
 
-  // 3. Tambahkan validasi: Jika data masih kosong, tunggu sebentar atau jangan slide dulu
-  if (summaryLines.value.length > 0 || rawData.value.length > 0) {
-    startDisplayLoop();
-  } else {
-    // Opsional: Coba refresh lagi setelah 5 detik jika data kosong
-    setTimeout(async () => {
-      await fetchAllData();
-      startDisplayLoop();
-    }, 5000);
-  }
+  startDisplayLoop();
 
-  // 4. Jalankan interval refresh data (tetap 1 jam sekali)
+  /* refresh tiap 1 jam */
   setInterval(fetchAllData, 3600000);
 });
 </script>

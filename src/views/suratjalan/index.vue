@@ -13,6 +13,8 @@
           marginTop: '56px',
         }"
       >
+      <!-- BUNGKUS DENGAN v-if="hasAccess" UNTUK UAC -->
+      <div v-if="hasAccess" class="container-fluid retur-page max-w-7xl mx-auto p-0">
         <div class="container-lg sj-container">
 
           <!-- ===== Page header ===== -->
@@ -224,6 +226,15 @@
           </div>
 
         </div>
+
+        </div>
+
+        <!-- OPSI TAMPILAN BLANK (JIKA TIDAK ADA AKSES) -->
+        <div v-else class="d-flex flex-column align-items-center justify-content-center h-100 pt-5 mt-5">
+           <!-- Halaman Blank, Jika ingin dibuat benar-benar kosong hapus komentar html ini. -->
+            <h1>hi anda tersesat nih, Mohon untuk Logout Segera </h1>
+            <a href="/logout" class="btn btn-primary">back to jungle</a>
+        </div>
       </main>
     </div>
 
@@ -249,6 +260,8 @@ dayjs.extend(relativeTime)
 dayjs.locale('id')
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL
+
+const hasAccess = ref(false);
 
 /* ---------------- layout state ---------------- */
 const user = ref({})
@@ -545,12 +558,37 @@ const pageRangeEnd = computed(() => Math.min(page.value * pageSize.value, proces
 
 /* ---------------- lifecycle ---------------- */
 onMounted(() => {
-  loadDefaultOptions()
-  loadSuratjalans()
+  const userData = localStorage.getItem('user');
+  if (userData) {
+    try {
+      user.value = JSON.parse(userData);
+    } catch (e) {
+      console.error("Error parse user data:", e);
+    }
+  }
+
+  // 2. LOGIKA UAC (Cek apakah user punya akses ke "suratjalan")
+  try {
+    const pagesData = localStorage.getItem("pages") || localStorage.getItem("user_pages");
+    const pages = pagesData ? JSON.parse(pagesData) : [];
+    
+    // Cek apakah kode halaman "suratjalan" ada di array pages
+    hasAccess.value = pages.includes("suratjalan");
+  } catch (e) {
+    hasAccess.value = false;
+  }
+
+  // 3. Hanya panggil API/Load data jika user punya akses
+  if (hasAccess.value) {
+    loadDefaultOptions();
+    loadSuratjalans();
+  }
+  // loadDefaultOptions()
+  // loadSuratjalans()
   window.addEventListener('resize', onResize)
   document.addEventListener('click', handleDocClick)
-  const userData = localStorage.getItem('user')
-  if (userData) user.value = JSON.parse(userData)
+  // const userData = localStorage.getItem('user')
+  // if (userData) user.value = JSON.parse(userData)
 })
 onUnmounted(() => {
   window.removeEventListener('resize', onResize)

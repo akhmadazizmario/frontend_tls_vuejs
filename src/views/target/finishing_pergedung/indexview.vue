@@ -109,7 +109,7 @@
                       <td>
                         <select v-model="group.gedung" class="form-select form-select-sm border-0 bg-light fw-bold rounded-3">
                           <option value="">- Pilih Gedung -</option>
-                          <option v-for="g in ['A','B', 'A&B']" :key="g" :value="g">GEDUNG {{g}}</option>
+                          <option v-for="g in ['', 'A','B', 'A&B']" :key="g" :value="g">GEDUNG {{g}}</option>
                         </select>
                       </td>
                       <td>

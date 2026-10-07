@@ -81,7 +81,7 @@
                           <th>Employee Group</th>
                           <th>Work Code</th>
                           <th>Dept Code</th>
-                          <th>Tanggal</th>
+                          <th>Work Controller</th>
                           <th>Owner</th>
                           <th>PC</th>
                           <th>Total Qty</th>
@@ -188,7 +188,7 @@ const initializeDataTable = () => {
         { data: "_gEmplName" },
         { data: "_WorkCode" },
         { data: "_DeptCode" },
-        { data: "tanggal_time", render: (d) => formatDateTime(d)  },
+        { data: "_EmplName" },
         { data: "xOwner" },
         { data: "xPC" },
         { data: "TotalQty", render: (d) => d?.toLocaleString("id-ID") || 0 },
@@ -219,54 +219,6 @@ const getReport = async () => {
     loading.value = false;
   }
 };
-
-// Format tanggal: 14 Nov 2025 05:00
-const formatDateTime  = (dateStr) => {
-  if (!dateStr) return "";
-
-  // Cek apakah ini format ISO/Browser (ada 'T')
-  if (dateStr.includes('T')) {
-    
-    // 1. Ambil bagian tanggal (YYYY-MM-DD)
-    const datePart = dateStr.split("T")[0]; // '2025-10-29'
-    
-    // Konversi YYYY-MM-DD menjadi DD/MM/YYYY
-    const [year, month, day] = datePart.split('-');
-    const formattedDate = `${day}/${month}/${year}`; // '29/10/2025'
-
-    // 2. Ambil bagian waktu (HH:MM:SS) dan hilangkan milidetik/Z
-    let timeAndZone = dateStr.split("T")[1];
-    
-    // Hapus milidetik dan Z
-    let formattedTime = timeAndZone.split('.')[0]; // '09:08:13'
-
-    // 3. Gabungkan dan tambahkan 'UTC'
-    return `${formattedDate} ${formattedTime} `;
-    
-  } 
-  
-  // Cek apakah ini format Database (ada spasi)
-  else if (dateStr.includes(' ')) {
-      
-    // 1. Ambil bagian tanggal (YYYY-MM-DD)
-    const datePart = dateStr.split(" ")[0]; // '2025-10-29'
-    
-    // Konversi YYYY-MM-DD menjadi DD/MM/YYYY
-    const [year, month, day] = datePart.split('-');
-    const formattedDate = `${day}/${month}/${year}`; // '29/10/2025'
-
-    // 2. Ambil bagian waktu (HH:MM:SS) dan hilangkan milidetik
-    let timePart = dateStr.split(" ")[1];
-    let formattedTime = timePart.split('.')[0]; // '06:33:11'
-
-    // 3. Gabungkan dan tambahkan label (asumsi waktu database adalah waktu server/lokal)
-    return `${formattedDate} ${formattedTime} Server Time`;
-  }
-  
-  // Jika format tidak dikenali, kembalikan string asli
-  return dateStr; 
-};
-
 
 const resetFilter = () => {
   filters.value = { pPO: "", pSysBeginDate: "", pSysEndDate: "" };

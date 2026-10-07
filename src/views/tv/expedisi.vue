@@ -22,7 +22,7 @@
             <tr class="bg-navy text-white header-main">
               <th rowspan="2" class="col-idp border-light text-white fs-2 fw-bold">STYLE</th>
               <th colspan="2" class="border-light text-white fs-2 fw-bold">A1 TO A2</th>
-              <th colspan="3" class="border-light bg-blue-shade text-white fs-3 fw-bold">A2 TO LINKING</th>
+              <th colspan="3" class="border-light bg-blue-shade text-white fs-3 fw-bold">WH to LK</th>
               <th colspan="3" class="border-light text-white fs-3 fw-bold">A2P TO A2I (PACKING)</th>
               <th colspan="2" class="border-light bg-blue-shade text-white fs-3 fw-bold">A2I TO A1 (TRANSFER)</th>
               <th rowspan="2" class="col-status border-light text-white fs-3 fw-bold">NOT YET TF</th>
@@ -79,7 +79,7 @@
           <span class="sum-value text-navy">{{ format(total.txC1) }}</span>
         </div>
         <div class="summary-box flex-fill border-end">
-          <span class="sum-label text-muted text-black fs-3 fw-bold">A2 to Linking</span>
+          <span class="sum-label text-muted text-black fs-3 fw-bold">WH to LK</span>
           <span class="sum-value text-navy">{{ format(total.txC2) }}</span>
         </div>
         <div class="summary-box flex-fill border-end bg-light-blue">

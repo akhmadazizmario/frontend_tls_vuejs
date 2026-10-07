@@ -141,7 +141,7 @@
           <div class="d-flex justify-content-between align-items-center">
             <div>
               <h1 class="fw-black m-0 display-3 text-white">LOW PERFORMANCE (< 50%)</h1>
-              <p class="m-0 text-white fs-4 fw-bold opacity-75">Operator Masa Kerja > 4 Bulan</p>
+              <p class="m-0 text-white fs-4 fw-bold opacity-75">Operator Masa Kerja > 4 Bulan - {{ new Date().toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' }) }}</p>
             </div>
             <span class="badge bg-white text-danger fs-2 border border-dark px-4 shadow">SEWING DAN LO LINE A</span>
           </div>
@@ -187,6 +187,7 @@
           <h4 class="fw-bold text-warning m-0 text-uppercase fs-3">
             MONITORING OPerator RATE &lt; 50% — <span class="text-white bg-danger px-2 rounded">SHIFT {{ currentShift }}</span>
           </h4>
+          <p class="text-white">{{ new Date().toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' }) }}</p>
         </div>
         <div class="bg-warning px-4 py-2 rounded border border-dark fw-black fs-2 text-dark">ACTIVE</div>
       </div>
@@ -214,6 +215,8 @@
               <th colspan="3" class="bg-success text-white py-1 border-bottom-dark border-start-dark">
                 HASIL PRODUKSI 
               </th>
+              <!-- KOLOM BARU: total hasil operator pada shift berjalan -->
+              <th rowspan="2" class="bg-warning text-dark border-start-dark" style="width: 130px;">HASIL</th>
             </tr>
             <tr class="header-text-white">
               <!-- Header Jam Tergantung Shift Berjalan -->
@@ -238,15 +241,20 @@
               <!-- Mapping Hasil Jam Berdasarkan Shift Aktif -->
               <td v-for="n in currentHourColumns" :key="n" class="p-0 border-end-dark hour-col" style="vertical-align: middle;">
                 <div class="d-flex h-100 align-items-stretch">
-                  <!-- Target Akumulasi Jam Berjalan (xTarget tunggal dikali pengali jam) -->
+                  <!-- Target sesi 3 jam (xTarget per jam x 3) -->
                   <div class="fs-3 fw-black py-2 text-primary bg-white d-flex align-items-center justify-content-center" style="width: 50%;">
                     {{ item.hourlyTarget[n] % 1 === 0 ? item.hourlyTarget[n] : item.hourlyTarget[n].toFixed(1) }}
                   </div>
-                  <!-- Hasil Akumulasi Qty -->
+                  <!-- Hasil produksi pada sesi tersebut -->
                   <div class="display-6 fw-black py-2 text-dark border-end border-dark bg-yellow-soft d-flex align-items-center justify-content-center" style="width: 50%;">
                     {{ item.hourlyQty[n] || 0 }}
                   </div>
                 </div>
+              </td>
+
+              <!-- KOLOM BARU: total hasil (penjumlahan hasil jam shift berjalan) -->
+              <td class="display-6 fw-black text-dark bg-warning border-start-dark" style="vertical-align: middle;">
+                {{ item.hasil }}
               </td>
             </tr>
           </tbody>
@@ -310,80 +318,54 @@ const cleanLineName = (name) => {
   return upperName.replace('Stick', 'Swing').replace('SLINE', '').trim();
 };
 
+const toNum = (v) => Number(v) || 0;
+
+// Sesi per shift. gate = jam komputer minimum agar kolom sesi tersebut sudah terisi
+const shiftSessions = {
+  1: [{ n: 8, gate: 0 }, { n: 11, gate: 8 }, { n: 14, gate: 11 }],
+  2: [{ n: 17, gate: 0 }, { n: 19, gate: 17 }, { n: 22, gate: 19 }]
+};
+
+// SQL sudah mengirim hasil & target per sesi (bukan akumulasi): hasil_jam8, xTarget8, dst.
+// Baris dengan operator + style + proses yang sama digabung supaya tidak dobel.
 const groupedData = computed(() => {
   const groups = {};
-  const isShift1 = currentShift.value === 1;
+  const sessions = shiftSessions[currentShift.value];
   const currentHour = currentHourRealtime.value;
 
   rawData.value.forEach(row => {
     const key = `${row.xEmplName}_${row.xMark}_${row.xWorkName}`;
-    
+
     if (!groups[key]) {
-      groups[key] = { 
-        xEmplName: row.xEmplName, 
-        xGroup: row.xGroup, 
+      groups[key] = {
+        xEmplName: row.xEmplName,
+        xGroup: row.xGroup,
         xMark: row.xMark,
-        xWorkName: row.xWorkName, 
-        xJoinMonth: row.xJoinMonth || 0, 
-        xTRealRate: row.xTRealRate || 0,
-        hourlyQty: isShift1 ? { 8: 0, 11: 0, 14: 0 } : { 17: 0, 19: 0, 22: 0 },
-        hourlyTarget: isShift1 ? { 8: 0, 11: 0, 14: 0 } : { 17: 0, 19: 0, 22: 0 }
+        xWorkName: row.xWorkName,
+        xJoinMonth: row.xJoinMonth || 0,
+        xTRealRate: toNum(row.xTRealRate),
+        xBConvertRate: row.xBConvertRate == null ? null : Number(row.xBConvertRate),
+        hourlyQty: {},
+        hourlyTarget: {}
       };
+      sessions.forEach(s => {
+        groups[key].hourlyQty[s.n] = 0;
+        groups[key].hourlyTarget[s.n] = 0;
+      });
     }
 
-    if (isShift1) {
-      // --- SHIFT 1 TIME-GATE (Disesuaikan dengan Target SQL) ---
-      
-      // Kolom Jam 8: Selalu Muncul
-      groups[key].hourlyQty[8] = Math.max(groups[key].hourlyQty[8], row.xJam8 || 0);
-      groups[key].hourlyTarget[8] = Math.max(groups[key].hourlyTarget[8], row.target8 || 0);
-
-      // Kolom Jam 11: Muncul jika jam komputer sudah melewati jam 8 pagi
-      if (currentHour >= 8) {
-        groups[key].hourlyQty[11] = Math.max(groups[key].hourlyQty[11], row.xJam11 || 0);
-        groups[key].hourlyTarget[11] = Math.max(groups[key].hourlyTarget[11], row.target11 || 0);
-      } else {
-        groups[key].hourlyQty[11] = 0;
-        groups[key].hourlyTarget[11] = 0;
-      }
-
-      // Kolom Jam 14: Muncul jika jam komputer sudah melewati jam 11 siang
-      if (currentHour >= 11) {
-        groups[key].hourlyQty[14] = Math.max(groups[key].hourlyQty[14], row.xJam14 || 0);
-        groups[key].hourlyTarget[14] = Math.max(groups[key].hourlyTarget[14], row.target14 || 0);
-      } else {
-        groups[key].hourlyQty[14] = 0;
-        groups[key].hourlyTarget[14] = 0;
-      }
-
-    } else {
-      // --- SHIFT 2 TIME-GATE (Disesuaikan dengan Target SQL) ---
-      
-      // Kolom Jam 17: Selalu Muncul di Shift 2
-      groups[key].hourlyQty[17] = Math.max(groups[key].hourlyQty[17], row.xJam17 || 0);
-      groups[key].hourlyTarget[17] = Math.max(groups[key].hourlyTarget[17], row.target17 || 0);
-
-      // Kolom Jam 19: Muncul jika jam komputer sudah melewati jam 17 (5 sore)
-      if (currentHour >= 17) {
-        groups[key].hourlyQty[19] = Math.max(groups[key].hourlyQty[19], row.xJam19 || 0);
-        groups[key].hourlyTarget[19] = Math.max(groups[key].hourlyTarget[19], row.target19 || 0);
-      } else {
-        groups[key].hourlyQty[19] = 0;
-        groups[key].hourlyTarget[19] = 0;
-      }
-
-      // Kolom Jam 22: Muncul jika jam komputer sudah melewati jam 19 (7 malam)
-      if (currentHour >= 19) {
-        groups[key].hourlyQty[22] = Math.max(groups[key].hourlyQty[22], row.xJam22 || 0);
-        groups[key].hourlyTarget[22] = Math.max(groups[key].hourlyTarget[22], row.target22 || 0);
-      } else {
-        groups[key].hourlyQty[22] = 0;
-        groups[key].hourlyTarget[22] = 0;
-      }
-    }
+    sessions.forEach(s => {
+      if (currentHour < s.gate) return; // sesi belum berjalan
+      groups[key].hourlyQty[s.n] += toNum(row[`hasil_jam${s.n}`]);
+      groups[key].hourlyTarget[s.n] = Math.max(groups[key].hourlyTarget[s.n], toNum(row[`xTarget${s.n}`]));
+    });
   });
 
-  return Object.values(groups);
+  // HASIL = penjumlahan hasil jam pada shift yang sedang tampil
+  return Object.values(groups).map(g => ({
+    ...g,
+    hasil: Object.values(g.hourlyQty).reduce((sum, q) => sum + q, 0)
+  }));
 });
 
 const filteredProductionData = computed(() => {
@@ -391,7 +373,7 @@ const filteredProductionData = computed(() => {
 
   return groupedData.value.filter(item => {
     const isLineA = item.xGroup?.toUpperCase().includes("LINE A");
-    const isUnderRate = item.xTRealRate < 50;
+    const isUnderRate = item.xBConvertRate !== null && item.xBConvertRate < 50;
     const isSenior = item.xJoinMonth > 4;
     
     if (!isLineA || !isUnderRate || !isSenior) return false;

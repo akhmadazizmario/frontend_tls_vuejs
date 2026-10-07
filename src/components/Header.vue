@@ -1,20 +1,17 @@
 <template>
   <header
-    class="app-header d-flex justify-content-between align-items-center px-3 px-md-4 shadow-sm"
+    class="app-header d-flex justify-content-between align-items-center px-3 px-md-4"
+    :class="{ 'sidebar-open': isSidebarOpen }"
   >
     <!-- LEFT -->
     <div class="d-flex align-items-center">
       <button
-        class="toggle-btn me-3"
+        class="toggle-btn"
         @click="$emit('toggle-sidebar')"
         aria-label="Toggle sidebar"
       >
-        <i class="bi bi-list fs-4"></i>
+        <i class="bi bi-list"></i>
       </button>
-
-      <h1 class="h5 mb-0 fw-bold brand">
-        TLSI <span class="brand-accent">App</span>
-      </h1>
     </div>
 
     <!-- RIGHT -->
@@ -27,21 +24,17 @@
           data-bs-toggle="dropdown"
           aria-expanded="false"
         >
-          <span class="avatar-ring">
-            <img
-              :src="user.image || 'https://i.pravatar.cc/32'"
-              alt="User"
-              class="rounded-circle"
-              width="32"
-              height="32"
-            />
-          </span>
-
           <span class="d-none d-sm-inline profile-name">
             {{ user.name || 'User' }}
           </span>
 
-          <i class="bi bi-chevron-down profile-caret"></i>
+          <img
+            :src="user.image || 'https://i.pravatar.cc/34'"
+            alt="User"
+            class="avatar rounded-circle"
+            width="34"
+            height="34"
+          />
         </button>
 
         <ul
@@ -70,9 +63,15 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import axios from 'axios'
 import { useRouter } from 'vue-router'
+
+const props = defineProps({
+  // opsional: kalau tidak dikirim dari parent, status dibaca otomatis dari .sidebar
+  sidebarOpen: { type: Boolean, default: undefined },
+})
+defineEmits(['toggle-sidebar'])
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL
 const API2_BASE_URL = import.meta.env.VITE_API2_BASE_URL
@@ -128,49 +127,54 @@ async function logout() {
 }
 
 onMounted(fetchUserProfile)
+
+/* ===============================
+   STATUS SIDEBAR (header ikut buka/tutup)
+================================ */
+const domOpen = ref(false)
+const isSidebarOpen = computed(() => props.sidebarOpen ?? domOpen.value)
+
+let observer = null
+onMounted(async () => {
+  await nextTick()
+  const el = document.querySelector('.sidebar')
+  if (!el) return
+  domOpen.value = el.classList.contains('open')
+  observer = new MutationObserver(() => {
+    domOpen.value = el.classList.contains('open')
+  })
+  observer.observe(el, { attributes: true, attributeFilter: ['class'] })
+})
+onBeforeUnmount(() => observer?.disconnect())
 </script>
 
 <style scoped>
-/* ===============================
-   ROOT VARIABLES (selaras dengan sidebar)
-================================ */
 .app-header {
-  --hd-accent: #4f7cff;
-  --hd-accent-soft: rgba(79, 124, 255, 0.1);
+  --hd-sidebar-w: 250px;
+  --hd-accent: #6cbb00;
+  --hd-accent-soft: rgba(108, 187, 0, 0.1);
   --hd-text: #1f2937;
   --hd-text-dim: #6b7280;
-  --hd-border: rgba(15, 23, 42, 0.08);
+  --hd-border: #e5e7eb;
 }
 
 /* ===============================
-   HEADER FIXED
+   HEADER FIXED (mulai di sebelah sidebar)
 ================================ */
 .app-header {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
-
   height: 56px;
-  background-color: rgba(255, 255, 255, 0.85);
+  background-color: #fff;
   border-bottom: 1px solid var(--hd-border);
-
-  backdrop-filter: saturate(180%) blur(20px);
-  -webkit-backdrop-filter: saturate(180%) blur(20px);
-
+  transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   z-index: 2000;
 }
 
-/* ===============================
-   BRAND / LOGO TEXT
-================================ */
-.brand {
-  color: var(--hd-text);
-  letter-spacing: 0.01em;
-}
-
-.brand-accent {
-  color: var(--hd-accent);
+.app-header.sidebar-open {
+  left: var(--hd-sidebar-w);
 }
 
 /* ===============================
@@ -182,18 +186,17 @@ onMounted(fetchUserProfile)
   justify-content: center;
   width: 38px;
   height: 38px;
-  border-radius: 0.6rem;
-  border: 1px solid var(--hd-border);
+  border: 0;
+  border-radius: 0.5rem;
   background-color: transparent;
   color: var(--hd-text-dim);
-  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
-  z-index: 2100; /* Tombol sidebar aman di atas semua */
+  font-size: 1.35rem;
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 .toggle-btn:hover {
-  background-color: var(--hd-accent-soft);
-  border-color: var(--hd-accent);
-  color: var(--hd-accent);
+  background-color: #f3f4f6;
+  color: var(--hd-text);
 }
 
 .toggle-btn:active {
@@ -201,52 +204,33 @@ onMounted(fetchUserProfile)
 }
 
 /* ===============================
-   PROFILE DROPDOWN BUTTON
+   PROFILE (nama + avatar)
 ================================ */
 .profile-btn {
   display: flex;
   align-items: center;
-  border: 1px solid var(--hd-border);
-  background-color: #fff;
+  border: 0;
+  background: transparent;
+  padding: 0.2rem 0.3rem;
   border-radius: 999px;
-  padding: 0.3rem 0.75rem 0.3rem 0.3rem;
-  transition: background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
-}
-
-.profile-btn:hover,
-.profile-btn:focus,
-.profile-btn.show {
-  background-color: var(--hd-accent-soft);
-  border-color: var(--hd-accent);
-}
-
-.avatar-ring {
-  display: inline-flex;
-  padding: 2px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, var(--hd-accent), #8fb0ff);
-}
-
-.avatar-ring img {
-  display: block;
-  border: 2px solid #fff;
+  cursor: pointer;
 }
 
 .profile-name {
-  font-size: 0.875rem;
-  font-weight: 600;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--hd-text-dim);
+}
+
+.profile-btn:hover .profile-name,
+.profile-btn.show .profile-name {
   color: var(--hd-text);
 }
 
-.profile-caret {
-  font-size: 0.7rem;
-  color: var(--hd-text-dim);
-  transition: transform 0.2s ease;
-}
-
-.profile-btn[aria-expanded="true"] .profile-caret {
-  transform: rotate(180deg);
-  color: var(--hd-accent);
+.avatar {
+  display: block;
+  object-fit: cover;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
 }
 
 /* ===============================
@@ -255,13 +239,13 @@ onMounted(fetchUserProfile)
 .dropdown-menu {
   margin-top: 0.5rem;
   border: 1px solid var(--hd-border);
-  border-radius: 0.75rem;
+  border-radius: 0.6rem;
   padding: 0.4rem;
   min-width: 200px;
 }
 
 .dropdown-item {
-  border-radius: 0.5rem;
+  border-radius: 0.4rem;
   padding: 0.5rem 0.75rem;
   font-size: 0.875rem;
   font-weight: 500;
@@ -272,7 +256,7 @@ onMounted(fetchUserProfile)
 .dropdown-item:hover,
 .dropdown-item:focus {
   background-color: var(--hd-accent-soft);
-  color: var(--hd-accent);
+  color: var(--hd-text);
 }
 
 .dropdown-item.text-danger:hover {

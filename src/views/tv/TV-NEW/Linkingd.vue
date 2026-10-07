@@ -19,7 +19,7 @@
 
           <div class="col-4">
             <div class="central-planning-card shadow-2xl border-warning">
-              <!-- SINKRONISASI TEKS KE LINE D -->
+              <!-- Ganti teks A&B menjadi C -->
               <div class="planning-label">PLANNING LINKING (LINE D)</div>
               <div class="d-flex align-items-baseline justify-content-center">
                 <span class="planning-value text-warning">{{ planningData || 0 }}</span>
@@ -38,7 +38,7 @@
 
         <!-- MAIN CARDS AREA -->
         <div class="row flex-grow-1 g-5 px-4 align-items-stretch justify-content-center">
-          <!-- Menggunakan justify-content-center agar posisi card LINE D seimbang di tengah -->
+          <!-- Ditambahkan justify-content-center agar card LINE D terlihat seimbang di tengah jika hanya 1 card -->
           <div v-for="line in summaryData" :key="line.xLine" class="col-6">
             <div class="summary-card h-100 border-success">
               <!-- Menggunakan warna dasar dinamis untuk Line D -->
@@ -101,16 +101,16 @@
           <div class="d-flex justify-content-between align-items-center">
             <div>
               <h1 class="fw-black m-0 display-3 text-white">LOW PERFORMANCE (&lt; 50%)</h1>
-              <p class="m-0 text-white fs-4 fw-bold opacity-75">Operator Masa Kerja > 4 Bulan</p>
+              <p class="m-0 text-white fs-4 fw-bold opacity-75">Operator Masa Kerja > 4 Bulan - {{ new Date().toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' }) }}</p>
             </div>
-            <!-- SINKRONISASI TEKS KE LINE D -->
+            <!-- Ganti teks badge menjadi LINE D -->
             <span class="badge bg-white text-danger fs-2 border border-dark px-4 shadow">LINKING LINE D</span>
           </div>
         </div>
         
         <div class="table-frame flex-grow-1 bg-white border border-4 border-dark shadow overflow-hidden d-flex flex-column">
           <div v-if="under60Data.length === 0" class="flex-grow-1 d-flex flex-column align-items-center justify-content-center text-center p-5">
-            <!-- SINKRONISASI TEKS KE LINE D -->
+            <!-- Ganti teks keterangan kosong menjadi Line D -->
             <p class="fs-2 text-muted text-uppercase text-dark">Tidak ada operator Linking Line D yang dibawah target.</p>
           </div>
 
@@ -145,9 +145,9 @@
         <!-- Header Monitor -->
         <div class="header-navy-custom p-3 mb-2 rounded shadow border border-dark d-flex justify-content-between align-items-center">
           <div>
-            <!-- SINKRONISASI TEKS KE LINE D -->
+            <!-- Ganti teks header menjadi LINE D -->
             <h1 class="fw-black m-0 display-4 text-white">HASIL PROD LINKING LINE D</h1>
-            <h4 class="fw-bold text-warning m-0 text-uppercase">MONITORING KHUSUS RATE &lt; 50%</h4>
+            <h4 class="fw-bold text-warning m-0 text-uppercase">MONITORING KHUSUS RATE &lt; 50% - {{ new Date().toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' }) }} </h4>
           </div>
           <div class="bg-warning px-4 py-2 rounded border border-dark fw-black fs-2 text-dark">ACTIVE</div>
         </div>
@@ -156,7 +156,7 @@
           
           <!-- State Kosong -->
           <div v-if="filteredProductionData.length === 0" class="flex-grow-1 d-flex flex-column align-items-center justify-content-center text-center p-5">
-            <!-- SINKRONISASI TEKS KE LINE D -->
+            <!-- Ganti teks keterangan kosong menjadi Line D -->
             <p class="fs-3 text-dark text-uppercase">Tidak ada operator Linking Line D yang dibawah target.</p>
           </div>
 
@@ -173,6 +173,8 @@
                 <th colspan="3" class="bg-success text-white py-1 border-bottom-dark border-start-dark">
                   HASIL PRODUKSI 
                 </th>
+                <!-- KOLOM BARU: total hasil (jam9 + jam12 + jam15) -->
+                <th rowspan="2" class="bg-warning text-dark border-start-dark" style="width: 130px;">HASIL</th>
               </tr>
               <tr class="header-text-white">
                 <th v-for="n in currentHourColumns" :key="n" class="p-0 border-start-dark border-bottom-dark">
@@ -205,6 +207,11 @@
                     </div>
                   </div>
                 </td>
+
+                <!-- KOLOM BARU: total hasil operator -->
+                <td class="display-6 fw-black text-dark bg-warning border-start-dark">
+                  {{ item.hasil }}
+                </td>
               </tr>
             </tbody>
           </table>
@@ -221,7 +228,7 @@
 
 <script setup>
 import { ref, onMounted, computed } from 'vue';
-import axios from 'axios'; 
+import axios from 'axios'; // atau 'axios' sesuai pengaturan Anda
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 const isLoading = ref(true);
@@ -249,48 +256,32 @@ const cleanLineName = (name) => {
   return name.toUpperCase().replace('LINKING', '').replace('LINE', '').trim();
 };
 
+const toNum = (v) => Number(v) || 0;
+
+// Data dari API sudah 1 baris per operator + xMark + proses (hasil & target per sesi sudah dihitung di SQL)
 const groupedData = computed(() => {
-  const groups = {};
+  return rawData.value.map(row => {
+    const h9 = toNum(row.hasil_jam9);
+    const h12 = toNum(row.hasil_jam12);
+    const h15 = toNum(row.hasil_jam15);
 
-  rawData.value.forEach(row => {
-    const key = `${row.xEmplCode}_${row.xGroup}_${row.xMark}_${row.xWorkName}`;
-    
-    if (!groups[key]) {
-      groups[key] = { 
-        xEmplCode: row.xEmplCode,
-        xEmplName: row.xEmplName, 
-        xGroup: row.xGroup, 
-        xMark: row.xMark,
-        xWorkName: row.xWorkName, 
-        xJoinMonth: row.xJoinMonth || 0, 
-        xTRealRate: row.xTRealRate || 0,
-        xTarget: row.xTarget || 0, 
-        hourlyQty: { 9: 0, 12: 0, 15: 0 }, 
-        hourlyTarget: { 9: 0, 12: 0, 15: 0 }
-      };
-    }
-
-    const jamKelompok = row.xTargetJamKelompok;
-    if (jamKelompok === 9 || jamKelompok === 12 || jamKelompok === 15) {
-      groups[key].hourlyQty[jamKelompok] += row.xQty || 0;
-    }
-  });
-
-  return Object.values(groups).map(group => {
-    const baseTarget = group.xTarget;
-    const qty9 = group.hourlyQty[9];
-    const qty12 = group.hourlyQty[12];
-    const qty15 = group.hourlyQty[15];
-
-    group.hourlyQty[9] = qty9;
-    group.hourlyQty[12] = qty9 + qty12;
-    group.hourlyQty[15] = qty9 + qty12 + qty15;
-    
-    group.hourlyTarget[9] = baseTarget * 3;
-    group.hourlyTarget[12] = baseTarget * 6;
-    group.hourlyTarget[15] = baseTarget * 7;
-
-    return group;
+    return {
+      xEmplCode: row.xEmplCode,
+      xEmplName: row.xEmplName,
+      xGroup: row.xGroup,
+      xMark: row.xMark,
+      xWorkName: row.xWorkName,
+      xJoinMonth: row.xJoinMonth || 0,
+      xTRealRate: toNum(row.xTRealRate),
+      xBConvertRate: row.xBConvertRate == null ? null : Number(row.xBConvertRate),
+      hourlyQty: { 9: h9, 12: h12, 15: h15 },
+      hourlyTarget: {
+        9: toNum(row.xTarget9),
+        12: toNum(row.xTarget12),
+        15: toNum(row.xTarget15)
+      },
+      hasil: row.hasil == null ? h9 + h12 + h15 : toNum(row.hasil)
+    };
   });
 });
 
@@ -298,10 +289,10 @@ const filteredProductionData = computed(() => {
   const filtered = groupedData.value.filter(item => {
     const groupName = item.xGroup?.toUpperCase() || '';
     
-    // ✅ PERUBAHAN: Memastikan pemfilteran murni hanya untuk LINE D pada Slide 3
+    // ✅ PERUBAHAN: Sekarang memfilter murni untuk LINE D saja di Slide 3
     const isLineD = groupName.includes("LINE D");
     
-    return isLineD && item.xTRealRate < 50 && item.xJoinMonth > 4;
+    return isLineD && item.xBConvertRate !== null && item.xBConvertRate < 50 && item.xJoinMonth > 4;
   });
 
   return filtered.sort((a, b) => {
@@ -325,7 +316,7 @@ const fetchAllData = async () => {
     
     rawData.value = resD.data.success ? resD.data.data : [];
     
-    // Menangani Slide 2 (Memfilter LINE D)
+    // Menangani Slide 2 (Mengecek LINE D)
     if (resU.data.success) {
       const filteredUnder60 = resU.data.data.filter(x => {
         const groupName = x.xGroup?.toUpperCase() || '';
@@ -342,8 +333,9 @@ const fetchAllData = async () => {
       under60Data.value = [];
     }
     
-    // Menangani Slide 1 (Mengambil data murni 'LINE D')
+    // Menangani Slide 1 Summary Card
     if (resS.data.success) {
+      // ✅ PERUBAHAN: Hanya ambil data yang xLine nya murni 'LINE D'
       summaryData.value = resS.data.data.filter(i => i.xLine === 'LINE D');
     }
 
@@ -352,8 +344,9 @@ const fetchAllData = async () => {
       const today = new Date().toISOString().split('T')[0];
       const findPlanning = resP.data.data.find(item => {
         const itemDate = new Date(item.xDate).toISOString().split('T')[0];
-        // ✅ PERUBAHAN: Kategori gedung diubah menjadi 'D' sesuai kebutuhan parameter Anda
-        return item.kategori_gedung === 'D' && itemDate === today;
+        
+        // UBAH 'A&B' MENJADI 'linking_AB' DI SINI
+        return item.kategori_gedung === 'linking_D' && itemDate === today; 
       });
       planningData.value = findPlanning ? findPlanning.planning : 0;
     }

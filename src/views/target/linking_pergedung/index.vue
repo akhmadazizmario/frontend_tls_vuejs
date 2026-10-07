@@ -73,8 +73,8 @@
       </div>
 
       <div v-if="hasSearched && filteredDisplayData.length > 0" class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4">
-        <div class="table-responsive">
-          <table id="report-table" class="table table-bordered align-middle mb-0 custom-table">
+        <div class="table-responsive" style="max-height: 65vh;">
+          <table id="report-table" class="table align-middle mb-0 custom-table">
             <thead>
               <tr>
                 <th rowspan="2" :class="['text-center align-middle', selected.dates.length > 0 ? 'table-info' : '']" width="120">
@@ -1374,20 +1374,79 @@ onMounted(() => {
 }
 .btn-modern:hover { transform: translateY(-2px); }
 
-/* Table Design */
+/* ============================================================
+   TABLE DESIGN — Modern / International Standard Report Table
+   ============================================================ */
+.table-responsive {
+  border-radius: 16px;
+}
+
 .custom-table {
   border: none;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 13px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Inter, "Helvetica Neue", Arial, sans-serif;
 }
+
+/* Header */
 .custom-table thead th {
-  background-color: #ffffff;
-  color: #5a5c69;
-  font-size: 11px;
+  background: linear-gradient(180deg, #fbfbfe 0%, #f4f6fb 100%);
+  color: #3b3f5c;
+  font-size: 10.5px;
   font-weight: 700;
+  letter-spacing: 0.6px;
   text-transform: uppercase;
-  padding: 15px 10px;
+  padding: 14px 10px;
   border-bottom: 2px solid #e3e6f0;
-  border-right: 1px solid #f2f2f2;
+  border-right: 1px solid #edf0f7;
+  vertical-align: middle;
+  position: sticky;
+  top: 0;
+  z-index: 5;
 }
+.custom-table thead th:first-child { border-top-left-radius: 12px; }
+.custom-table thead th:last-child { border-top-right-radius: 12px; border-right: none; }
+.custom-table thead tr:last-child th { top: 46px; }
+
+/* Sub-header (TODAY / TTL) keep brand colors but refine */
+.custom-table thead th.bg-primary {
+  background: linear-gradient(135deg, #4e73df 0%, #3b5fc4 100%) !important;
+  letter-spacing: 1px;
+  font-size: 10.5px;
+  padding: 8px 10px;
+}
+.custom-table thead th.bg-primary-subtle {
+  background: #eef2fd !important;
+  color: #3b56b0;
+  font-size: 10px;
+  letter-spacing: 0.4px;
+}
+.custom-table thead th.table-info {
+  background: linear-gradient(180deg, #e7f1ff 0%, #dbe9ff 100%) !important;
+}
+
+/* Body cells */
+.custom-table tbody td {
+  padding: 11px 10px;
+  border-bottom: 1px solid #f0f2f7;
+  border-right: 1px solid #f5f6fa;
+  color: #383a4a;
+  vertical-align: middle;
+}
+.custom-table tbody td:last-child { border-right: none; }
+
+/* Zebra striping for readability on dense reports */
+.custom-table tbody tr:nth-of-type(even) { background-color: #fafbfd; }
+
+/* Row hover */
+.table-row { transition: background-color 0.15s ease; }
+.table-row:hover td { background-color: #f2f6fd !important; }
+
+/* Rounded bottom corners on last row */
+.custom-table tbody tr:last-child td:first-child { border-bottom-left-radius: 12px; }
+.custom-table tbody tr:last-child td:last-child { border-bottom-right-radius: 12px; }
+
 .cell-nested {
   padding: 10px;
   border-bottom: 1px solid #f2f2f2;
@@ -1400,12 +1459,17 @@ onMounted(() => {
 
 /* Filter Buttons */
 .btn-filter {
-  background: #f8f9fc;
-  border: 1px solid #e3e6f0;
-  padding: 2px 8px;
+  background: #ffffff;
+  border: 1px solid #dde1ec;
+  padding: 3px 9px;
   font-size: 10px;
-  border-radius: 6px;
+  border-radius: 7px;
   color: #4e73df;
+  transition: all 0.15s ease;
+}
+.btn-filter:hover {
+  background: #eef2fd;
+  border-color: #4e73df;
 }
 .filter-scroll {
   max-height: 200px;
@@ -1413,15 +1477,17 @@ onMounted(() => {
   padding-right: 5px;
 }
 .filter-scroll::-webkit-scrollbar { width: 5px; }
-.filter-scroll::-webkit-scrollbar-thumb { background: #e3e6f0; border-radius: 10px; }
+.filter-scroll::-webkit-scrollbar-thumb { background: #dde1ec; border-radius: 10px; }
 
-/* Cell Colors */
-.bg-success-light { background-color: #f6fff9; }
-.bg-primary-light { background-color: #f0f7ff; }
-.bg-danger-light { background-color: #fff5f5; }
+/* Cell Colors — softer, more refined tints */
+.bg-success-light { background-color: #f2fbf6; }
+.bg-primary-light { background-color: #eef3fe; }
+.bg-danger-light { background-color: #fdf3f3; color: #c0392b; }
 
-.table-row { transition: all 0.2s; }
-.table-row:hover { background-color: #f1f4f9 !important; }
+.badge { font-weight: 600; letter-spacing: 0.2px; }
 
-.badge { font-weight: 600; }
+/* Scrollbar for the whole table wrapper */
+.table-responsive::-webkit-scrollbar { height: 8px; width: 8px; }
+.table-responsive::-webkit-scrollbar-thumb { background: #dde1ec; border-radius: 10px; }
+.table-responsive::-webkit-scrollbar-track { background: transparent; }
 </style>

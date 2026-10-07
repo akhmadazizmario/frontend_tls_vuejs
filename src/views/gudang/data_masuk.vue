@@ -1,209 +1,228 @@
 <template>
-  <div class="d-flex flex-column min-vh-100 bg-light-subtle">
+  <div class="d-flex flex-column min-vh-100 modern-bg">
     <Header :user="user" @toggle-sidebar="toggleSidebar" @logout="logout" />
 
     <div class="d-flex flex-grow-1 overflow-hidden">
       <Sidebar :isOpen="sidebarOpen" />
 
+      <!-- [PERBAIKAN] minWidth: '0' Mencegah layar melar ke kanan -->
       <main
         class="flex-grow-1 p-3 p-md-4 main-content"
         :style="{
           marginLeft: sidebarOpen && windowWidth >= 768 ? '16rem' : '0',
-          transition: 'margin-left 0.3s ease',
+          transition: 'margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
           marginTop: '56px',
+          minWidth: '0'
         }"
       >
-        <div class="container-fluid">
+        <div class="container-fluid max-w-custom mx-auto">
 
-          <div class="sweep-nav-wrapper">
+          <!-- Top Navigation Pill -->
+          <div class="sweep-nav-wrapper mb-4 shadow-sm">
             <div class="sweep-indicator" style="left: 10px;"></div>
-
-              <a href="/item-masuk" class="nav-link active">Barang Masuk</a>
-              <a href="/request" class="nav-link">Penggunaan</a>
-              <a href="/item-stok" class="nav-link">Stok</a>
-              <a href="/item-no-stok" class="nav-link">No Stock</a>
+            <a href="/item-masuk" class="nav-link active">Barang Masuk</a>
+            <a href="/request" class="nav-link">Penggunaan</a>
+            <a href="/item-stok" class="nav-link">Stok</a>
           </div>
 
-          <div class="row align-items-end mb-4 g-3 mt-3">
+          <!-- Page Header -->
+          <div class="row align-items-end mb-4 g-3">
             <div class="col">
               <nav aria-label="breadcrumb">
-                <ol class="breadcrumb mb-1 small">
-                  <li class="breadcrumb-item"><a href="#" class="text-decoration-none">Dashboard</a></li>
-                  <li class="breadcrumb-item active">Barang masuk</li>
+                <ol class="breadcrumb mb-2 small fw-medium">
+                  <li class="breadcrumb-item"><a href="#" class="text-decoration-none text-muted hover-primary">Dashboard</a></li>
+                  <li class="breadcrumb-item active text-primary">Barang Masuk</li>
                 </ol>
               </nav>
-              <h3 class="fw-bold text-dark m-0 d-flex align-items-center gap-2">
-                <span class="page-title-icon"><i class="bi bi-box-seam-fill"></i></span>
+              <h3 class="fw-bolder text-dark m-0 d-flex align-items-center gap-2">
+                <span class="bg-primary text-white p-2 rounded-3 fs-5 d-flex align-items-center justify-content-center shadow-sm">
+                  <i class="bi bi-box-seam-fill"></i>
+                </span>
                 Inventory Barang Masuk
               </h3>
-              <p class="text-muted small m-0">Kelola data barang masuk dengan tampilan modern.</p>
+              <p class="text-secondary small m-0 mt-2">Kelola data inventaris barang masuk secara efisien dan *real-time*.</p>
             </div>
             <div class="col-auto text-nowrap">
-              <router-link to="/inventory-form" class="btn btn-add-item px-4 rounded-3 shadow-sm d-flex align-items-center gap-2">
-                <i class="bi bi-plus-lg"></i>
+              <router-link to="/inventory-form" class="btn btn-primary px-4 py-2 rounded-pill shadow-sm modern-btn d-flex align-items-center gap-2 fw-medium">
+                <i class="bi bi-plus-lg fs-6"></i>
                 <span class="d-none d-md-inline">Tambah Barang</span>
               </router-link>
             </div>
           </div>
 
-          <div class="card border-0 shadow-sm rounded-4 mb-4 toolbar-card">
+          <!-- Action Bar Card -->
+          <div class="card border-0 shadow-sm rounded-4 mb-4 glass-card">
             <div class="card-body p-3">
               <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
                 <div class="d-flex flex-wrap align-items-center gap-2">
                   <div class="dropdown">
-                    <button class="btn btn-toolbar-action dropdown-toggle px-3 py-2" type="button" id="colDrop" data-bs-toggle="dropdown" aria-expanded="false">
-                      <i class="bi bi-layout-three-columns me-2"></i> Kolom
+                    <button class="btn btn-light border-0 px-3 py-2 rounded-pill shadow-sm d-flex align-items-center gap-2 text-dark fw-medium btn-hover" type="button" data-bs-toggle="dropdown">
+                      <i class="bi bi-sliders text-primary"></i> Kolom
                     </button>
-                    <ul class="dropdown-menu shadow-lg border-0 p-2 mt-2 rounded-4" aria-labelledby="colDrop" style="max-height: 350px; overflow-y: auto; min-width: 240px;">
+                    <ul class="dropdown-menu shadow-lg border-0 p-2 mt-2 custom-dropdown rounded-4">
                       <li class="dropdown-header text-uppercase small fw-bold text-secondary px-2">Tampilkan Kolom</li>
                       <li v-for="(col, index) in columnDefs" :key="index">
                         <div v-if="col.title && col.title !== 'No' && col.title !== 'Aksi'"
-                             class="form-check form-switch dropdown-item rounded-3 py-2 d-flex align-items-center justify-content-between col-toggle-item">
-                          <label class="form-check-label small cursor-pointer me-3" :for="'col'+index">{{ col.title }}</label>
-                          <input class="form-check-input ms-0" type="checkbox" :id="'col'+index" :checked="col.visible" @change="toggleColumn(index)">
+                             class="form-check form-switch dropdown-item rounded-3 py-2 d-flex align-items-center justify-content-between modern-switch">
+                          <label class="form-check-label small cursor-pointer me-4 fw-medium text-secondary" :for="'col'+index">{{ col.title }}</label>
+                          <input class="form-check-input cursor-pointer" type="checkbox" :id="'col'+index" :checked="col.visible" @change="toggleColumn(index)">
                         </div>
                       </li>
                     </ul>
                   </div>
 
-                  <div class="vr mx-1 d-none d-md-block"></div>
+                  <div class="vr opacity-25 mx-1 d-none d-md-block"></div>
 
-                  <span class="badge stat-badge stat-badge-primary px-3 py-2 rounded-pill d-flex align-items-center gap-2">
+                  <span class="badge bg-primary-subtle text-primary-emphasis border border-primary-subtle px-3 py-2 rounded-pill fw-semibold shadow-sm d-flex align-items-center gap-2">
                     <i class="bi bi-database-fill-check"></i>
-                    Total Data Masuk: <strong>{{ items.length }}</strong>
+                    Total Data: {{ items.length }}
                   </span>
                 </div>
 
-                <div class="d-flex flex-wrap gap-2 align-items-center export-bar">
-                  <div class="export-date-field">
-                    <i class="bi bi-calendar3"></i>
-                    <div class="d-flex flex-column">
-                      <label class="export-date-label">Dari</label>
-                      <input type="date" v-model="exportDates.start" class="export-date-input">
-                    </div>
+                <div class="d-flex flex-wrap gap-2 align-items-center">
+                  <div class="input-group modern-input-group shadow-sm rounded-pill overflow-hidden bg-white">
+                    <span class="input-group-text bg-white border-0 text-primary px-3"><i class="bi bi-calendar-range"></i></span>
+                    <input type="date" v-model="exportDates.start" class="form-control border-0 bg-white small-date text-muted" title="Tanggal Mulai">
+                    <span class="input-group-text bg-white border-0 text-muted px-1">-</span>
+                    <input type="date" v-model="exportDates.end" class="form-control border-0 bg-white small-date text-muted" title="Tanggal Akhir">
+                    
+                    <button @click="downloadExcel" class="btn btn-success d-flex align-items-center gap-2 px-3 fw-medium border-0 btn-hover-scale" title="Export Excel">
+                      <i class="bi bi-file-earmark-excel-fill"></i> <span class="d-none d-lg-inline">Excel</span>
+                    </button>
                   </div>
-                  <div class="export-date-field">
-                    <i class="bi bi-calendar3"></i>
-                    <div class="d-flex flex-column">
-                      <label class="export-date-label">Sampai</label>
-                      <input type="date" v-model="exportDates.end" class="export-date-input">
-                    </div>
-                  </div>
-                  <button @click="downloadExcel" class="btn btn-export-excel px-3 rounded-3 d-flex align-items-center gap-2">
-                    <i class="bi bi-file-earmark-spreadsheet-fill"></i> Excel
+                  
+                  <button class="btn btn-danger rounded-pill px-4 shadow-sm fw-medium d-flex align-items-center gap-2 btn-hover-scale"
+                          data-bs-toggle="modal" data-bs-target="#npbMultiModal">
+                    <i class="bi bi-file-earmark-pdf-fill"></i> <span class="d-none d-md-inline">Cetak NPB</span>
                   </button>
-<button class="btn btn-outline-danger px-3 rounded-3 d-flex align-items-center gap-2"
-        data-bs-toggle="modal" data-bs-target="#npbMultiModal">
-  <i class="bi bi-file-earmark-pdf-fill"></i> Cetak NPB
-</button>
                 </div>
 
               </div>
             </div>
           </div>
 
-          <div class="card border-0 shadow-sm rounded-4 overflow-hidden table-card">
-            <div class="table-responsive custom-scrollbar bg-white">
-              <table id="inventoryTable" class="table table-hover align-middle mb-0 w-100 text-nowrap">
-                <thead class="bg-light sticky-header">
-                  <tr>
-                    <th v-for="col in columnDefs" :key="col.title" class="py-3 px-4 text-muted small fw-bold text-uppercase border-bottom">{{ col.title }}</th>
-                  </tr>
-                  <tr class="bg-white">
-                    <th v-for="(col, index) in columnDefs" :key="'filter'+index" class="p-2 border-bottom shadow-sm-bottom">
-                      <div v-if="col.filterable" class="dropdown w-100">
-                        <button class="btn btn-sm btn-light w-100 dropdown-toggle text-start d-flex justify-content-between align-items-center shadow-none border filter-trigger-btn" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside">
-                          <span class="text-truncate small" :id="'label-filter-' + index" style="max-width: 80px;">Pilih...</span>
-                        </button>
-                        <div class="dropdown-menu p-3 shadow-lg border-0 mt-1 rounded-4" style="min-width: 240px; max-height: 300px; overflow-y: auto;">
-                          <div class="input-group input-group-sm mb-2">
-                            <span class="input-group-text bg-white border-end-0"><i class="bi bi-search small text-muted"></i></span>
-                            <input type="text" class="form-control border-start-0 filter-search-input" placeholder="Cari..." @click.stop>
-                          </div>
-                          <div :id="'container-filter-' + index" class="filter-options-container"></div>
-                          <div class="dropdown-divider"></div>
-                          <button class="btn btn-link btn-sm text-decoration-none p-0 w-100 text-center btn-reset-filter fw-bold" :data-index="index">
-                            <i class="bi bi-arrow-counterclockwise me-1"></i>RESET
-                          </button>
+          <!-- Data Table Card -->
+          <!-- [PERBAIKAN] Table Wrapper dipindah ke script melalui konfigurasi `dom` DataTables -->
+          <div class="card border-0 shadow-sm rounded-4 overflow-hidden bg-white w-100">
+            <table id="inventoryTable" class="table table-hover align-middle mb-0 w-100 text-nowrap modern-table">
+              <thead class="sticky-header">
+                <!-- Baris 1: Judul Kolom & Sort -->
+                <tr class="table-light-custom">
+                  <!-- [PERBAIKAN] Class dinamis 'sticky-col-end-header' untuk kolom Aksi -->
+                  <th v-for="(col, index) in columnDefs" :key="'header'+index" 
+                      class="py-3 px-4 text-secondary small fw-bold text-uppercase border-bottom border-light tracking-wide"
+                      :class="{'d-none': !col.visible, 'sticky-col-end-header': col.title === 'Aksi'}">
+                    {{ col.title }}
+                  </th>
+                </tr>
+                
+                <!-- Baris 2: Filter Dropdown (@click.stop Mencegah trigger sort) -->
+                <tr class="bg-white border-bottom border-light">
+                  <th v-for="(col, index) in columnDefs" :key="'filter'+index" 
+                      class="p-2 border-0" :class="{'d-none': !col.visible, 'sticky-col-end-header': col.title === 'Aksi'}">
+                    
+                    <div v-if="col.filterable" class="dropdown w-100" @click.stop>
+                      <button class="btn btn-sm btn-light w-100 dropdown-toggle text-start d-flex justify-content-between align-items-center border-0 rounded-3 text-muted filter-btn shadow-none" 
+                              type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside" @click.stop>
+                        <span class="text-truncate small fw-medium" :id="'label-filter-' + index">Semua</span>
+                      </button>
+                      <div class="dropdown-menu p-3 shadow-lg border-0 mt-1 custom-dropdown rounded-4" @click.stop>
+                        <div class="input-group input-group-sm mb-3 border rounded-3 overflow-hidden shadow-sm">
+                          <span class="input-group-text bg-light border-0"><i class="bi bi-search text-muted"></i></span>
+                          <input type="text" class="form-control border-0 bg-light filter-search-input shadow-none" placeholder="Cari filter..." @click.stop>
                         </div>
+                        <div :id="'container-filter-' + index" class="filter-options-container custom-scrollbar mb-2 px-1">
+                        </div>
+                        <div class="dropdown-divider border-light my-3"></div>
+                        <button class="btn btn-light btn-sm w-100 text-center btn-reset-filter fw-bold text-danger rounded-3" :data-index="index">
+                          <i class="bi bi-arrow-counterclockwise me-1"></i> Reset Filter
+                        </button>
                       </div>
-                      <div v-else class="text-center">
-                         <span class="text-muted opacity-25 small">-</span>
-                      </div>
-                    </th>
-                  </tr>
-                </thead>
-                <tbody class="border-top-0"></tbody>
-              </table>
-            </div>
+                    </div>
+                    <div v-else class="text-center text-muted opacity-25 small mt-1">-</div>
+                    
+                  </th>
+                </tr>
+              </thead>
+              <tbody class="border-top-0"></tbody>
+            </table>
           </div>
         </div>
       </main>
     </div>
 
-
+    <!-- Modal NPB Multi (Tidak diubah fungsinya, hanya disesuaikan UI-nya sedikit) -->
     <div class="modal fade" id="npbMultiModal" tabindex="-1">
-  <div class="modal-dialog modal-lg">
-    <div class="modal-content rounded-4 border-0">
-      <div class="modal-header">
-        <h5 class="modal-title fw-bold">Cetak NPB Berdasarkan Tanggal Terima</h5>
-        <button class="btn-close" data-bs-dismiss="modal"></button>
-      </div>
-      <div class="modal-body">
-        <div class="row g-2 mb-3">
-          <div class="col-md-5">
-            <label class="form-label small fw-bold">Dari Tanggal Terima</label>
-            <input type="date" class="form-control" v-model="npbFilterDates.start">
+      <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content rounded-4 border-0 shadow-lg">
+          <div class="modal-header border-light p-4">
+            <h5 class="modal-title fw-bold text-dark"><i class="bi bi-printer-fill text-danger me-2"></i>Cetak NPB Berdasarkan Tanggal Terima</h5>
+            <button class="btn-close shadow-none" data-bs-dismiss="modal"></button>
           </div>
-          <div class="col-md-5">
-            <label class="form-label small fw-bold">Sampai Tanggal Terima</label>
-            <input type="date" class="form-control" v-model="npbFilterDates.end">
-          </div>
-          <div class="col-md-2 d-flex align-items-end">
-            <button class="btn btn-primary w-100" @click="fetchReceivedByDate">Cari</button>
-          </div>
-        </div>
+          <div class="modal-body p-4 bg-light-subtle">
+            <div class="card border-0 shadow-sm rounded-3 p-3 mb-3 bg-white">
+              <div class="row g-2 align-items-end">
+                <div class="col-md-5">
+                  <label class="form-label small fw-semibold text-secondary">Dari Tanggal Terima</label>
+                  <input type="date" class="form-control rounded-3" v-model="npbFilterDates.start">
+                </div>
+                <div class="col-md-5">
+                  <label class="form-label small fw-semibold text-secondary">Sampai Tanggal Terima</label>
+                  <input type="date" class="form-control rounded-3" v-model="npbFilterDates.end">
+                </div>
+                <div class="col-md-2">
+                  <button class="btn btn-primary w-100 rounded-3 fw-medium" @click="fetchReceivedByDate">
+                    <i class="bi bi-search me-1"></i> Cari
+                  </button>
+                </div>
+              </div>
+            </div>
 
-        <div v-if="receivedItems.length" class="table-responsive" style="max-height:350px; overflow-y:auto;">
-          <table class="table table-sm table-hover align-middle">
-            <thead>
-              <tr>
-                <th style="width:36px;">
-                  <input type="checkbox" @change="toggleAllReceived($event)" :checked="allReceivedChecked">
-                </th>
-                <th>PO / NPB</th>
-                <th>Nama Barang</th>
-                <th>Spek</th>
-                <th>Qty</th>
-                <th>Tgl Terima</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="item in receivedItems" :key="item.id">
-                <td><input type="checkbox" :value="item.id" v-model="selectedNpbIds"></td>
-                <td class="small">{{ item.po_number }}<br><span class="text-muted">{{ item.npb }}</span></td>
-                <td class="fw-semibold small">{{ item.item_name }}</td>
-                <td class="small text-muted">{{ item.spesifikasi || '-' }}</td>
-                <td class="small">{{ item.qty_awal }} {{ item.unit }}</td>
-                <td class="small">{{ formatTanggalID(item.tgl_terima) }}</td>
-              </tr>
-            </tbody>
-          </table>
+            <div v-if="receivedItems.length" class="card border-0 shadow-sm rounded-3 overflow-hidden bg-white">
+              <div class="table-responsive custom-scrollbar" style="max-height:300px;">
+                <table class="table table-hover align-middle mb-0 text-nowrap">
+                  <thead class="table-light sticky-header">
+                    <tr>
+                      <th class="text-center px-3" style="width:36px;">
+                        <input class="form-check-input shadow-none" type="checkbox" @change="toggleAllReceived($event)" :checked="allReceivedChecked">
+                      </th>
+                      <th class="small fw-bold text-secondary">PO / NPB</th>
+                      <th class="small fw-bold text-secondary">Nama Barang</th>
+                      <th class="small fw-bold text-secondary">Spek</th>
+                      <th class="small fw-bold text-secondary">Qty</th>
+                      <th class="small fw-bold text-secondary">Tgl Terima</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="item in receivedItems" :key="item.id">
+                      <td class="text-center px-3">
+                        <input class="form-check-input shadow-none cursor-pointer" type="checkbox" :value="item.id" v-model="selectedNpbIds">
+                      </td>
+                      <td class="small fw-medium">{{ item.po_number }}<br><span class="text-muted">{{ item.npb }}</span></td>
+                      <td class="small fw-bold text-dark">{{ item.item_name }}</td>
+                      <td class="small text-secondary">{{ item.spesifikasi || '-' }}</td>
+                      <td class="small fw-semibold">{{ item.qty_awal }} <span class="text-muted fw-normal">{{ item.unit }}</span></td>
+                      <td class="small text-muted">{{ formatTanggalID(item.tgl_terima) }}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            <div v-else class="text-center py-5">
+              <div class="display-1 text-muted opacity-25 mb-3"><i class="bi bi-inbox"></i></div>
+              <p class="text-muted mb-0">Pilih rentang tanggal terima, lalu klik <strong>Cari</strong>.</p>
+            </div>
+          </div>
+          <div class="modal-footer border-light p-3 bg-white rounded-bottom-4">
+            <span class="small fw-semibold text-primary bg-primary-subtle px-3 py-1 rounded-pill me-auto">{{ selectedNpbIds.length }} Item Terpilih</span>
+            <button class="btn btn-light border fw-medium rounded-pill px-4" data-bs-dismiss="modal">Batal</button>
+            <button class="btn btn-danger fw-medium rounded-pill px-4" :disabled="!selectedNpbIds.length" @click="cetakNpbMulti">
+              <i class="bi bi-file-earmark-pdf-fill me-1"></i> Cetak PDF
+            </button>
+          </div>
         </div>
-        <div v-else class="text-muted small text-center py-5">
-          Pilih rentang tanggal terima, lalu klik <strong>Cari</strong>.
-        </div>
-      </div>
-      <div class="modal-footer">
-        <span class="small text-muted me-auto">{{ selectedNpbIds.length }} item dipilih</span>
-        <button class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
-        <button class="btn btn-danger" :disabled="!selectedNpbIds.length" @click="cetakNpbMulti">
-          <i class="bi bi-file-earmark-pdf"></i> Cetak PDF
-        </button>
       </div>
     </div>
-  </div>
-</div>
 
     <Footer />
   </div>
@@ -216,7 +235,6 @@ import axios from 'axios';
 import Swal from 'sweetalert2';
 import $ from 'jquery';
 
-// BOOTSTRAP JS PENTING UNTUK DROPDOWN
 import 'bootstrap/dist/js/bootstrap.bundle.min.js';
 import 'datatables.net-bs5';
 import 'datatables.net-bs5/css/dataTables.bootstrap5.min.css';
@@ -235,34 +253,29 @@ const windowWidth = ref(window.innerWidth);
 const items = ref([]);
 let table = null;
 
-// ===================== FORMAT TANGGAL INDONESIA =====================
-// Hasil: "30 Mei 2026, 05:56"
-const BULAN_ID = [
-  'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
-  'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
-];
+// Helper Format Tanggal
+const BULAN_ID = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
 
 const formatTanggalID = (value) => {
   if (!value) return '-';
   const date = new Date(value);
-  if (isNaN(date.getTime())) return value; // fallback jika bukan format tanggal valid
-
-  const tanggal = date.getDate();
+  if (isNaN(date.getTime())) return value; 
+  const tanggal = String(date.getDate()).padStart(2, '0');
   const bulan = BULAN_ID[date.getMonth()];
   const tahun = date.getFullYear();
   const jam = String(date.getHours()).padStart(2, '0');
   const menit = String(date.getMinutes()).padStart(2, '0');
-
   return `${tanggal} ${bulan} ${tahun}, ${jam}:${menit}`;
 };
 
+// [PERBAIKAN] Menambahkan property className: 'sticky-col-end' pada definisi kolom terakhir
 const columnDefs = ref([
   { title: 'No', data: null, visible: true, filterable: false },
   { title: 'Akses Kode', data: 'akses_code', visible: true, filterable: true },
   { title: 'Factory', data: 'factory', visible: true, filterable: true },
   { title: 'Tgl Masuk', data: 'in_date', visible: true, filterable: true },
   { title: 'Kategori', data: 'kategori', visible: true, filterable: true },
-  { title: 'Nama Barang', data: 'item_name', visible: true, filterable: true }, // Nama Barang kini bisa difilter
+  { title: 'Nama Barang', data: 'item_name', visible: true, filterable: true },
   { title: 'Spek', data: 'spesifikasi', visible: true, filterable: true },
   { title: 'qty', data: 'qty_awal', visible: true, filterable: true },
   { title: 'min_qty', data: 'min_qty', visible: true, filterable: true },
@@ -283,7 +296,7 @@ const columnDefs = ref([
   { title: 'Created By', data: 'createdBy', visible: true, filterable: true },
   { title: 'UpdatedAt', data: 'updatedAt', visible: true, filterable: true },
   { title: 'Updated By', data: 'updatedBy', visible: true, filterable: true },
-  { title: 'Aksi', data: null, visible: true, filterable: false }
+  { title: 'Aksi', data: null, visible: true, filterable: false, className: 'sticky-col-end text-center' }
 ]);
 
 const toggleSidebar = () => (sidebarOpen.value = !sidebarOpen.value);
@@ -293,9 +306,88 @@ const toggleColumn = (index) => {
   columnDefs.value[index].visible = !columnDefs.value[index].visible;
   if (table) {
     table.column(index).visible(columnDefs.value[index].visible);
-    // Recalculate layout
     setTimeout(() => { table.columns.adjust().draw(); }, 100);
   }
+};
+
+const setupFilters = (api) => {
+  api.columns().every(function (index) {
+    const column = this;
+    const colDef = columnDefs.value[index];
+    if (!colDef || !colDef.filterable) return;
+
+    const container = $(`#container-filter-${index}`);
+    const label = $(`#label-filter-${index}`);
+    
+    const uniqueData = [];
+    
+    // [PERBAIKAN] Mengambil teks bersih murni untuk difilter
+    column.cells('', index).render('filter').unique().each(function(val) {
+        if (val && val !== '-' && val !== 'Kosong') {
+            uniqueData.push(val);
+        }
+    });
+
+    // [PERBAIKAN PENGURUTAN / SORTING FILTER TANGGAL]
+    if (colDef.title === 'Tgl Masuk' || colDef.title === 'Tgl Bill') {
+        uniqueData.sort((a, b) => new Date(b).getTime() - new Date(a).getTime());
+    } else if (colDef.title === 'CreatedAt' || colDef.title === 'UpdatedAt') {
+        uniqueData.sort((a, b) => {
+            const parseIndoDate = (str) => {
+                const parts = str.match(/(\d+)\s+([A-Za-z]+)\s+(\d+),\s+(\d+):(\d+)/);
+                if (parts) {
+                    const m = BULAN_ID.indexOf(parts[2]);
+                    return new Date(parts[3], m, parts[1], parts[4], parts[5]).getTime();
+                }
+                return new Date(str).getTime() || 0;
+            };
+            return parseIndoDate(b) - parseIndoDate(a);
+        });
+    } else {
+        uniqueData.sort();
+    }
+
+    container.empty();
+    if (uniqueData.length === 0) {
+        container.append('<div class="text-center text-muted small p-3 bg-light rounded-3">Kosong</div>');
+        return;
+    }
+
+    uniqueData.forEach(d => {
+      const safeId = `chk-${index}-${String(d).replace(/[^a-z0-9]/gi, '-')}`;
+      container.append(`
+        <div class="form-check modern-checkbox mb-2 d-flex align-items-center">
+          <input class="form-check-input filter-checkbox cursor-pointer shadow-none border-secondary-subtle" type="checkbox" value="${d}" data-index="${index}" id="${safeId}">
+          <label class="form-check-label small cursor-pointer ms-2 text-dark w-100" for="${safeId}">${d}</label>
+        </div>`);
+    });
+
+    $(`.btn-reset-filter[data-index="${index}"]`).off('click').on('click', function(e) {
+      e.preventDefault();
+      $(`.filter-checkbox[data-index="${index}"]`).prop('checked', false);
+      column.search('').draw();
+      label.text('Semua').removeClass('text-primary fw-bold');
+    });
+  });
+
+  $(document).off('change', '.filter-checkbox').on('change', '.filter-checkbox', function() {
+    const idx = $(this).data('index');
+    const col = api.column(idx);
+    const selected = [];
+    $(`.filter-checkbox[data-index="${idx}"]:checked`).each(function() {
+      const val = $.fn.dataTable.util.escapeRegex($(this).val());
+      selected.push(`^${val}$`); 
+    });
+    col.search(selected.length > 0 ? selected.join('|') : '', true, false).draw();
+    $(`#label-filter-${idx}`).text(selected.length > 0 ? `${selected.length} Terpilih` : 'Semua')
+      .toggleClass('text-primary fw-bold', selected.length > 0);
+  });
+
+  $('.filter-search-input').on('keyup', function() {
+    const val = $(this).val().toLowerCase();$(this).closest('.dropdown-menu').find('.form-check').filter(function() {
+      $(this).toggle($(this).text().toLowerCase().indexOf(val) > -1);
+    });
+  });
 };
 
 const initDataTable = (data) => {
@@ -304,156 +396,79 @@ const initDataTable = (data) => {
   table = $('#inventoryTable').DataTable({
     data,
     autoWidth: false,
-    scrollX: false, // Kita handle via CSS .table-responsive
-    dom: '<"p-3 d-flex justify-content-between align-items-center"lf>rt<"p-3 d-flex justify-content-between"ip>',
-    columns: [
-      { data: null, render: (d, t, r, meta) => `<span class="text-muted small">${meta.row + 1}</span>` },
-      { data: 'akses_code', render: d => `<span class="badge badge-akses px-2">${d || '-'}</span>` },
-      { data: 'factory' },
-      { data: 'in_date' },
-      { data: 'kategori', render: d => `<span class="badge badge-kategori">${d || '-'}</span>` },
-      { data: 'item_name', render: d => `<div class="fw-bold text-dark" style="min-width:200px; white-space: normal;">${d}</div>` },
-      { data: 'spesifikasi', render: d => `<small class="text-muted">${d || '-'}</small>` },
-      {
-        data: 'qty_awal',
-        render: d => `<span class="badge ${d < 5 ? 'badge-qty-low' : 'badge-qty-normal'} rounded-pill shadow-sm">${d || 0}</span>`
-      },
-      { data: 'min_qty' },
-      { data: 'max_qty' },
-      { data: 'unit' },
-      {
-        data: 'status_barang',
-        render: (d) => {
-          if (d === 'Received') {
-            return `<span class="badge badge-status-received"><i class="bi bi-check-circle-fill me-1"></i>Received</span>`;
-          }
-          return `<span class="badge badge-status-pending"><i class="bi bi-hourglass-split me-1"></i>Pending</span>`;
+    orderCellsTop: true, // [PERBAIKAN] Mengatasi up/down sort conflict pada filter
+    // [PERBAIKAN] Memisahkan bungkus scroll hanya pada bagian tabel ('t') 
+    dom: '<"p-3 d-flex flex-wrap justify-content-between align-items-center gap-3"lf><"table-responsive custom-scrollbar"t><"p-4 d-flex flex-wrap justify-content-between align-items-center border-top border-light"ip>',
+    language: {
+      search: "_INPUT_",
+      searchPlaceholder: "Pencarian cepat...",
+      lengthMenu: "Tampil _MENU_ data",
+      info: "Menampilkan _START_ s/d _END_ dari _TOTAL_ entri",
+      paginate: { previous: "Prev", next: "Next" }
+    },
+    columns: columnDefs.value.map(col => ({
+      data: col.data,
+      visible: col.visible,
+      className: col.className || '',
+      render: (d, type, r, meta) => {
+        
+        // 1. Definisikan Text Asli (Murni) untuk Keperluan Filter dan Sort
+        let plainText = d !== null && d !== undefined ? String(d).trim() : '-';
+        if (col.title === 'No') plainText = String(meta.row + 1);
+        else if (col.title === 'Status') plainText = d === 'Received' ? 'Received' : 'Pending';
+        else if (col.title === 'Rak') plainText = `${r.rak || '-'}/${r.rak_no || '-'}`;
+        else if (col.title === 'CreatedAt' || col.title === 'UpdatedAt') plainText = d ? formatTanggalID(d) : '-';
+
+        // 2. Berikan Text Murni Ke Engine DataTable
+        if (type === 'filter' || type === 'sort') {
+            return plainText;
         }
-      },
-      { data: 'npb' },
-      { data: 'po_number', render: d => `<span class="font-monospace text-primary fw-bold">${d || '-'}</span>` },
-      { data: 'bill_date' },
-      { data: 'dokumen_bc' },
-      { data: 'supplier' },
-      { data: 'brand' },
-      { data: 'color' },
-      { data: 'size' },
-      {
-        data: 'rak',
-        render: (d, t, row) => `<div class="small fw-semibold text-secondary">${row.rak || '-'}/${row.rak_no || '-'}</div>`
-      },
-      { data: 'rak_no' },
-      {
-        data: 'createdAt',
-        render: d => `<span class="text-nowrap small text-muted">${formatTanggalID(d)}</span>`
-      },
-      { data: 'createdBy', render: d => `<div class="fw-bold text-dark" style="min-width:200px; white-space: normal;">${d || '-'}</div>` },
-      {
-        data: 'updatedAt',
-        render: d => `<span class="text-nowrap small text-muted">${formatTanggalID(d)}</span>`
-      },
-      { data: 'updatedBy', render: d => `<div class="fw-bold text-dark" style="min-width:200px; white-space: normal;">${d || '-'}</div>` },
-      {
-        data: null,
-        orderable: false,
-        className: 'text-center sticky-col-end',
-        render: (data) => {
-          const isReceived = data.status_barang === 'Received';
 
+        // 3. Render HTML Estetis Untuk UI Tampilan Layar
+        if (col.title === 'No') return `<span class="text-muted fw-medium">${plainText}</span>`;
+        if (col.title === 'Akses Kode') return `<span class="badge badge-akses px-2 shadow-sm">${plainText}</span>`;
+        if (col.title === 'Kategori') return `<span class="badge badge-kategori shadow-sm">${plainText}</span>`;
+        if (col.title === 'Nama Barang') return `<div class="fw-bold text-dark" style="min-width:200px; white-space: normal;">${plainText}</div>`;
+        if (col.title === 'Spek') return `<small class="text-secondary">${plainText}</small>`;
+        if (col.title === 'qty') return `<span class="badge ${d < 5 ? 'badge-qty-low' : 'badge-qty-normal'} rounded-pill shadow-sm px-3">${d || 0}</span>`;
+        if (col.title === 'Status') {
+          return d === 'Received' 
+            ? `<span class="badge badge-status-received px-3 py-2 rounded-pill shadow-sm"><i class="bi bi-check-circle-fill me-1"></i>Received</span>` 
+            : `<span class="badge badge-status-pending px-3 py-2 rounded-pill shadow-sm"><i class="bi bi-hourglass-split me-1"></i>Pending</span>`;
+        }
+        if (col.title === 'PO Number') return `<span class="font-monospace text-primary fw-bold px-2 py-1 bg-primary-subtle rounded">${plainText}</span>`;
+        if (col.title === 'Rak') return `<div class="small fw-semibold text-secondary"><i class="bi bi-inboxes me-1"></i>${plainText}</div>`;
+        if (col.title === 'CreatedAt' || col.title === 'UpdatedAt') return `<span class="text-nowrap small text-muted"><i class="bi bi-clock-history me-1"></i>${plainText}</span>`;
+        if (col.title === 'Created By' || col.title === 'Updated By') return `<div class="fw-bold text-dark d-flex align-items-center gap-2"><div class="avatar-sm bg-light text-primary rounded-circle d-flex align-items-center justify-content-center border" style="width:24px;height:24px;"><i class="bi bi-person-fill small"></i></div> <span style="min-width:150px; white-space: normal;">${plainText}</span></div>`;
+        
+        if (col.title === 'Aksi') {
+          const isReceived = r.status_barang === 'Received';
           return `
-            <div class="d-flex gap-1 justify-content-center action-btn-group">
-
+            <div class="d-flex gap-2 justify-content-center">
               ${!isReceived ? `
-                <button class="btn btn-action btn-action-receive btn-receive" data-id="${data.id}" title="Terima Barang">
-                  <i class="bi bi-check-circle"></i>
-                </button>
+                <button class="btn btn-sm action-btn btn-action-receive btn-receive shadow-sm" data-id="${r.id}" title="Terima Barang"><i class="bi bi-check-lg"></i></button>
               ` : `
-                <span class="badge badge-status-received px-2"><i class="bi bi-check-circle-fill"></i></span>
+                <div class="btn btn-sm action-btn bg-success-subtle text-success border-success-subtle pe-none"><i class="bi bi-check2-all"></i></div>
               `}
-
-              <button class="btn btn-action btn-action-pdf btn-pdf" data-npb="${data.npb}" title="Cetak PDF">
-                <i class="bi bi-file-earmark-pdf"></i>
-              </button>
-
-              <button class="btn btn-action btn-action-edit btn-edit" data-id="${data.id}" title="Edit">
-                <i class="bi bi-pencil-square"></i>
-              </button>
-
-              <button class="btn btn-action btn-action-delete btn-delete" data-id="${data.id}" title="Hapus">
-                <i class="bi bi-trash3"></i>
-              </button>
-
+              <button class="btn btn-sm action-btn btn-action-pdf btn-pdf shadow-sm" data-npb="${r.npb}" title="Cetak PDF"><i class="bi bi-printer"></i></button>
+              <button class="btn btn-sm action-btn btn-action-edit btn-edit shadow-sm" data-id="${r.id}" title="Edit"><i class="bi bi-pencil"></i></button>
+              <button class="btn btn-sm action-btn btn-action-delete btn-delete shadow-sm" data-id="${r.id}" title="Hapus"><i class="bi bi-trash"></i></button>
             </div>
           `;
         }
-      },
-    ],
+
+        return plainText !== '-' ? `<span class="text-dark fw-medium">${plainText}</span>` : '<span class="text-muted opacity-50">-</span>';
+      }
+    })),
     initComplete: function () {
-      const api = this.api();
-      api.columns().every(function (index) {
-        const column = this;
-        const colDef = columnDefs.value[index];
-        if (colDef && colDef.filterable) {
-          const container = $(`#container-filter-${index}`);
-          const label = $(`#label-filter-${index}`);
-          const uniqueData = column.data().unique().sort();
-
-          uniqueData.each(d => {
-            if(d) {
-              const safeId = d.toString().replace(/[^a-z0-9]/gi, '');
-              container.append(`
-                <div class="form-check mb-1">
-                  <input class="form-check-input filter-checkbox" type="checkbox" value="${d}" data-index="${index}" id="chk-${index}-${safeId}">
-                  <label class="form-check-label small cursor-pointer" for="chk-${index}-${safeId}">${d}</label>
-                </div>
-              `);
-            }
-          });
-
-          $(document).off('change', `.filter-checkbox[data-index="${index}"]`).on('change', `.filter-checkbox[data-index="${index}"]`, function() {
-            const selected = [];
-            $(`.filter-checkbox[data-index="${index}"]:checked`).each(function() {
-              selected.push($.fn.dataTable.util.escapeRegex($(this).val()));
-            });
-            if (selected.length > 0) {
-              label.text(`${selected.length} Kriteria`).addClass('text-primary fw-bold');
-              column.search(selected.join('|'), true, false).draw();
-            } else {
-              label.text('Pilih...').removeClass('text-primary fw-bold');
-              column.search('', true, false).draw();
-            }
-          });
-        }
-      });
-
-      // Events
-      $('.btn-reset-filter').on('click', function(e) {
-        e.stopPropagation();
-        const idx = $(this).data('index');
-        $(`.filter-checkbox[data-index="${idx}"]`).prop('checked', false).trigger('change');
-      });
-
-      $('.filter-search-input').on('keyup', function() {
-        const val = $(this).val().toLowerCase();
-        $(this).closest('.dropdown-menu').find('.form-check').filter(function() {
-          $(this).toggle($(this).text().toLowerCase().indexOf(val) > -1);
-        });
-      });
-
+      setupFilters(this.api());
+      
+      // Events Routing
       $('#inventoryTable')
-  .on('click', '.btn-edit', function() {
-    router.push(`/inventory-form/${$(this).data('id')}`);
-  })
-  .on('click', '.btn-pdf', function () {
-    const npb = $(this).data('npb');
-    window.open(`${GUDANG_URL}/export-npb/${npb}`, '_blank');
-  })
-  .on('click', '.btn-delete', function() {
-    deleteItem($(this).data('id'));
-  })
-  .on('click', '.btn-receive', function() {
-    receiveItem($(this).data('id'));
-  });
+      .on('click', '.btn-edit', function() { router.push(`/inventory-form/${$(this).data('id')}`); })
+      .on('click', '.btn-pdf', function () { window.open(`${GUDANG_URL}/export-npb/${$(this).data('npb')}`, '_blank'); })
+      .on('click', '.btn-delete', function() { deleteItem($(this).data('id')); })
+      .on('click', '.btn-receive', function() { receiveItem($(this).data('id')); });
     }
   });
 };
@@ -464,29 +479,20 @@ const receiveItem = async (id) => {
     text: 'NPB akan digenerate dan status berubah menjadi Received',
     icon: 'question',
     showCancelButton: true,
-    confirmButtonText: 'Ya, Terima'
+    confirmButtonColor: '#198754',
+    confirmButtonText: 'Ya, Terima',
+    customClass: { popup: 'rounded-4 shadow-lg border-0', confirmButton: 'rounded-pill px-4', cancelButton: 'rounded-pill px-4' }
   });
 
   if (!confirm.isConfirmed) return;
-
   try {
     await axios.put(`${GUDANG_URL}/receive/${id}`);
-
-    Swal.fire({
-      icon: 'success',
-      title: 'Berhasil',
-      text: 'Barang sudah diterima',
-      timer: 1500,
-      showConfirmButton: false
-    });
-
-    // 🔥 reload data
+    Swal.fire({ icon: 'success', title: 'Berhasil', text: 'Barang sudah diterima', timer: 1500, showConfirmButton: false, customClass: { popup: 'rounded-4' }});
     const res = await axios.get(GUDANG_URL);
     items.value = res.data;
     initDataTable(items.value);
-
   } catch (err) {
-    Swal.fire('Error', err.response?.data?.message || 'Gagal', 'error');
+    Swal.fire({icon: 'error', title: 'Gagal', text: err.response?.data?.message || 'Error Server', customClass: { popup: 'rounded-4' }});
   }
 };
 
@@ -497,16 +503,17 @@ const deleteItem = async (id) => {
     icon: 'warning',
     showCancelButton: true,
     confirmButtonColor: '#dc3545',
-    confirmButtonText: 'Ya, Hapus'
+    confirmButtonText: 'Ya, Hapus',
+    customClass: { popup: 'rounded-4 shadow-lg border-0', confirmButton: 'rounded-pill px-4', cancelButton: 'rounded-pill px-4' }
   });
   if (res.isConfirmed) {
     try {
       await axios.delete(`${GUDANG_URL}/${id}`);
       items.value = items.value.filter(i => i.id !== id);
       initDataTable(items.value);
-      Swal.fire({ icon: 'success', title: 'Terhapus', timer: 1000, showConfirmButton: false });
+      Swal.fire({ icon: 'success', title: 'Terhapus', timer: 1000, showConfirmButton: false, customClass: { popup: 'rounded-4' } });
     } catch (err) {
-      Swal.fire('Error', 'Gagal menghapus data.', 'error');
+      Swal.fire({icon: 'error', title: 'Gagal', text: 'Menghapus data gagal.', customClass: { popup: 'rounded-4' }});
     }
   }
 };
@@ -528,34 +535,20 @@ onMounted(async () => {
 
 onBeforeUnmount(() => { if (table) table.destroy(); });
 
-// 1. Tambahkan state untuk tanggal
-const exportDates = ref({
-  start: new Date().toISOString().substr(0, 10), // Default hari ini
-  end: new Date().toISOString().substr(0, 10)
-});
+const exportDates = ref({ start: new Date().toISOString().substr(0, 10), end: new Date().toISOString().substr(0, 10) });
 
-// 2. Fungsi download
 const downloadExcel = async () => {
   if (!exportDates.value.start || !exportDates.value.end) {
-    return Swal.fire('Info', 'Pilih rentang tanggal terlebih dahulu', 'info');
+    return Swal.fire({icon: 'info', title: 'Perhatian', text: 'Pilih rentang tanggal terlebih dahulu', customClass: { popup: 'rounded-4' }});
   }
-
   try {
     Swal.fire({
-      title: 'Memproses...',
-      text: 'Sedang menyiapkan file Excel',
-      allowOutsideClick: false,
-      didOpen: () => { Swal.showLoading(); }
+      title: 'Memproses...', text: 'Sedang menyiapkan file Excel', allowOutsideClick: false,
+      didOpen: () => { Swal.showLoading(); }, customClass: { popup: 'rounded-4' }
     });
-
     const response = await axios.get(`${GUDANG_URL}/export-date`, {
-      params: {
-        startDate: exportDates.value.start,
-        endDate: exportDates.value.end
-      },
-      responseType: 'blob'
+      params: { startDate: exportDates.value.start, endDate: exportDates.value.end }, responseType: 'blob'
     });
-
     const url = window.URL.createObjectURL(new Blob([response.data]));
     const link = document.createElement('a');
     link.href = url;
@@ -563,367 +556,171 @@ const downloadExcel = async () => {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-
     Swal.close();
   } catch (error) {
-    console.error(error);
-    Swal.fire('Error', 'Gagal mengunduh data Excel', 'error');
+    Swal.fire({icon: 'error', title: 'Gagal', text: 'Gagal mengunduh data Excel', customClass: { popup: 'rounded-4' }});
   }
 };
 
-const npbFilterDates = ref({
-  start: new Date().toISOString().substr(0, 10),
-  end: new Date().toISOString().substr(0, 10)
-});
+const npbFilterDates = ref({ start: new Date().toISOString().substr(0, 10), end: new Date().toISOString().substr(0, 10) });
 const receivedItems = ref([]);
 const selectedNpbIds = ref([]);
+const allReceivedChecked = computed(() => receivedItems.value.length > 0 && selectedNpbIds.value.length === receivedItems.value.length);
 
-const allReceivedChecked = computed(() =>
-  receivedItems.value.length > 0 && selectedNpbIds.value.length === receivedItems.value.length
-);
-
-const toggleAllReceived = (e) => {
-  selectedNpbIds.value = e.target.checked ? receivedItems.value.map(i => i.id) : [];
-};
+const toggleAllReceived = (e) => { selectedNpbIds.value = e.target.checked ? receivedItems.value.map(i => i.id) : []; };
 
 const fetchReceivedByDate = async () => {
   if (!npbFilterDates.value.start || !npbFilterDates.value.end) {
-    return Swal.fire('Info', 'Pilih rentang tanggal terlebih dahulu', 'info');
+    return Swal.fire({icon: 'info', title: 'Perhatian', text: 'Pilih rentang tanggal', customClass: { popup: 'rounded-4' }});
   }
   try {
-    const res = await axios.get(`${GUDANG_URL}/received-by-date`, {
-      params: { startDate: npbFilterDates.value.start, endDate: npbFilterDates.value.end }
-    });
+    const res = await axios.get(`${GUDANG_URL}/received-by-date`, { params: { startDate: npbFilterDates.value.start, endDate: npbFilterDates.value.end } });
     receivedItems.value = res.data;
     selectedNpbIds.value = [];
     if (!receivedItems.value.length) {
-      Swal.fire('Info', 'Tidak ada barang Received pada rentang tanggal tersebut', 'info');
+      Swal.fire({icon: 'info', title: 'Kosong', text: 'Tidak ada barang Received pada tanggal tersebut', customClass: { popup: 'rounded-4' }});
     }
-  } catch (err) {
-    Swal.fire('Error', 'Gagal mengambil data', 'error');
-  }
+  } catch (err) { Swal.fire({icon: 'error', title: 'Gagal', text: 'Gagal mengambil data', customClass: { popup: 'rounded-4' }}); }
 };
 
 const cetakNpbMulti = async () => {
   try {
-    const response = await axios.post(
-      `${GUDANG_URL}/export-npb-multiple`,
-      { ids: selectedNpbIds.value },
-      { responseType: 'blob' }
-    );
+    const response = await axios.post(`${GUDANG_URL}/export-npb-multiple`, { ids: selectedNpbIds.value }, { responseType: 'blob' });
     const url = window.URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }));
     window.open(url, '_blank');
-  } catch (err) {
-    Swal.fire('Error', 'Gagal mencetak NPB', 'error');
-  }
+  } catch (err) { Swal.fire({icon: 'error', title: 'Gagal', text: 'Gagal mencetak NPB', customClass: { popup: 'rounded-4' }}); }
 };
-
 </script>
 
 <style scoped>
-.main-content {
-  max-width: 100vw;
-  overflow-x: hidden;
+/* =========================================
+   GAYA UI MODERN (SAAS / DASHBOARD STYLE)
+   ========================================= */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+* { font-family: 'Inter', system-ui, -apple-system, sans-serif; }
+
+.modern-bg { background-color: #f8fafc !important; }
+
+/* [PERBAIKAN] Penambahan position dan z-index agar dropdown tidak ketutupan */
+.glass-card { 
+  background: rgba(255, 255, 255, 0.95); 
+  backdrop-filter: blur(10px); 
+  position: relative;
+  z-index: 1010; /* Ubah dari 1050 menjadi 1010 */
+}
+.tracking-wide { letter-spacing: 0.05em; }
+.hover-primary:hover { color: #0d6efd !important; }
+
+/* Navigasi Pill Atas */
+.sweep-nav-wrapper {
+  position: relative; background-color: #ffffff; border-radius: 50px; 
+  padding: 6px; display: flex; width: 100%; max-width: 500px; 
+  border: 1px solid #e2e8f0; overflow: hidden;
+}
+.sweep-nav-wrapper .nav-link {
+  position: relative; z-index: 2; color: #64748b; font-weight: 600; 
+  font-size: 0.875rem; flex: 1; text-align: center; text-decoration: none; 
+  padding: 10px 0; transition: color 0.3s ease; border: none; background: transparent;
+}
+.sweep-nav-wrapper .nav-link:hover { color: #0d6efd; }
+.sweep-nav-wrapper .nav-link.active { color: #0d6efd !important; }
+.sweep-indicator {
+  position: absolute; height: calc(100% - 12px); width: calc(33.33% - 8px); 
+  top: 6px; background: #f1f5f9; border-radius: 40px; 
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05); transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); z-index: 1;
 }
 
+/* Tombol dan Input Modern */
+.modern-btn { transition: all 0.2s ease; border: none; }
+.modern-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(13, 110, 253, 0.2) !important; }
+.btn-hover-scale { transition: transform 0.2s ease; }
+.btn-hover-scale:hover { transform: scale(1.03); }
+.btn-hover { transition: background-color 0.2s; }
+.btn-hover:hover { background-color: #f1f5f9 !important; }
+
+.modern-input-group { border: 1px solid #e2e8f0; }
+.modern-input-group:focus-within { border-color: #86b7fe; box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25); }
+.small-date { font-size: 0.875rem; font-weight: 500; }
+
+/* Styling Tabel Modern */
+.modern-table th, .modern-table td { padding: 1rem 1.25rem; vertical-align: middle; }
+.table-light-custom { background-color: #f8fafc !important; }
+.modern-table tbody tr { transition: background-color 0.2s ease; }
+.modern-table tbody tr:hover { background-color: #f1f5f9 !important; }
+
+/* Filter Bawah (Baris 2) */
+.filter-btn { background-color: #f8fafc; transition: all 0.2s; }
+.filter-btn:hover { background-color: #e2e8f0; }
+
+/* =========================================
+   STICKY ACTION COLUMN CSS
+   ========================================= */
+.sticky-col-end-header {
+  position: sticky !important; right: 0; z-index: 1001 !important; 
+  background-color: #f8fafc !important; box-shadow: -4px 0 8px -4px rgba(0, 0, 0, 0.1); 
+}
+tr.bg-white .sticky-col-end-header { background-color: #ffffff !important; }
+
+:deep(.sticky-col-end) {
+  position: sticky !important; right: 0; background-color: #ffffff !important;
+  z-index: 1 !important; box-shadow: -4px 0 8px -4px rgba(0, 0, 0, 0.1); transition: background-color 0.2s ease;
+}
+:deep(tbody tr:hover .sticky-col-end) { background-color: #f1f5f9 !important; }
+
+/* Elemen Pelengkap */
+/* [PERBAIKAN] Penambahan batas max-height dan overflow-y agar tidak memanjang keluar batas */
+.custom-dropdown { 
+  min-width: 260px; 
+  max-height: 400px;
+  overflow-y: auto;
+  z-index: 9999 !important; 
+}
+.filter-options-container { max-height: 200px; overflow-y: auto; }
+.modern-switch .form-check-input { width: 2.5em; height: 1.25em; }
+
+:deep(.table-responsive) { overflow-x: auto; min-height: 450px; }
+
+/* Scrollbar Estetik */
+:deep(.custom-scrollbar::-webkit-scrollbar) { width: 6px; height: 10px; }
+:deep(.custom-scrollbar::-webkit-scrollbar-track) { background: transparent; }
+:deep(.custom-scrollbar::-webkit-scrollbar-thumb) { background: #cbd5e1; border-radius: 10px; }
+:deep(.custom-scrollbar::-webkit-scrollbar-thumb:hover) { background: #94a3b8; }
+.sticky-header { position: sticky; top: 0; z-index: 1000; }
 .cursor-pointer { cursor: pointer; }
 
-/* ===================== HEADER TITLE ICON ===================== */
-.page-title-icon {
-  width: 38px; height: 38px;
-  border-radius: 10px;
-  background: linear-gradient(135deg, #0d6efd, #0b5ed7);
-  color: #fff;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1rem;
-  box-shadow: 0 4px 10px rgba(13, 110, 253, 0.25);
+/* Meng-override komponen internal DataTable */
+:deep(.dataTables_wrapper .dataTables_filter input) {
+  border: 1px solid #e2e8f0; border-radius: 50rem; padding: 0.375rem 1rem;
+  outline: none; font-size: 0.875rem; box-shadow: 0 0.125rem 0.25rem rgba(0,0,0,0.075);
 }
-
-/* ===================== TOMBOL TAMBAH BARANG ===================== */
-.btn-add-item {
-  background: linear-gradient(135deg, #0d6efd, #0b5ed7);
-  color: #fff;
-  border: none;
-  font-weight: 600;
-  transition: all 0.2s ease;
+:deep(.dataTables_wrapper .dataTables_filter input:focus) {
+  border-color: #86b7fe; box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
 }
-.btn-add-item:hover {
-  color: #fff;
-  transform: translateY(-1px);
-  box-shadow: 0 6px 14px rgba(13, 110, 253, 0.3);
+:deep(.dataTables_wrapper .dataTables_length select) {
+  border: 1px solid #e2e8f0; border-radius: 0.5rem; padding: 0.375rem 2rem 0.375rem 0.75rem;
 }
-
-/* ===================== TOOLBAR CARD ===================== */
-.toolbar-card { background: #fff; }
-
-.btn-toolbar-action {
-  background: #fff;
-  border: 1.5px solid #e9ecef;
-  border-radius: 10px;
-  font-weight: 600;
-  font-size: 0.85rem;
-  color: #495057;
-  transition: all 0.2s ease;
-}
-.btn-toolbar-action:hover { border-color: #0d6efd; color: #0d6efd; }
-.btn-toolbar-action i { color: #0d6efd; }
-.col-toggle-item:hover { background: #f3f5fb; }
-
-.stat-badge {
-  font-size: 0.8rem;
-  font-weight: 600;
-  border: none;
-}
-.stat-badge-primary {
-  background: #e7edff;
-  color: #1d4ed8;
-}
-
-.export-bar { background: #f8f9fb; padding: 6px; border-radius: 14px; border: 1px solid #eef0f3; }
-
-.export-date-field {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background: #fff;
-  border: 1.5px solid #e9ecef;
-  border-radius: 10px;
-  padding: 6px 12px;
-}
-.export-date-field i { color: #0d6efd; font-size: 0.9rem; }
-.export-date-label {
-  font-size: 0.62rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: #adb5bd;
-  margin-bottom: 0;
-  line-height: 1;
-}
-.export-date-input {
-  border: none;
-  outline: none;
-  padding: 0;
-  font-size: 0.82rem;
-  font-weight: 600;
-  color: #212529;
-  background: transparent;
-}
-
-.btn-export-excel {
-  background: linear-gradient(135deg, #198754, #157347);
-  color: #fff;
-  font-weight: 600;
-  font-size: 0.85rem;
-  border: none;
-  transition: all 0.2s ease;
-}
-.btn-export-excel:hover { color: #fff; transform: translateY(-1px); box-shadow: 0 6px 14px rgba(25,135,84,0.3); }
-
-/* ===================== TABLE CARD ===================== */
-.table-card { background: #fff; }
-
-/* FIX TABEL NEMBUS */
-.table-responsive {
-  display: block;
-  width: 100%;
-  overflow-x: auto;
-  background-color: white;
-  border-radius: 0 0 16px 16px;
-}
-
-/* STICKY HEADER FIX */
-.sticky-header {
-  position: sticky;
-  top: 0;
-  z-index: 50;
-}
-
-/* Z-INDEX DROPDOWN FIX */
-.dropdown-menu {
-  z-index: 9999 !important;
-  border-radius: 12px;
-}
-
-.filter-trigger-btn { border-radius: 8px; font-weight: 600; }
-.filter-search-input:focus { box-shadow: none; border-color: #dee2e6; }
-
-/* CUSTOM SCROLLBAR */
-.custom-scrollbar::-webkit-scrollbar { height: 8px; width: 4px; }
-.custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e0; border-radius: 10px; }
-.custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #0d6efd; }
-
-:deep(.dataTables_filter input) {
-  border-radius: 10px;
-  border: 1px solid #dee2e6;
-  padding: 0.4rem 0.8rem;
-  width: 220px !important;
-}
-:deep(.dataTables_paginate .paginate_button.current) {
-  background: #0d6efd !important;
-  color: white !important;
-  border-radius: 8px;
-  border: none !important;
-}
-
-.filter-options-container {
-  max-height: 200px;
-  overflow-y: auto;
-  margin: 10px 0;
-}
-
-/* Pastikan tabel memiliki border-collapse terpisah agar sticky bekerja */
-#inventoryTable {
-  border-collapse: separate;
-  border-spacing: 0;
-}
-
-/* Sasar kolom terakhir di header, filter, dan body */
-:deep(.sticky-col-end) {
-  position: sticky;
-  right: 0;
-  background-color: white !important;
-  z-index: 10;
-  border-left: 1px solid #dee2e6;
-}
-
-/* Header harus lebih tinggi z-indexnya dari body */
-thead tr th.sticky-col-end {
-  z-index: 51;
-  background-color: #f8f9fa !important;
-}
-
-/* Baris filter juga harus sticky */
-thead tr:nth-child(2) th.sticky-col-end {
-  top: 48px;
-  z-index: 51;
-  background-color: white !important;
-}
-
-/* Tambahkan shadow tipis saat tabel discroll */
-.table-responsive {
-  position: relative;
-}
-
-/* Container Navigasi Utama */
-    .sweep-nav-wrapper {
-        position: relative;
-        background-color: #f1f3f5;
-        border-radius: 50px;
-        padding: 8px;
-        display: flex;
-        width: 100%;
-        max-width: 500px;
-        border: 1px solid #e9ecef;
-        overflow: hidden;
-    }
-
-    /* Link Satuan */
-    .sweep-nav-wrapper .nav-link {
-        position: relative;
-        z-index: 2;
-        color: #6c757d;
-        font-weight: 600;
-        font-size: 0.875rem;
-        border: none;
-        padding: 10px 0;
-        flex: 1;
-        text-align: center;
-        text-decoration: none;
-        transition: color 0.3s ease;
-    }
-
-    /* Link saat Aktif */
-    .sweep-nav-wrapper .nav-link.active {
-        color: #0d6efd !important;
-    }
-
-    /* Kotak Putih yang Menyapu */
-    .sweep-indicator {
-        position: absolute;
-        height: calc(100% - 12px);
-        width: calc(25% - 8px);
-        top: 6px;
-        background: #ffffff;
-        border-radius: 40px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-        z-index: 1;
-    }
 </style>
 
-<!--
-  PENTING: style di bawah ini SENGAJA TIDAK "scoped".
-  Konten badge & tombol aksi pada tabel di-generate oleh DataTables lewat
-  innerHTML (render: di kolom), bukan lewat template Vue, sehingga atribut
-  scoped (data-v-xxxx) Vue tidak pernah ditempel ke elemen tersebut.
-  Akibatnya CSS scoped TIDAK PERNAH KENA ke badge/tombol ini -- itulah sebabnya
-  sebelumnya teks badge tampak putih/transparan (memakai warna default
-  Bootstrap, bukan warna custom). Style ini harus tetap global agar berlaku.
--->
+<!-- GLOBAL STYLES KHUSUS COMPONENT DATATABLES -->
 <style>
-.badge-akses {
-  background: #11182c !important;
-  color: #ffffff !important;
-  font-weight: 600;
-}
-.badge-kategori {
-  background: #eef1f6 !important;
-  color: #495057 !important;
-  border: 1px solid #e0e4eb;
-  font-weight: 600;
-}
+.badge-akses { background: #1e293b !important; color: #ffffff !important; font-weight: 600; font-size: 0.75rem; }
+.badge-kategori { background: #f1f5f9 !important; color: #475569 !important; border: 1px solid #cbd5e1; font-weight: 600; font-size: 0.75rem;}
+.badge-qty-low { background: #fee2e2 !important; color: #ef4444 !important; font-weight: 600; border: 1px solid #fecaca; }
+.badge-qty-normal { background: #eff6ff !important; color: #3b82f6 !important; font-weight: 600; border: 1px solid #bfdbfe; }
+.badge-status-received { background: #dcfce7 !important; color: #16a34a !important; font-weight: 600; border: 1px solid #bbf7d0; }
+.badge-status-pending { background: #fef9c3 !important; color: #ca8a04 !important; font-weight: 600; border: 1px solid #fef08a; }
 
-.badge-qty-low {
-  background: #dc3545 !important;
-  color: #ffffff !important;
-  font-weight: 600;
-}
-.badge-qty-normal {
-  background: #0d6efd !important;
-  color: #ffffff !important;
-  font-weight: 600;
-}
-
-.badge-status-received {
-  background: #d1f5e0 !important;
-  color: #157347 !important;
-  font-weight: 600;
-  border: 1px solid #b7ecc9;
-}
-.badge-status-pending {
-  background: #fff3cd !important;
-  color: #997404 !important;
-  font-weight: 600;
-  border: 1px solid #ffe69c;
-}
-
-/* ===================== ACTION BUTTONS (tabel) ===================== */
-.action-btn-group { padding: 2px; }
-.btn-action {
-  width: 32px;
-  height: 32px;
-  border-radius: 8px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.85rem;
-  border: none !important;
-  transition: all 0.15s ease;
-}
-.btn-action:hover { transform: translateY(-1px); }
-
-.btn-action-receive { background: #d1f5e0 !important; color: #157347 !important; }
-.btn-action-receive:hover { background: #157347 !important; color: #ffffff !important; }
-
-.btn-action-pdf { background: #fdeeee !important; color: #dc3545 !important; }
-.btn-action-pdf:hover { background: #dc3545 !important; color: #ffffff !important; }
-
-.btn-action-edit { background: #e7edff !important; color: #1d4ed8 !important; }
-.btn-action-edit:hover { background: #1d4ed8 !important; color: #ffffff !important; }
-
-.btn-action-delete { background: #fdeeee !important; color: #dc3545 !important; }
-.btn-action-delete:hover { background: #dc3545 !important; color: #ffffff !important; }
+/* Tombol Aksi Bulat Modern */
+.action-btn { width: 32px; height: 32px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 0.85rem; border: none !important; transition: all 0.2s ease; }
+.action-btn:hover { transform: scale(1.1); }
+.btn-action-receive { background: #dcfce7 !important; color: #16a34a !important; }
+.btn-action-receive:hover { background: #16a34a !important; color: #ffffff !important; }
+.btn-action-pdf { background: #fee2e2 !important; color: #ef4444 !important; }
+.btn-action-pdf:hover { background: #ef4444 !important; color: #ffffff !important; }
+.btn-action-edit { background: #eff6ff !important; color: #3b82f6 !important; }
+.btn-action-edit:hover { background: #3b82f6 !important; color: #ffffff !important; }
+.btn-action-delete { background: #fee2e2 !important; color: #ef4444 !important; }
+.btn-action-delete:hover { background: #ef4444 !important; color: #ffffff !important; }
 </style>

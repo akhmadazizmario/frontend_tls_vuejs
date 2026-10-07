@@ -75,10 +75,6 @@
                 </div>
                 
                 <div class="col-md-2">
-                  <button class="btn btn-danger" @click="exportPDF">
-  <i class="bi bi-filetype-pdf me-1"></i> Export PDF
-</button>
-
                     <button class="btn btn-outline-secondary w-100" @click="resetFilters">
                         <i class="bi bi-x-circle me-1"></i> Reset
                     </button>
@@ -317,16 +313,6 @@ function logout() {
   localStorage.removeItem("user");
   window.location.href = "/login";
 }
-
-async function exportPDF() {
-  let url = `${API_BASE_URL}/buku-tamu/export/pdf?`;
-
-  if (startDate.value) url += `startDate=${startDate.value}&`;
-  if (endDate.value) url += `endDate=${endDate.value}&`;
-
-  window.open(url, "_blank");
-}
-
 
 onMounted(() => {
   const u = localStorage.getItem("user");

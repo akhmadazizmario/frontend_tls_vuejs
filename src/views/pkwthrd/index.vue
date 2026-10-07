@@ -18,6 +18,8 @@
           marginTop: '56px' 
         }"
       >
+      <!-- BUNGKUS DENGAN v-if="hasAccess" UNTUK UAC -->
+      <div v-if="hasAccess" class="container-fluid retur-page max-w-7xl mx-auto p-0">
 
         <!-- TOP HEADER & ACTION BUTTONS -->
         <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3 mb-4">
@@ -31,7 +33,7 @@
             </div>
           </div>
 
-          <div class="d-flex align-items-center gap-2">
+          <div class="d-flex align-items-center gap-2 flex-wrap">
             <button
               class="btn btn-outline-primary d-flex align-items-center gap-2"
               @click="handleDownloadAll"
@@ -42,6 +44,43 @@
               <i v-else class="bi bi-file-earmark-zip-fill"></i>
               <span>{{ downloadAllLoading ? 'Menyiapkan ZIP...' : 'Download Semua Dokumen (.zip)' }}</span>
             </button>
+            <div class="dropdown">
+              <button
+                class="btn btn-outline-success d-flex align-items-center gap-2"
+                type="button"
+                @click.stop="showExportPanel = !showExportPanel"
+              >
+                <i class="bi bi-file-earmark-excel-fill"></i>
+                <span>Export Laporan TTD (.xlsx)</span>
+              </button>
+              <div
+                v-if="showExportPanel"
+                class="dropdown-menu show p-3 shadow"
+                style="right: 0; left: auto; min-width: 280px;"
+                @click.stop
+              >
+                <p class="small text-muted mb-2">
+                  Laporan otomatis hanya berisi karyawan aktif yang <strong>sudah lengkap</strong> mengisi email, ttd, dan dokumen. Kosongkan tanggal jika ingin export semua.
+                </p>
+                <div class="mb-2">
+                  <label class="form-label small fw-bold mb-1">Dari Tanggal (xDateTime)</label>
+                  <input type="date" class="form-control form-control-sm" v-model="exportDari" />
+                </div>
+                <div class="mb-3">
+                  <label class="form-label small fw-bold mb-1">Sampai Tanggal (xDateTime)</label>
+                  <input type="date" class="form-control form-control-sm" v-model="exportSampai" />
+                </div>
+                <button
+                  class="btn btn-success btn-sm w-100 d-flex align-items-center justify-content-center gap-2"
+                  @click="handleExportExcel"
+                  :disabled="exportExcelLoading"
+                >
+                  <span v-if="exportExcelLoading" class="spinner-border spinner-border-sm"></span>
+                  <i v-else class="bi bi-download"></i>
+                  <span>{{ exportExcelLoading ? 'Menyiapkan Excel...' : 'Download Excel' }}</span>
+                </button>
+              </div>
+            </div>
             <button class="btn btn-primary d-flex align-items-center gap-2 shadow-sm" @click="handleSync" :disabled="syncLoading">
               <span v-if="syncLoading" class="spinner-border spinner-border-sm"></span>
               <i v-else class="bi bi-arrow-repeat"></i>
@@ -107,6 +146,26 @@
                 <span class="text-muted small">
                   Total Data: <strong class="text-dark">{{ filteredItems.length.toLocaleString('id-ID') }}</strong> / {{ items.length.toLocaleString('id-ID') }} Karyawan
                 </span>
+                
+              </div>
+            </div>
+
+            <!-- Filter range xEDate (Dari - Sampai) -->
+            <div class="row align-items-center g-2 mt-1">
+              <div class="col-auto">
+                <label class="small text-muted mb-0 fw-semibold">Filter xEDate:</label>
+              </div>
+              <div class="col-auto">
+                <input type="date" class="form-control form-control-sm" v-model="xEDateDari" style="width: 160px;" />
+              </div>
+              <div class="col-auto"><span class="small text-muted">s/d</span></div>
+              <div class="col-auto">
+                <input type="date" class="form-control form-control-sm" v-model="xEDateSampai" style="width: 160px;" />
+              </div>
+              <div class="col-auto" v-if="xEDateDari || xEDateSampai">
+                <button class="btn btn-sm btn-outline-secondary" @click="xEDateDari = ''; xEDateSampai = '';">
+                  <i class="bi bi-x-lg"></i> Hapus
+                </button>
               </div>
             </div>
 
@@ -130,20 +189,31 @@
           <div class="card-body p-0">
             <div class="table-scroll-wrapper custom-scrollbar">
               <table class="table table-hover align-middle mb-0 employee-table">
+                <colgroup>
+                  <col :style="{ width: noColWidth + 'px' }" />
+                  <col :style="{ width: aksiColWidth + 'px' }" />
+                  <col v-for="col in columns" :key="'colgroup-' + col.key" :style="{ width: (columnWidths[col.key] || 150) + 'px' }" />
+                </colgroup>
                 <thead class="table-light">
-                  <tr class="text-nowrap small text-uppercase fw-bold text-muted">
-                    <th class="text-center sticky-col" style="width: 55px;">No</th>
-                    <th class="text-center sticky-col-aksi" style="width: 110px;">Aksi</th>
+                  <tr class="small text-uppercase fw-bold text-muted">
+                    <th class="text-center sticky-col resizable-th text-nowrap" style="width: 55px;">
+                      No
+                      <span class="col-resize-handle" @mousedown="startResize($event, 'no')"></span>
+                    </th>
+                    <th class="text-center sticky-col-aksi resizable-th text-nowrap" :style="{ width: aksiColWidth + 'px', left: noColWidth + 'px' }">
+                      Aksi
+                      <span class="col-resize-handle" @mousedown="startResize($event, 'aksi')"></span>
+                    </th>
 
                     <th
                       v-for="col in columns"
                       :key="col.key"
-                      class="filter-th"
-                      :style="{ minWidth: col.width || '150px' }"
+                      class="filter-th resizable-th"
+                      :style="{ width: (columnWidths[col.key] || 150) + 'px' }"
                     >
-                      <div class="d-flex align-items-center justify-content-between gap-1">
-                        <span>{{ col.label }}</span>
-                        <div class="dropdown" v-if="col.filterable">
+                      <div class="d-flex align-items-start justify-content-between gap-1">
+                        <span class="col-label-text">{{ col.label }}</span>
+                        <div class="dropdown flex-shrink-0" v-if="col.filterable">
                           <button
                             class="btn btn-sm btn-link p-0 filter-btn"
                             :class="{ 'text-primary': filters[col.key] && filters[col.key].length }"
@@ -207,6 +277,7 @@
                           </div>
                         </div>
                       </div>
+                      <span class="col-resize-handle" @mousedown.stop="startResize($event, col.key)"></span>
                     </th>
                   </tr>
                 </thead>
@@ -222,8 +293,8 @@
                     </td>
                   </tr>
                   <tr v-for="item in paginatedItems" :key="item.id_ttd || item.sID" class="small">
-                    <td class="text-center fw-bold sticky-col">{{ item.__rowNo }}</td>
-                    <td class="text-center sticky-col-aksi">
+                    <td class="text-center fw-bold sticky-col" :style="{ width: noColWidth + 'px' }">{{ item.__rowNo }}</td>
+                    <td class="text-center sticky-col-aksi" :style="{ width: aksiColWidth + 'px', left: noColWidth + 'px' }">
                       
                       <!-- 3. TOMBOL UPDATE MENGGUNAKAN data-bs-toggle SEPERTI IDPPO -->
                       <button
@@ -317,6 +388,15 @@
           </div>
         </div>
 
+        </div>
+
+        <!-- OPSI TAMPILAN BLANK (JIKA TIDAK ADA AKSES) -->
+        <div v-else class="d-flex flex-column align-items-center justify-content-center h-100 pt-5 mt-5">
+           <!-- Halaman Blank, Jika ingin dibuat benar-benar kosong hapus komentar html ini. -->
+            <h1>hi anda tersesat nih, Mohon untuk Logout Segera </h1>
+            <a href="/logout" class="btn btn-primary">back to jungle</a>
+        </div>
+
       </main>
     </div>
 
@@ -339,13 +419,26 @@
               <input type="text" class="form-control bg-light" :value="selectedItem.xName" readonly />
             </div>
             <div class="row g-3">
+              <div class="col-12" v-if="xEDateBerubah">
+                <div class="alert alert-warning py-2 px-3 small mb-0 d-flex align-items-center justify-content-between gap-2 flex-wrap">
+                  <span>
+                    <i class="bi bi-exclamation-triangle-fill me-1"></i>
+                    xEDate terbaru dari data HR (<strong>{{ formatDate(selectedItem.xEDate) }}</strong>) berbeda dengan Tgl Kontrak Akhir yang sudah tersimpan sebelumnya. Silakan ubah manual atau pakai nilai terbaru.
+                  </span>
+                  <button type="button" class="btn btn-sm btn-outline-warning text-nowrap" @click="pakaiXEDateTerbaru">
+                    Pakai xEDate Terbaru
+                  </button>
+                </div>
+              </div>
               <div class="col-md-6">
                 <label class="form-label small fw-bold">Tgl Kontrak Baru <span class="text-danger">*</span></label>
                 <input type="date" v-model="formContract.tgl_kontrak_baru" class="form-control" required />
+                <small class="text-muted">Otomatis dari Entry Date (xJoinDate) bila belum pernah diisi.</small>
               </div>
               <div class="col-md-6">
                 <label class="form-label small fw-bold">Tgl Kontrak Akhir <span class="text-danger">*</span></label>
                 <input type="date" v-model="formContract.tgl_kontrak_akhir" class="form-control" required />
+                <small class="text-muted">Otomatis dari xEDate bila belum pernah diisi.</small>
               </div>
               <div class="col-md-6">
                 <label class="form-label small fw-bold">Nomor Surat PKWT <span class="text-muted fw-normal">(opsional)</span></label>
@@ -373,7 +466,7 @@
           </div>
           <div class="modal-footer border-top-0 pt-0">
             <button type="button" class="btn btn-light" data-bs-dismiss="modal">Batal</button>
-            <button type="submit" class="btn btn-primary" :disabled="submitLoading" data-bs-dismiss="modal">
+            <button type="submit" class="btn btn-success" :disabled="submitLoading" data-bs-dismiss="modal">
               <span v-if="submitLoading" class="spinner-border spinner-border-sm me-1"></span>
               Simpan Perubahan
             </button>
@@ -395,6 +488,8 @@ import Footer from "../../components/Footer.vue";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
+const hasAccess = ref(false);
+
 const items = ref([]);
 const user = ref({});
 const sidebarOpen = ref(false);
@@ -408,6 +503,12 @@ const syncLoading = ref(false);
 const submitLoading = ref(false);
 const downloadAllLoading = ref(false);
 const activeTab = ref("active");
+
+// State untuk panel Export Excel (laporan siapa saja yg sudah TTD)
+const showExportPanel = ref(false);
+const exportExcelLoading = ref(false);
+const exportDari = ref("");
+const exportSampai = ref("");
 
 const searchInput = ref("");
 const searchQuery = ref("");
@@ -428,6 +529,18 @@ const formContract = reactive({
   nomor_suratpkwt: ""
 });
 
+// True kalau xEDate hasil sync terbaru berbeda dari tgl_kontrak_akhir yang sudah
+// tersimpan sebelumnya -> dipakai buat munculin banner opsi "Pakai xEDate Terbaru"
+// di modal (HRD tetap bebas mau ngikutin atau ubah manual).
+const xEDateBerubah = ref(false);
+
+// Normalisasi berbagai bentuk string tanggal (ISO dengan/atau tanpa "T", dsb)
+// jadi format yyyy-MM-dd yang dipahami <input type="date">.
+const toDateInputValue = (val) => {
+  if (!val) return "";
+  return String(val).split("T")[0];
+};
+
 // modalInstance dihapus, ref dibiarkan jika masih dibutuhkan vue (opsional)
 const modalContractRef = ref(null);
 
@@ -437,13 +550,13 @@ const columns = [
   { key: "xIDNo", label: "No. KTP", filterable: true, width: "160px" },
   { key: "xDimisLabel", label: "Status", filterable: true, width: "110px" },
   { key: "xName", label: "Nama Karyawan", filterable: true, width: "220px" },
-  { key: "xJoinDate", label: "Tgl Masuk", filterable: false, width: "130px" },
+  { key: "xJoinDate", label: "Tgl Masuk", filterable: true, width: "130px" },
   { key: "xIDAddr", label: "Alamat KTP", filterable: true, width: "220px" },
   { key: "xNative", label: "Asal Daerah", filterable: true, width: "150px" },
   { key: "xBirth", label: "Tgl Lahir", filterable: false, width: "130px" },
   { key: "xKind", label: "Jenis Kontrak", filterable: true, width: "140px" },
   { key: "xPact", label: "xPact", filterable: true, width: "120px" },
-  { key: "xEDate", label: "xEDate", filterable: false, width: "130px" },
+  { key: "xEDate", label: "xEDate", filterable: true, width: "130px" },
   { key: "job", label: "Jabatan", filterable: true, width: "160px" },
   { key: "dept", label: "Departemen", filterable: true, width: "160px" },
   { key: "email", label: "Email", filterable: true, width: "220px" },
@@ -457,8 +570,62 @@ const columns = [
 const FILTERABLE_KEYS = columns.filter((c) => c.filterable).map((c) => c.key);
 const MAX_OPTIONS_SHOWN = 150;
 
+// ===== RESIZABLE COLUMNS (drag pinggir kolom kaya di Excel) =====
+const MIN_COL_WIDTH = 60;
+const noColWidth = ref(55);
+const aksiColWidth = ref(110);
+const columnWidths = reactive(
+  Object.fromEntries(columns.map((c) => [c.key, parseInt(c.width) || 150]))
+);
+
+let resizeState = null;
+
+function startResize(event, key) {
+  event.preventDefault();
+  const startX = event.clientX;
+  const startWidth =
+    key === "no" ? noColWidth.value : key === "aksi" ? aksiColWidth.value : (columnWidths[key] || 150);
+
+  resizeState = { key, startX, startWidth };
+  document.body.classList.add("col-resizing-active");
+  window.addEventListener("mousemove", onResizeMove);
+  window.addEventListener("mouseup", stopResize);
+}
+
+function onResizeMove(event) {
+  if (!resizeState) return;
+  const delta = event.clientX - resizeState.startX;
+  const newWidth = Math.max(MIN_COL_WIDTH, Math.round(resizeState.startWidth + delta));
+  const { key } = resizeState;
+  if (key === "no") noColWidth.value = newWidth;
+  else if (key === "aksi") aksiColWidth.value = newWidth;
+  else columnWidths[key] = newWidth;
+}
+
+function stopResize() {
+  resizeState = null;
+  document.body.classList.remove("col-resizing-active");
+  window.removeEventListener("mousemove", onResizeMove);
+  window.removeEventListener("mouseup", stopResize);
+}
+
 const filters = reactive({});
 const columnSearch = reactive({});
+
+// Filter range xEDate (Dari - Sampai), terpisah dari filter checkbox kolom lain
+const xEDateDari = ref("");
+const xEDateSampai = ref("");
+
+const xEDateDalamRentang = (item) => {
+  if (!xEDateDari.value && !xEDateSampai.value) return true;
+  if (!item.xEDate) return false;
+  const tgl = new Date(item.xEDate);
+  if (isNaN(tgl.getTime())) return false;
+  const tglYMD = `${tgl.getFullYear()}-${String(tgl.getMonth() + 1).padStart(2, "0")}-${String(tgl.getDate()).padStart(2, "0")}`;
+  if (xEDateDari.value && tglYMD < xEDateDari.value) return false;
+  if (xEDateSampai.value && tglYMD > xEDateSampai.value) return false;
+  return true;
+};
 columns.forEach((col) => {
   filters[col.key] = [];
   columnSearch[col.key] = "";
@@ -488,6 +655,9 @@ function handleClickOutsideFilter(e) {
   if (openFilterKey.value && !e.target.closest(".filter-th")) {
     openFilterKey.value = null;
   }
+  if (showExportPanel.value && !e.target.closest(".dropdown")) {
+    showExportPanel.value = false;
+  }
 }
 
 const getRawValue = (item, key) => {
@@ -516,6 +686,7 @@ const computeOptionsForColumn = (targetKey) => {
         (item.email && item.email.toLowerCase().includes(q))
     );
   }
+
   for (const key of FILTERABLE_KEYS) {
     if (key === targetKey) continue;
     const selected = filters[key];
@@ -524,6 +695,8 @@ const computeOptionsForColumn = (targetKey) => {
       base = base.filter((item) => selSet.has(getRawValue(item, key)));
     }
   }
+  
+  base = base.filter(xEDateDalamRentang);
   const counts = new Map();
   for (const item of base) {
     const v = getRawValue(item, targetKey);
@@ -559,14 +732,17 @@ const clearAllFilters = () => {
     filters[col.key] = [];
     columnSearch[col.key] = "";
   });
+  xEDateDari.value = "";
+  xEDateSampai.value = "";
 };
 
 const hasActiveFilters = computed(() =>
-  columns.some((col) => filters[col.key] && filters[col.key].length > 0)
+  columns.some((col) => filters[col.key] && filters[col.key].length > 0) ||
+  !!xEDateDari.value || !!xEDateSampai.value
 );
 
 watch(
-  [searchQuery, filters],
+  [searchQuery, filters, xEDateDari, xEDateSampai],
   () => {
     currentPage.value = 1;
   },
@@ -644,15 +820,77 @@ const handleDownloadAll = async () => {
   }
 };
 
+const handleExportExcel = async () => {
+  if (exportDari.value && exportSampai.value && exportDari.value > exportSampai.value) {
+    alert("Tanggal 'Dari' tidak boleh lebih besar dari tanggal 'Sampai'.");
+    return;
+  }
+  exportExcelLoading.value = true;
+  try {
+    const params = {};
+    if (exportDari.value) params.dari = exportDari.value;
+    if (exportSampai.value) params.sampai = exportSampai.value;
+
+    const res = await axios.get(`${API_BASE_URL}/pkwthrd/export-excel`, {
+      params,
+      responseType: "blob"
+    });
+    const blob = new Blob([res.data], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    const disposition = res.headers["content-disposition"];
+    const match = disposition && disposition.match(/filename="?([^"]+)"?/);
+    a.download = match ? match[1] : `Laporan_TTD_Kontrak_${new Date().toISOString().slice(0, 10)}.xlsx`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    window.URL.revokeObjectURL(url);
+    showExportPanel.value = false;
+  } catch (error) {
+    console.error("Gagal export laporan Excel:", error);
+    alert("Gagal membuat laporan Excel.");
+  } finally {
+    exportExcelLoading.value = false;
+  }
+};
+
 // 6. LOGIC POPUP MANUAL DIHAPUS 
 const openModalUpdate = (item) => {
   selectedItem.value = item;
   formContract.sID = item.sID;
-  formContract.tgl_kontrak_baru = item.tgl_kontrak_baru ? item.tgl_kontrak_baru.split("T")[0] : "";
-  formContract.tgl_kontrak_akhir = item.tgl_kontrak_akhir ? item.tgl_kontrak_akhir.split("T")[0] : "";
+
+  const sudahAdaKontrakBaru = !!item.tgl_kontrak_baru;
+  const sudahAdaKontrakAkhir = !!item.tgl_kontrak_akhir;
+
+  // Tgl Kontrak Baru: kalau belum pernah diisi HRD, auto-fill dari Entry Date (xJoinDate).
+  // Kalau sudah pernah diisi, pakai nilai yang sudah tersimpan (tidak ditimpa otomatis).
+  formContract.tgl_kontrak_baru = sudahAdaKontrakBaru
+    ? toDateInputValue(item.tgl_kontrak_baru)
+    : toDateInputValue(item.xJoinDate);
+
+  // Tgl Kontrak Akhir: kalau belum pernah diisi HRD, auto-fill dari xEDate.
+  formContract.tgl_kontrak_akhir = sudahAdaKontrakAkhir
+    ? toDateInputValue(item.tgl_kontrak_akhir)
+    : toDateInputValue(item.xEDate);
+
   formContract.gaji_perjanjiankontrak = item.gaji_perjanjiankontrak ?? "";
   formContract.nomor_suratpkwt = item.nomor_suratpkwt ?? "";
+
+  // Kalau sebelumnya sudah pernah diisi TAPI xEDate hasil sync terbaru ternyata beda
+  // dari yang tersimpan -> tampilkan opsi ke HRD (manual atau pakai nilai terbaru),
+  // jangan langsung ditimpa otomatis.
+  xEDateBerubah.value =
+    sudahAdaKontrakAkhir &&
+    !!item.xEDate &&
+    toDateInputValue(item.tgl_kontrak_akhir) !== toDateInputValue(item.xEDate);
   // JS manual dihapus karena sudah di-handle otomatis lewat atribut HTML
+};
+
+// Dipanggil dari tombol "Pakai xEDate Terbaru" di banner modal.
+const pakaiXEDateTerbaru = () => {
+  formContract.tgl_kontrak_akhir = toDateInputValue(selectedItem.value.xEDate);
+  xEDateBerubah.value = false;
 };
 
 const submitUpdateContract = async () => {
@@ -693,6 +931,7 @@ const filteredItems = computed(() => {
       result = result.filter((item) => selSet.has(getRawValue(item, key)));
     }
   }
+  result = result.filter(xEDateDalamRentang);
   return result;
 });
 
@@ -747,7 +986,22 @@ onMounted(() => {
       console.error("Error parsing user data", e);
     }
   }
-  fetchData();
+
+  try {
+    const pagesData = localStorage.getItem("pages") || localStorage.getItem("user_pages");
+    const pages = pagesData ? JSON.parse(pagesData) : [];
+
+    // Ganti 'KODE_HALAMAN' sesuai dengan 'code' di database UAC halaman ini
+    hasAccess.value = pages.includes("pkwtandtt");
+  } catch (e) {
+    hasAccess.value = false;
+  }
+
+  // 4. Panggil API/fetchData hanya jika user punya akses
+  if (hasAccess.value) {
+    fetchData();
+  }
+  //fetchData();
   
   window.addEventListener("resize", handleResize);
   document.addEventListener("click", handleClickOutsideFilter);
@@ -757,6 +1011,7 @@ onBeforeUnmount(() => {
   clearTimeout(searchDebounceTimer);
   window.removeEventListener("resize", handleResize);
   document.removeEventListener("click", handleClickOutsideFilter);
+  stopResize();
 });
 </script>
 
@@ -854,6 +1109,58 @@ onBeforeUnmount(() => {
 .employee-table {
   width: max-content;
   min-width: 100%;
+  table-layout: fixed;
+}
+
+.employee-table th,
+.employee-table td {
+  white-space: normal;
+  word-break: break-word;
+  overflow-wrap: break-word;
+}
+
+.employee-table tbody td {
+  vertical-align: top;
+}
+
+.resizable-th {
+  position: relative;
+  overflow: visible !important;
+}
+
+.col-resize-handle {
+  position: absolute;
+  top: 0;
+  right: -3px;
+  width: 6px;
+  height: 100%;
+  cursor: col-resize;
+  z-index: 5;
+  touch-action: none;
+}
+
+.col-resize-handle::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 2px;
+  width: 2px;
+  height: 100%;
+  background-color: transparent;
+  transition: background-color 0.15s ease;
+}
+
+.col-resize-handle:hover::after {
+  background-color: var(--hr-navy-500, #3b5f9e);
+}
+
+/* Saat sedang di-drag, cegah teks/gambar ikut ke-select */
+:global(body.col-resizing-active) {
+  cursor: col-resize !important;
+  user-select: none !important;
+}
+:global(body.col-resizing-active) * {
+  cursor: col-resize !important;
 }
 
 .employee-table thead th {
@@ -865,6 +1172,14 @@ onBeforeUnmount(() => {
   letter-spacing: 0.04em;
   padding-top: 0.85rem;
   padding-bottom: 0.85rem;
+  vertical-align: top;
+}
+
+.col-label-text {
+  white-space: normal;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  line-height: 1.3;
 }
 
 .employee-table tbody tr:hover { background-color: #f9fafc; }
@@ -891,13 +1206,9 @@ thead .sticky-col-aksi {
 }
 
 .text-wrap-cell {
-  max-width: 220px;
   white-space: normal;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
+  word-break: break-word;
+  overflow-wrap: break-word;
 }
 
 .custom-scrollbar::-webkit-scrollbar {

@@ -140,7 +140,7 @@
 
                                         <td align="right">{{ row.xTls_Qty_Primary }}</td>
                                         <td align="right">{{ row.tTLS_Qty_Primary }}</td>
-                                        <td class="bg-soft-red">{{ row.xBelumLinkKrah }}</td>
+                                        <td class="bg-soft-red">{{ row.xBelumLinkKrah1 }}</td>
 
                                         <td align="right">{{ row.qty_total_LO_hari_ini }}</td>
                                         <td align="right">{{ row.LO_keseluruhan }}</td>

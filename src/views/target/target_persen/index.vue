@@ -6,6 +6,8 @@
       <Sidebar :isOpen="sidebarOpen" />
 
       <main :class="['flex-grow-1 p-4 main-content transition-all', { 'content-shifted': sidebarOpen }]">
+        <!-- BUNGKUS DENGAN v-if="hasAccess" UNTUK UAC -->
+      <div v-if="hasAccess" class="container-fluid retur-page max-w-7xl mx-auto p-0">
         <div class="container-fluid">
           
           <div class="d-flex justify-content-between align-items-center mb-4 mt-3">
@@ -201,6 +203,14 @@
             <p class="text-muted mt-3">Gunakan filter untuk menampilkan data matrix performance.</p>
           </div>
         </div>
+        </div>
+
+        <!-- OPSI TAMPILAN BLANK (JIKA TIDAK ADA AKSES) -->
+        <div v-else class="d-flex flex-column align-items-center justify-content-center h-100 pt-5 mt-5">
+           <!-- Halaman Blank, Jika ingin dibuat benar-benar kosong hapus komentar html ini. -->
+            <h1>hi anda tersesat nih, Mohon untuk Logout Segera </h1>
+            <a href="/logout" class="btn btn-primary">back to jungle</a>
+        </div>
       </main>
     </div>
   </div>
@@ -218,6 +228,8 @@ import Header from "../../../components/Header.vue";
 import Sidebar from "../../../components/Sidebar.vue";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
+const hasAccess = ref(false);
 
 // --- STATE UTAMA ---
 const user = ref({});
@@ -468,8 +480,15 @@ const logout = () => { localStorage.clear(); window.location.href = "/login"; };
 watch(() => filter.value.line, () => { if(isDataLoaded.value) fetchReport(); });
 
 onMounted(() => {
-  const ud = localStorage.getItem("user");
-  if (ud) user.value = JSON.parse(ud);
+  try {
+    const pagesData = localStorage.getItem('pages') || localStorage.getItem('user_pages');
+    const pages = pagesData ? JSON.parse(pagesData) : [];
+    hasAccess.value = pages.includes('persen-target');
+  } catch {
+    hasAccess.value = false;
+  }
+  // const ud = localStorage.getItem("user");
+  // if (ud) user.value = JSON.parse(ud);
 });
 </script>
 

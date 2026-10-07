@@ -37,7 +37,7 @@ import FilePkbIndex from '../views/fco/pkbfile.vue'
 import GetProd4aIndex from '../views/target/prod4.vue'
 import PkbVisitorIndex from '../views/fco/pkbdownloadvisitor.vue'
 import BukuTamuIndex from '../views/buku_tamu/bukutamu.vue'
-import BlogRekrutmenIndex from '../views/loker/blog/index.vue'
+
 import GalleryRekrutmenIndex from '../views/loker/gallery/index.vue'
 import FormFcoIndex from '../views/fco/form-fco.vue'
 import FormFcoCreateIndex from '../views/fco/form-create-fco.vue'
@@ -50,15 +50,16 @@ import AparRekapIndex from '../views/fco/apar/AparRekap.vue'
 import ProdTestLining  from '../views/target/ProdTestLining.vue'
 import ProdTestLiningpublik from '../views/target/ProdTestLiningpublik.vue'
 import DailyOutputPage from '../views/ekspedisi/DailyOutputPage.vue'
-import knittingMatchReport from '../views/target/knittingMatchReport.vue'
-import UserPageAccess from '../views/uac/UserPageAccess.vue'
-import Pages from '../views/uac/Pages.vue'
 import Warehouse12 from '../views/warehouse/index.vue'
 import inputanACC from '../views/warehouse/inputanACC.vue'
+import UserPageAccess from '../views/uac/UserPageAccess.vue'
+import Pages from '../views/uac/Pages.vue'
+
 import CategoriesCleaning from '../views/genearl_affair/lap_kebersihan/CategoriesCleaning.vue'
 import QuestionsCleaning from '../views/genearl_affair/lap_kebersihan/QuestionsCleaning.vue'
 import InspectionCreate from '../views/genearl_affair/lap_kebersihan/InspectionCreate.vue'
 import InspectionReports from '../views/genearl_affair/lap_kebersihan/InspectionReports.vue'
+
 //tv
 import linkingA from '../views/tv/linkingA.vue'
 import linkingB from '../views/tv/linkingB.vue'
@@ -109,22 +110,29 @@ import indexfinishingakumperdeptmassal from '../views/target/finishing_pergedung
 import indexfinishingakumperdeptmassalLPTP from '../views/target/finishing_pergedung/MassEntryAkumDeptLPTP.vue'
 import indexfinishingakumperdeptmanual from '../views/target/finishing_pergedung/SummaryManualPergedung.vue'
 import indexfinishingformturunlainlain from '../views/target/finishing_pergedung/ProductionEntryTurunLainConsole.vue'
-import indextestgedung from '../views/target/finishing_pergedung/testgedung/index.vue'
+import plnLKtambahan from '../views/target/finishing_pergedung/planlk/IndexLK.vue'
+import plnKRtambahan from '../views/target/finishing_pergedung/plankr/IndexKR.vue'
+//
+import TampilanAkumPerDept from '../views/target/finishing_pergedung/TampilanAkumPerDept.vue'
+
 // plan ppc
-import plan_ppc_v2 from '../views/ppc/planning_target/plan_ppc_v2.vue'
-import plan_ppc from '../views/ppc/planning_target/plan_ppc.vue'
-import update_plan_ppc from '../views/ppc/planning_target/update_plan_ppc.vue'
-import update_plan_linking from '../views/ppc/planning_target/update_plan_linking.vue'
-import plan_ppc_v2_linking from '../views/ppc/planning_target/plan_ppc_v2_linking.vue'
-import MasterTeamTarget from '../views/ppc/planning_target/MasterTeamTarget.vue'
+// import plan_ppc_v2 from '../views/ppc/planning_target/plan_ppc_v2.vue'
+// import plan_ppc from '../views/ppc/planning_target/plan_ppc.vue'
+// import update_plan_ppc from '../views/ppc/planning_target/update_plan_ppc.vue'
+// import update_plan_linking from '../views/ppc/planning_target/update_plan_linking.vue'
+// import plan_ppc_v2_linking from '../views/ppc/planning_target/plan_ppc_v2_linking.vue'
+// import MasterTeamTarget from '../views/ppc/planning_target/MasterTeamTarget.vue'
+//baru
+import Planningprodcreate from '../views/ppc/planning_baru/Planningprodcreate.vue'
+//import Planningprodupdate from '../views/ppc/planning_baru/Planningprodupdate.vue'
+import Reportplanppc from '../views/ppc/planning_baru/Reportplanppc.vue'
+import Teambaru from '../views/ppc/planning_baru/Teambaru.vue'
 
 // poeks
 import poeks from '../views/poeks/update.vue'
 import viewpoeks from '../views/poeks/view.vue'
 import edit2poeks from '../views/poeks/edit2.vue'
 
-// car booking
-import CarBookingDashboard from '../views/car_book/CarBookingDashboard.vue'
 // car booking
 import FormBookingPemohon from '../views/car_book/FormBookingPemohon.vue'
 import GaApprovalPage from '../views/car_book/GaApprovalPage.vue'
@@ -139,20 +147,24 @@ import ServisMobilPage from '../views/car_book/ServisMobilPage.vue'
 
 // retur panel
 import indexReturPanel from '../views/returpanel/indexReturPanel.vue'
+import Forminputreturnpanel from '../views/returpanel/Forminputreturnpanel.vue'
 
 //pkwt HRD
 import pkwtHRD from '../views/pkwthrd/index.vue'
 import Tandatangankontrak from '../views/pkwthrd/Tandatangankontrak.vue'
 
+// po index laporan terima
+import indexLaporanTerima from '../views/po/indexLaporanTerima.vue'
+import indexPOLK from '../views/po/indexPOLK.vue'
 
 import { name } from 'dayjs/locale/id'
 
 const routes = [
-  { path: '/', name: 'Login', component: Login }, 
+  { path: '/', name: 'Login', component: Login },
   { path: '/unauthorized', name:'Unauthorized', component: Unauthorized},
   { path: '/dashboard', name: 'Dashboard', component: Dashboard },
 
-  // publik complain erp
+   // publik
   { path: '/complain/create', name: 'ComplainCreate', component: ComplainCreate },
 
   // butuh login
@@ -192,8 +204,7 @@ const routes = [
   { path: '/p-gudang', name: 'PGudangIndex', component: PGudangIndex},
   //loker
   { path: '/loker', name: 'LokerIndex', component: LokerIndex},
-
-    //loker
+  //loker
   { path: '/contact-messages', name: 'ContactMIndex', component: ContactMIndex},
   { path: '/daftar-pelamar', name: 'PelamarIndex', component: PelamarIndex},
   // planing erp
@@ -213,7 +224,6 @@ const routes = [
   { path: '/visitor-pkb', name: 'PkbVisitorIndex', component:PkbVisitorIndex},
   // buku tamu
   { path: '/buku-tamu', name: 'BukuTamuIndex', component:BukuTamuIndex},
-  { path: '/blog-rekrutmen', name: 'BlogRekrutmenIndex', component:BlogRekrutmenIndex},
   { path: '/gallery-rekrutmen', name: 'GalerryRekrutmenIndex', component:GalleryRekrutmenIndex},
   // fco
   { path: '/form-fco', name: 'FormFcoIndex', component:FormFcoIndex},
@@ -224,24 +234,25 @@ const routes = [
   { path: '/apar-question', name: 'AparQuestIndex', component:AparQuestIndex},
   { path: '/fco/apar-check/:id', name: 'apar-check-form', component:AparFormIndex},
   { path: '/fco/apar-rekap', name: 'apar-rekap', component:AparRekapIndex},
+
   // lining
   { path: '/target/lining', name: 'prodTestLining', component:ProdTestLining},
   { path: '/idplining', name: 'ProdTestLiningpublik', component:ProdTestLiningpublik},
   // daily output
   { path: '/dailyoutput', name: 'DailyOutputPage', component:DailyOutputPage},
-  { path: '/knittingMatchReport', name: 'knittingMatchReport', component:knittingMatchReport},
-  { path: '/userpageaccess', name: 'UserPageAccess', component:UserPageAccess},
-  { path: '/pages', name: 'Pages', component:Pages},
   // warehouse
   { path: '/warehouse', name: 'Warehouse', component:Warehouse12},
+  { path: '/userpageaccess', name: 'UserPageAccess', component:UserPageAccess},
+  { path: '/pages', name: 'Pages', component:Pages},
   { path: '/inputanacc', name: 'inputanACC', component:inputanACC},
+
   // general affair
   { path: '/categories-lapkebersihan', name: 'CategoriesCleaning', component:CategoriesCleaning},
   { path: '/question-lapkebersihan', name: 'QuestionsCleaning', component:QuestionsCleaning},
   { path: '/create-lapkebersihan', name: 'InspectionCreate', component:InspectionCreate},
   { path: '/report-lapkebersihan', name: 'InspectionReports', component:InspectionReports},
 
-  // tv
+   // tv
   { path: '/tv', name:'DashboardTvDisplay', component:DashboardTvDisplay},
   { path: '/tv-linkinga', name: 'linkingA', component:linkingA},
   { path: '/tv-linkingb', name: 'linkingB', component:linkingB},
@@ -252,7 +263,7 @@ const routes = [
   { path: '/tv-lodansewing', name: 'lodansewinG', component:lodansewinG},
   { path: '/tv-office', name: 'OfficetV', component:OfficetV},
   { path: '/tv-expedisi', name: 'expedisi', component: expedisi},
-  // tv baru
+   // tv baru
   { path: '/tv-newlinkinga', name: 'linkingAbaru', component: linkingAbaru},
   { path: '/tv-newlinkingb', name: 'linkingBbaru', component: linkingBbaru},
   { path: '/tv-newlinkingc', name: 'linkingCbaru', component: linkingCbaru},
@@ -276,7 +287,7 @@ const routes = [
   { path: '/item-no-stok-form', name: 'itemnostockForm', component: itemnostockForm},
   { path: '/item-no-stok-form/:id', name: 'itemnostockFormEdit', component: itemnostockForm},
 
-  // persen target
+   // persen target
   { path: '/persen-target', name: 'persentarget', component: persentarget},
   { path: '/persen-target-under50persen', name:'persentargetunder50persen', component: persentargetunder50persen},
   { path: '/linking-pergedung', name: 'linkingpergedung', component: linkingpergedung},
@@ -293,25 +304,36 @@ const routes = [
   { path: '/inputan-massallptp', name: 'indexfinishingakumperdeptmassalLPTP', component: indexfinishingakumperdeptmassalLPTP},
   { path: '/view-akum-pergedung-manual', name: 'indexfinishingakumperdeptmanual', component: indexfinishingakumperdeptmanual},
   { path: '/view-form-turun-lainlain', name: 'indexfinishingformturunlainlain', component:indexfinishingformturunlainlain},
-  { path: '/view-test-gedung', name: 'indextestgedung', component:indextestgedung},
+  { path: '/cek-akum-pergedung', name: 'TampilanAkumPerDept', component:TampilanAkumPerDept},
+  { path: '/plnlktambahan', name: 'plnLKtambahan', component:plnLKtambahan},
+  { path: '/plnkrtambahan', name: 'plnKRtambahan', component:plnKRtambahan},
 
   // plan ppc
-  { path: '/plan_ppc_v2', name: 'plan_ppc', component:plan_ppc},
-  { path: '/plan_ppc', name: 'plan_ppc_v2', component:plan_ppc_v2},
-  { path: '/update_plan_ppc', name: 'update_plan_ppc', component:update_plan_ppc},
-  { path: '/update_plan_linking', name: 'update_plan_linking', component: update_plan_linking },
-  { path: '/plan_ppc_linking', name: 'plan_ppc_v2_linking', component:plan_ppc_v2_linking },
-  { path: '/teamtarget', name: 'MasterTeamTarget', component:MasterTeamTarget},
+  // { path: '/plan_ppc_v2', name: 'plan_ppc', component:plan_ppc},
+  // { path: '/plan_ppc', name: 'plan_ppc_v2', component:plan_ppc_v2},
+  // { path: '/update_plan_ppc', name: 'update_plan_ppc', component:update_plan_ppc},
+  // { path: '/update_plan_linking', name: 'update_plan_linking', component: update_plan_linking },
+  // { path: '/plan_ppc_linking', name: 'plan_ppc_v2_linking', component:plan_ppc_v2_linking },
+  // { path: '/teamtarget', name: 'MasterTeamTarget', component:MasterTeamTarget},
+  //baru
+  { path: '/plan_create', name:'Planningprodcreate', component:Planningprodcreate},
+  // { path: '/plan_update', name:'Planningprodupdate', component:Planningprodupdate},
+  { path: '/plan_ppc', name: 'Reportplanppc', component:Reportplanppc},
+  { path: '/team_plan', name: 'Teambaru', component:Teambaru},
 
+  // po ekspedisi
   { path: '/update_poeks', name: 'poeks', component:poeks},
   { path: '/view_poeks', name:'viewpoeks', component:viewpoeks},
   { path: '/edit_poeks', name:'edit2poeks', component:edit2poeks},
 
   // retur panel
   { path: '/hasilperbaikandantolakan', name:'indexReturPanel', component:indexReturPanel},
+  { path: '/formhasilperbaikandantolakan', name:'Forminputreturnpanel', component:Forminputreturnpanel},
 
-  // car book
-  { path: '/carbook', name: 'CarBookingDashboard', component:CarBookingDashboard },
+  // pkwt HRD
+  { path: '/pkwtandtt', name: 'pkwtHRD', component:pkwtHRD },
+  { path: '/ttk-hrd', name: 'Tandatangankontrak', component:Tandatangankontrak},
+
   // ===== CAR BOOKING =====
   { path: '/carbook/booking', name: 'CarBookingForm', component: FormBookingPemohon, meta: { requiresAuth: true, pageKey: 'carbook-booking' } },
   { path: '/carbook/ga-approval', name: 'CarBookingGaApproval', component: GaApprovalPage, meta: { requiresAuth: true, pageKey: 'carbook-ga-approval' } },
@@ -324,9 +346,9 @@ const routes = [
   { path: '/carbook/master-tujuan', name: 'CarBookingMasterTujuan', component: MasterTujuanPage, meta: { requiresAuth: true, pageKey: 'carbook-master-tujuan' } },
   { path: '/carbook/servis', name: 'CarBookingServisMobil', component: ServisMobilPage, meta: { requiresAuth: true, pageKey: 'carbook-servis' } },
 
-  // pkwt HRD
-  { path: '/pkwtandtt', name: 'pkwtHRD', component:pkwtHRD },
-  { path: '/ttdkontrak-hrd', name: 'Tandatangankontrak', component:Tandatangankontrak},
+  // Laporan Terima po
+  { path: '/laporan-terima-tls', name: 'indexLaporanTerima', component:indexLaporanTerima },
+  { path: '/po-linking-produksi', name: 'indexPOLK', component:indexPOLK },
 
 ]
 
@@ -337,10 +359,8 @@ const router = createRouter({
 
 router.beforeEach((to, from, next) => {
   const isLoggedIn = !!localStorage.getItem('user')
-
-  const publicPages = ['Login', 'ComplainCreate', 'ProdTestLiningpublik', 'linkingA', 'DashboardTvDisplay', 'linkingB', 'linkingC', 'sonteX', 'sulaM'] // halaman tanpa login
+  const publicPages = ['Login', 'ComplainCreate', 'ProdTestLiningpublik', 'DashboardTvDisplay', 'linkingA', 'linkingB', 'linkingC', 'sonteX', 'sulaM', 'lodansewinG', 'OfficetV', 'expedisi', 'linkingD', 'linkingAbaru', 'linkingBbaru', 'linkingCbaru', 'linkingDbaru', 'sulamAbaru', 'sulamBbaru', 'sontexAbaru', 'sontexBbaru', 'sewingloAbaru', 'sewingloBbaru', 'officeBaru', 'Tandatangankontrak'] // halaman tanpa login
   const authRequired = !publicPages.includes(to.name)
-
   if (authRequired && !isLoggedIn) {
     next({ name: 'Login' })
   } else if (to.name === 'Login' && isLoggedIn) {
@@ -349,6 +369,5 @@ router.beforeEach((to, from, next) => {
     next()
   }
 })
-
 
 export default router

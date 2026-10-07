@@ -57,7 +57,7 @@
                           <img 
                             :src="`${API_BASE_URL}/uploads/gallery/${item.image}`" 
                             alt="Gallery" 
-                            class="rounded shadow-sm border"
+                            class="rounded shadow-sm"
                             style="height: 60px; width: 100px; object-fit: cover;"
                           >
                         </td>
@@ -94,7 +94,7 @@
     <Footer />
   </div>
 
-  <div class="modal fade" id="galleryModal" tabindex="-1">
+  <div class="modal fade" id="galleryModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content rounded-4 shadow">
         <div class="modal-header bg-primary text-white">
@@ -118,14 +118,14 @@
                 <p class="small text-muted mb-1">Pratinjau:</p>
                 <img
                   :src="form.preview"
-                  class="img-thumbnail shadow-sm border"
+                  class="img-thumbnail shadow-sm"
                   style="max-height: 200px"
                 />
               </div>
             </div>
             <div class="d-flex justify-content-end mt-4">
               <button type="button" class="btn btn-secondary me-2" data-bs-dismiss="modal">Batal</button>
-              <button type="submit" class="btn btn-primary px-4" data-bs-dismiss="modal">
+              <button type="submit" class="btn btn-primary px-4">
                 {{ editMode ? "Update" : "Simpan" }}
               </button>
             </div>
@@ -152,7 +152,7 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 const API_GALLERY = API_BASE_URL + '/gallery-rekrutmen';
 
 const items = ref([]);
-const user = ref({});
+const user = ref(JSON.parse(localStorage.getItem('user')) || {});
 const sidebarOpen = ref(false);
 const windowWidth = ref(window.innerWidth);
 const loading = ref(false);
@@ -169,8 +169,11 @@ let table = null;
 const formatDateTime = (dateStr) => {
   if (!dateStr) return "-";
   return new Intl.DateTimeFormat("id-ID", {
-    year: "numeric", month: "short", day: "numeric",
-    hour: "2-digit", minute: "2-digit",
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
   }).format(new Date(dateStr));
 };
 
@@ -194,15 +197,18 @@ const reloadDataTable = () => {
       searching: true,
       autoWidth: false,
       responsive: true,
-      order: [[2, 'desc']],
+      order: [[2, 'desc']], // Urutkan berdasarkan kolom tanggal
       language: {
         search: "Cari:",
+        zeroRecords: "Gambar tidak ditemukan",
+        info: "Menampilkan _START_ sampai _END_ dari _TOTAL_ data",
         paginate: { next: "Next", previous: "Prev" },
       },
     });
-  }, 0);
+  }, 50);
 };
 
+// Re-init DataTable saat data items berubah
 watch(items, () => reloadDataTable(), { deep: true });
 
 async function loadItems() {
@@ -238,6 +244,10 @@ async function saveItem() {
     const fd = new FormData();
     if (form.value.image) fd.append('image', form.value.image);
 
+    // Tutup modal secara manual menggunakan Bootstrap API atau data-bs-dismiss di tombol
+    const modalElement = document.getElementById('galleryModal');
+    const modalInstance = bootstrap.Modal.getInstance(modalElement);
+
     if (editMode.value) {
       await axios.put(`${API_GALLERY}/${form.value.id}`, fd);
       Swal.fire("Berhasil", "Galeri berhasil diperbarui.", "success");
@@ -245,6 +255,8 @@ async function saveItem() {
       await axios.post(API_GALLERY, fd);
       Swal.fire("Berhasil", "Gambar berhasil ditambahkan.", "success");
     }
+    
+    modalInstance.hide();
     loadItems();
   } catch (err) {
     console.error(err);
@@ -260,6 +272,7 @@ async function deleteItem(id) {
     showCancelButton: true,
     confirmButtonColor: "#d33",
     confirmButtonText: "Ya, Hapus!",
+    cancelButtonText: "Batal"
   });
 
   if (result.isConfirmed) {
@@ -278,10 +291,10 @@ const toggleSidebar = () => sidebarOpen.value = !sidebarOpen.value;
 const logout = () => { localStorage.clear(); window.location.href = "/login"; };
 
 onMounted(() => {
-  const userData = localStorage.getItem("user");
-  if (userData) user.value = JSON.parse(userData);
   loadItems();
-  window.addEventListener("resize", () => { windowWidth.value = window.innerWidth; });
+  window.addEventListener("resize", () => {
+    windowWidth.value = window.innerWidth;
+  });
 });
 
 onBeforeUnmount(() => {
@@ -290,12 +303,3 @@ onBeforeUnmount(() => {
   }
 });
 </script>
-
-<style scoped>
-.bg-light-soft {
-  background-color: #f8f9fa;
-}
-.table-container {
-  overflow-x: auto;
-}
-</style>

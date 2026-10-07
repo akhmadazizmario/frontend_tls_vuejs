@@ -2,7 +2,7 @@
   <footer
     class="bg-white text-center text-muted py-3 mt-auto border-top"
   >
-    ©{{ new Date().getFullYear() }}. by tim IT PT. Tri Lestari Sandang Industri, All rights reserved.
+    ©{{ new Date().getFullYear() }}. by PT. Tri Lestari Sandang Industri, All rights reserved.
   </footer>
 </template>
 

@@ -1,594 +1,673 @@
 <template>
-  <div class="container-fluid bg-dark vh-100 p-0 overflow-hidden text-dark font-main">
-    
-    <!-- 1. LOADING OVERLAY -->
-    <div v-if="isLoading" class="loading-overlay">
-      <div class="loader-box"></div>
-      <h1 class="fw-black display-3 text-warning">SINKRONISASI DATA...</h1>
-      <p class="text-white fs-4 text-uppercase">Mohon Tunggu, Mengatur Urutan Tampilan</p>
+  <div id="app">
+    <header>
+      <div class="brand">
+        <div class="logoBox">FIN</div>
+        <div class="titleBlock">
+          <h1>Laporan Finishing Harian</h1>
+          <div class="subtitle">Real-time Production Monitor</div>
+        </div>
+      </div>
+      <div class="headerRight">
+        <div class="shiftBadge" :class="shiftClass">{{ shiftLabel }}</div>
+        <div class="clockBox">
+          <div class="time">{{ clockTime }}</div>
+          <div class="date">{{ clockDate }}</div>
+        </div>
+      </div>
+    </header>
+
+    <div class="gedungBar">
+      <div class="gedungTab active">GEDUNG {{ gedung }}</div>
+      <div class="rowCount" v-if="filteredRows.length">{{ markCount }} Style Produksi</div>
     </div>
 
-    <!-- 2. SLIDE 1: PRODUCTION SUMMARY (MODERN PREMIUM) -->
-    <Transition name="fade-slide">
-      <div v-if="activeView === 'summary' && !isLoading" class="vh-100 w-100 d-flex flex-column p-5 bg-main-summary text-white overflow-hidden position-relative" style="box-sizing: border-box;">
-        
-        <div class="row align-items-center mb-4 m-0" style="height: 12vh;">
-          <div class="col-6 text-start p-0">
-            <h1 class="fw-black text-white m-0 tracking-tighter line-height-1" style="font-size: 3.5rem;">
-              PRODUCTION <span class="text-warning">SUMMARY</span>
-            </h1>
-            <p class="fs-3 m-0 mt-2 fw-bold tracking-widest text-uppercase text-white">
-              QC LAMPU & SULAM - Line B
-            </p>
-          </div>
-
-          <div class="col-6 text-end p-0">
-            <div class="status-badge mb-2 d-inline-block px-4 py-2 fs-4 fw-bold" style="background: rgba(255, 255, 255, 0.1); border-radius: 8px;">SYSTEM ACTIVE</div>
-            <h2 class="fw-black m-0 text-shadow" style="font-size: 3rem;">
-              {{ new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) }} WIB
-            </h2>
-          </div>
+    <main>
+      <div class="tableWrap">
+        <div v-if="fetchFailed && rows.length === 0" class="errBox">
+          <div class="errIcon">!</div>
+          <div>GAGAL MENGAMBIL DATA DARI SERVER</div>
+          <span class="errUrl">{{ endpoint }}</span>
         </div>
 
-        <div class="row flex-grow-1 justify-content-center align-items-center m-0" style="height: 83vh;">
-          <div v-for="line in summaryData" :key="line.xLine" class="col-12 p-0 h-100">
-            
-            <div class="summary-card border-primary shadow-glow-primary d-flex flex-column h-100" style="overflow: hidden; background: rgba(10, 15, 30, 0.7); border-radius: 24px;">
-              <div class="card-glow glow-primary"></div>
-              
-              <div class="summary-content d-flex flex-column h-100 p-5 position-relative justify-content-between flex-grow-1">
-                
-                <div class="d-flex justify-content-between align-items-center m-0" style="height: 10vh;">
-                  <div class="line-pill shadow-lg bg-primary px-5 py-3 fw-black text-white" style="font-size: 3rem; border-radius: 16px;">
-                    {{ line.xLine }}
-                  </div>
-                  <div class="status-pill fw-bold bg-black bg-opacity-40 px-4 py-3 rounded-pill border border-secondary border-opacity-20" style="font-size: 1.8rem; letter-spacing: 2px;">
-                    <i class="bi bi-record-fill text-success me-3 animate-pulse"></i> MONITORING
-                  </div>
-                </div>
-
-                <div class="row g-5 align-items-center my-auto flex-grow-1" style="height: 50vh;">
-                  
-                  <div class="col-6 d-flex flex-column justify-content-center h-100 border-end border-secondary border-opacity-25 pe-5">
-                    <div class="data-box-premium text-center w-100">
-                      <h2 class="label-premium fw-black mb-3 text-warning" style="font-size: 2.2rem; letter-spacing: 5px;">
-                        OUTPUT QC LAMPU
-                      </h2>
-                      <div class="value-wrapper justify-content-center d-flex align-items-baseline">
-                        <span class="value-premium fw-black text-white" style="font-size: 8rem; line-height: 1;">{{ line.hasil_qc || 0 }}</span>
-                        <span class="unit-premium fw-bold ms-3 text-white-50" style="font-size: 2.5rem;">QTY</span>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div class="col-6 d-flex flex-column justify-content-center h-100 ps-5">
-                    <div class="data-box-premium text-center w-100">
-                      <h2 class="label-premium fw-black mb-3 text-info" style="font-size: 2.2rem; letter-spacing: 5px;">
-                        OUTPUT SULAM
-                      </h2>
-                      <div class="value-wrapper justify-content-center d-flex align-items-baseline">
-                        <span class="value-premium fw-black text-white" style="font-size: 8rem; line-height: 1;">{{ line.hasil_sulam || 0 }}</span>
-                        <span class="unit-premium fw-bold ms-3 text-white-50" style="font-size: 2.5rem;">QTY</span>
-                      </div>
-                    </div>
-                  </div>
-
-                </div>
-
-                <div class="operator-glass-section p-4 row align-items-center m-0 bg-black bg-opacity-40 border-top border-secondary border-opacity-20" style="height: 13vh; border-radius: 16px;">
-                  <div class="col-4 d-flex align-items-center">
-                    <div class="operator-avatar me-4 bg-primary bg-opacity-20 d-flex align-items-center justify-content-center rounded-circle text-primary" style="width: 70px; height: 70px; font-size: 2.5rem; min-width: 70px;">
-                      <i class="bi bi-people-fill"></i>
-                    </div>
-                    <div>
-                      <h3 class="m-0 fw-black text-white uppercase tracking-wide" style="font-size: 1.8rem;">OPERATOR ACTIVE</h3>
-                      <p class="m-0 text-white-50 tracking-wider" style="font-size: 1.1rem; letter-spacing: 1px;">REALTIME MANPOWER</p>
-                    </div>
-                  </div>
-                  
-                  <div class="col-8 d-flex justify-content-around text-center">
-                    <div class="d-flex align-items-center gap-4">
-                      <div class="text-white fw-bold tracking-wider" style="font-size: 1.6rem;">QC LAMPU:</div>
-                      <div class="text-warning fw-black" style="font-size: 3.5rem;">{{ line.employee_qc || 0 }} <span class="fw-bold text-white" style="font-size: 1.8rem;">ORG</span></div>
-                    </div>
-                    <div style="border-left: 2px solid rgba(255,255,255,0.15); height: 50px;"></div>
-                    <div class="d-flex align-items-center gap-4">
-                      <div class="text-white fw-bold tracking-wider" style="font-size: 1.6rem;">SULAM:</div>
-                      <div class="text-info fw-black" style="font-size: 3.5rem;">{{ line.employee_sulam || 0 }} <span class="fw-bold text-white" style="font-size: 1.8rem;">ORG</span></div>
-                    </div>
-                  </div>
-                </div>
-
-              </div>
-            </div>
-          </div>
+        <div v-else-if="filteredRows.length === 0" class="empty">
+          BELUM ADA DATA FINISHING UNTUK GEDUNG {{ gedung }} HARI INI
         </div>
 
-      </div>
-    </Transition>
-
-    <!-- 3. SLIDE 2: LOW PERFORMANCE (ORIGINAL LAYOUT) -->
-    <Transition name="fade-slide">
-      <div v-if="activeView === 'under60' && !isLoading" class="vh-100 d-flex flex-column p-2 bg-silver">
-        <div class="header-danger-custom p-3 mb-2 rounded shadow border border-dark">
-          <div class="d-flex justify-content-between align-items-center">
-            <div>
-              <h1 class="fw-black m-0 display-3 text-white">LOW PERFORMANCE (&lt; 50%)</h1>
-              <p class="m-0 text-white fs-4 fw-bold opacity-75">Operator Masa Kerja &gt; 4 Bulan</p>
-            </div>
-            <span class="badge bg-white text-danger fs-2 border border-dark px-4 shadow">QC LAMPU DAN SULAM LINE B</span>
-          </div>
-        </div>
-        
-        <div class="table-frame flex-grow-1 bg-white border border-4 border-dark shadow overflow-hidden d-flex flex-column">
-          <div v-if="under60Data.length === 0" class="flex-grow-1 d-flex flex-column align-items-center justify-content-center text-center p-5">
-            <p class="fs-2 text-muted text-uppercase text-dark">Tidak ada operator SULAM DAN QC LAMPU Line B yang dibawah target.</p>
-          </div>
-
-          <table v-else class="table-custom table-fixed">
-            <thead class="bg-navy text-white">
-              <tr class="header-text-white">
-                <th style="width: 80px;">NO</th>
-                <th style="width: 120px;">LINE</th>
-                <th class="text-start px-4">NAMA OPERATOR</th>
-                <th style="width: 250px;">MASA KERJA</th>
-                <th style="width: 200px;" class="bg-warning text-dark border-start-dark">RATE %</th>
+        <template v-else>
+          <table class="headTable">
+            <colgroup>
+              <col style="width: 12%" />
+              <col style="width: 9%" />
+              <col style="width: 15%" />
+              <col style="width: 22%" />
+              <col style="width: 10%" />
+              <col style="width: 10.67%" />
+              <col style="width: 10.66%" />
+              <col style="width: 10.67%" />
+            </colgroup>
+            <thead>
+              <tr>
+                <th>Style</th>
+                <th>Gedung</th>
+                <th>Pekerjaan</th>
+                <th>Team</th>
+                <th>Qty Plan</th>
+                <th>{{ activeJamColumns[0].label }}</th>
+                <th>{{ activeJamColumns[1].label }}</th>
+                <th>{{ activeJamColumns[2].label }}</th>
               </tr>
             </thead>
-            <tbody>
-              <tr v-for="(item, index) in paginatedUnder60" :key="index" class="border-bottom-dark">
-                <td class="fs-1 bg-light fw-black border-end-dark">{{ (currentUnder60Page - 1) * itemsPerPage + index + 1 }}</td>
-                <td class="fs-2 fw-black border-end-dark">{{ cleanLineName(item.xGroup) }}</td>
-                <td class="fs-1 text-start px-4 text-uppercase fw-black text-dark border-end-dark text-truncate">{{ item.xEmplName }}</td>
-                <td class="fs-2 text-primary fw-black border-end-dark bg-light-blue">{{ formatLOS(item.xJoinMonth) }}</td>
-                <td class="display-3 text-danger bg-yellow-soft fw-black">{{ Math.round(item.xTRealRate) }}%</td>
-              </tr>
-            </tbody>
           </table>
-        </div>
-      </div>
-    </Transition>
 
-    <!-- 4. SLIDE 3: HASIL PRODUKSI PER 3 JAM -->
-    <Transition name="fade-slide">
-      <div v-if="activeView === 'table' && !isLoading" class="vh-100 w-100 d-flex flex-column p-4 bg-silver overflow-hidden position-relative" style="box-sizing: border-box;">
-        
-        <div class="header-navy-custom p-4 mb-3 rounded shadow border border-dark d-flex justify-content-between align-items-center" style="height: 12vh;">
-          <div>
-            <h1 class="fw-black m-0 display-4 text-white">HASIL PROD SULAM & QC LAMPU Line B</h1>
-            <h4 class="fw-bold text-warning m-0 text-uppercase fs-3">
-              MONITORING Operator RATE &lt; 50% — <span class="text-white bg-danger px-2 rounded">SHIFT {{ currentShift }}</span>
-            </h4>
+          <div class="scrollViewport" ref="scrollViewport">
+            <table class="bodyTable">
+              <colgroup>
+                <col style="width: 12%" />
+                <col style="width: 9%" />
+                <col style="width: 15%" />
+                <col style="width: 22%" />
+                <col style="width: 10%" />
+                <col style="width: 10.67%" />
+                <col style="width: 10.66%" />
+                <col style="width: 10.67%" />
+              </colgroup>
+              <tbody>
+                <tr
+                  v-for="(row, idx) in displayRows"
+                  :key="idx"
+                  :class="{ 'group-first': row._isFirst }"
+                >
+                  <td v-if="row._isFirst" class="xmark" :rowspan="row._span">
+                    {{ row.xMark || '-' }}
+                  </td>
+                  <td v-if="row._isFirst" class="gedung" :rowspan="row._span">
+                    {{ row.Gedung || '-' }}
+                  </td>
+                  <td
+                    class="pekerjaan"
+                    :class="{
+                      sulam: row.Pekerjaan === 'SULAM',
+                      qc: row.Pekerjaan === 'QC LAMPU',
+                    }"
+                  >
+                    {{ row.Pekerjaan || '-' }}
+                  </td>
+                  <td class="team">{{ row.Nama_Team || '-' }}</td>
+                  <td class="plan">{{ formatNum(row.Qty_Plan_Total) }}</td>
+                  <td
+                    v-for="col in activeJamColumns"
+                    :key="col.key"
+                    class="jam"
+                    :class="Number(row[col.key] || 0) > 0 ? 'hasQty' : 'zero'"
+                  >
+                    {{ Number(row[col.key] || 0) > 0 ? formatNum(row[col.key]) : '—' }}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
           </div>
-          <div class="bg-warning px-4 py-2 rounded border border-dark fw-black fs-2 text-dark">ACTIVE</div>
-        </div>
-
-        <div class="table-frame flex-grow-1 bg-white border border-4 border-dark shadow overflow-hidden d-flex flex-column" style="height: 83vh;">
-          
-          <div v-if="filteredProductionData.length === 0" class="flex-grow-1 d-flex flex-column align-items-center justify-content-center text-center p-5">
-            <p class="display-6 fw-bold text-dark text-uppercase">Tidak ada operator Sulam dan QC lampu Line B yang dibawah target pada Shift {{ currentShift }}.</p>
-          </div>
-
-          <table v-else class="table-custom table-fixed h-100 m-0" style="width: 100%;">
-            <thead class="bg-black text-white text-center">
-              <tr class="header-text-white">
-                <th rowspan="2" style="width: 70px; color:white;">NO</th>
-                <th rowspan="2" style="width: 80px; color:white;">LINE</th>
-                <th rowspan="2" class="text-start px-3" style="width: 25%; color:white;">NAMA OPERATOR</th>
-                <th rowspan="2" style="width: 140px; color:white;">MASA KERJA</th>
-                <th rowspan="2" style="width: 12%; color:white;">STYLE</th>
-                <th rowspan="2" style="width: 15%; color:white;">PROSES</th>
-                
-                <th colspan="3" class="bg-success text-white py-1 border-bottom-dark border-start-dark">
-                  HASIL PRODUKSI 
-                </th>
-              </tr>
-              <tr class="header-text-white">
-                <th v-for="n in currentHourColumns" :key="n" class="p-0 border-start-dark border-bottom-dark" style="width: 15%;">
-                  <div class="d-flex w-100 h-100">
-                    <div class="bg-dark py-2 text-warning fs-5 fw-bold" style="width: 50%;">Tgt {{ n }}</div>
-                    <div class="bg-success py-2 border-end border-dark text-white fs-4 fw-bold" style="width: 50%;">JAM {{ n }}</div>
-                    
-                  </div>
-                </th>
-              </tr>
-            </thead>
-            
-            <tbody class="text-center fw-black">
-              <tr v-for="(item, index) in paginatedData" :key="index" class="border-bottom-dark" style="height: 10.5vh;">
-                <td class="display-6 bg-light border-end-dark" style="vertical-align: middle;">{{ (currentPage - 1) * itemsPerPage + index + 1 }}</td>
-                <td class="fs-3 border-end-dark" style="vertical-align: middle;">{{ cleanLineName(item.xGroup) }}</td>
-                <td class="fs-3 text-start px-3 text-dark border-end-dark text-truncate" style="vertical-align: middle; max-width: 220px;">{{ item.xEmplName }}</td>
-                <td class="fs-4 text-dark border-end-dark bg-light-blue" style="vertical-align: middle;">{{ formatLOS(item.xJoinMonth) }}</td>
-                <td class="fs-4 text-dark border-end-dark text-truncate" style="vertical-align: middle; max-width: 110px;">{{ item.xMark || '-' }}</td>
-                <td class="fs-4 text-dark border-end-dark text-truncate" style="vertical-align: middle; max-width: 140px;">{{ item.xWorkName || '-' }}</td>
-                
-                <td v-for="n in currentHourColumns" :key="n" class="p-0 border-end-dark hour-col" style="vertical-align: middle;">
-                  <div class="d-flex h-100 align-items-stretch">
-                    <div class="fs-3 fw-black py-2 text-primary bg-white d-flex align-items-center justify-content-center" style="width: 50%;">
-                      {{ item.hourlyTarget[n] % 1 === 0 ? item.hourlyTarget[n] : item.hourlyTarget[n].toFixed(1) }}
-                    </div>
-                    <div class="display-6 fw-black py-2 text-dark border-end border-dark bg-yellow-soft d-flex align-items-center justify-content-center" style="width: 50%;">
-                      {{ item.hourlyQty[n] || 0 }}
-                    </div>
-                    
-                  </div>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
-        <div class="fixed-bottom bg-black" style="height: 12px;">
-          <div class="h-100 bg-warning shadow" :style="{ width: scrollProgress + '%', transition: 'none' }"></div>
-        </div>
+        </template>
       </div>
-    </Transition>
+    </main>
 
-    <!-- BOTTOM PROGRESS BAR -->
-    <div class="fixed-bottom bg-black" style="height: 12px;">
-      <div class="h-100 bg-warning shadow" :style="{ width: scrollProgress + '%', transition: 'none' }"></div>
-    </div>
+    <footer>
+      <div class="legend">
+        <span><i class="dotGreen"></i> Sudah Ada Qty</span>
+        <span><i class="dotGray"></i> Belum Ada</span>
+        <span class="lastUpdateLabel">Update terakhir: <b>{{ lastUpdate }}</b></span>
+      </div>
+      <div class="refreshInfo">Refresh data otomatis setiap 1 jam</div>
+    </footer>
   </div>
 </template>
 
-<script setup>
-import { ref, onMounted, computed } from 'vue';
-import axios from 'axios';
+<script>
+const API_BASE_URL =
+  (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_API_BASE_URL) ||
+  process.env.VUE_APP_API_BASE_URL ||
+  '';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
-const isLoading = ref(true);
-const rawData = ref([]);
-const under60Data = ref([]);
-const summaryData = ref([]);
-const activeView = ref('summary');
-const currentPage = ref(1);
-const currentUnder60Page = ref(1);
-const itemsPerPage = ref(6);
-const scrollProgress = ref(0);
+const REFRESH_DATA_MS = 60 * 60 * 1000; // refresh data tiap 1 jam
+const SCROLL_DURATION_MS = 90000; // waktu tempuh bergerak dari atas ke bawah (45 detik)
+const SCROLL_PAUSE_MS = 7000; // jeda 5 detik di paling atas & paling bawah
 
-// Reactive tracking jam internal monitor
-const currentHourRealtime = ref(new Date().getHours());
+const JAM_COLUMNS = [
+  { key: 'Jam_07_59', label: 's/d 08:00', hour: 8 },
+  { key: 'Jam_10_59', label: 's/d 11:00', hour: 11 },
+  { key: 'Jam_13_59', label: 's/d 14:00', hour: 14 },
+  { key: 'Jam_15_59', label: 's/d 16:00', hour: 16 },
+  { key: 'Jam_18_59', label: 's/d 19:00', hour: 19 },
+  { key: 'Jam_22_30', label: 's/d 22:30', hour: 22.5 },
+];
 
-const formatLOS = (m) => {
-  if (!m) return '0Bln';
-  const years = Math.floor(m / 12);
-  const months = m % 12;
-  return (years > 0 ? `${years}Thn ` : '') + (months > 0 ? `${months}Bln` : (years > 0 ? '' : '0Bln'));
-};
-
-const currentShift = computed(() => {
-  return currentHourRealtime.value >= 14 ? 2 : 1;
-});
-
-const currentHourColumns = computed(() => {
-  return currentShift.value === 1 ? [8, 11, 14] : [17, 19, 22];
-});
-
-const cleanLineName = (name) => {
-  if (!name) return '-';
-  let upperName = name.toUpperCase();
-  if (upperName.includes('QC')) return 'QC B';
-  if (upperName.includes('SULAM')) return 'SLM B';
-  return upperName.replace('SULAM', 'SLM').replace('S LINE', '').replace('LINE', '').trim();
-};
-
-const getProcessOrder = (workName) => {
-  if (!workName) return 99;
-  const name = workName.toUpperCase();
-  if (name.includes('QC') || name.includes('LAMPU') || name.includes('LMP')) return 1;
-  if (name.includes('SULAM') || name.includes('SLM')) return 2;
-  return 3;
-};
-
-const groupedData = computed(() => {
-  const groups = {};
-  const isShift1 = currentShift.value === 1;
-  const currentHour = currentHourRealtime.value;
-
-  rawData.value.forEach(row => {
-    const key = `${row.xEmplName}_${row.xMark}_${row.xWorkName}`;
-    
-    if (!groups[key]) {
-      groups[key] = { 
-        xEmplName: row.xEmplName, 
-        xGroup: row.xGroup, 
-        xMark: row.xMark,
-        xWorkName: row.xWorkName, 
-        xJoinMonth: row.xJoinMonth || 0, 
-        xTRealRate: row.xTRealRate || 0,
-        hourlyQty: isShift1 ? { 8: 0, 11: 0, 14: 0 } : { 17: 0, 19: 0, 22: 0 },
-        hourlyTarget: isShift1 ? { 8: 0, 11: 0, 14: 0 } : { 17: 0, 19: 0, 22: 0 }
-      };
-    }
-
-    if (isShift1) {
-      // --- SHIFT 1 TIME-GATE (Disesuaikan dengan Target SQL) ---
-      
-      // Kolom Jam 8: Selalu Muncul
-      groups[key].hourlyQty[8] = Math.max(groups[key].hourlyQty[8], row.xJam8 || 0);
-      groups[key].hourlyTarget[8] = Math.max(groups[key].hourlyTarget[8], row.target8 || 0);
-
-      // Kolom Jam 11: Muncul jika jam komputer sudah melewati jam 8 pagi
-      if (currentHour >= 8) {
-        groups[key].hourlyQty[11] = Math.max(groups[key].hourlyQty[11], row.xJam11 || 0);
-        groups[key].hourlyTarget[11] = Math.max(groups[key].hourlyTarget[11], row.target11 || 0);
-      } else {
-        groups[key].hourlyQty[11] = 0;
-        groups[key].hourlyTarget[11] = 0;
-      }
-
-      // Kolom Jam 14: Muncul jika jam komputer sudah melewati jam 11 siang
-      if (currentHour >= 11) {
-        groups[key].hourlyQty[14] = Math.max(groups[key].hourlyQty[14], row.xJam14 || 0);
-        groups[key].hourlyTarget[14] = Math.max(groups[key].hourlyTarget[14], row.target14 || 0);
-      } else {
-        groups[key].hourlyQty[14] = 0;
-        groups[key].hourlyTarget[14] = 0;
-      }
-
-    } else {
-      // --- SHIFT 2 TIME-GATE (Disesuaikan dengan Target SQL) ---
-      
-      // Kolom Jam 17: Selalu Muncul di Shift 2
-      groups[key].hourlyQty[17] = Math.max(groups[key].hourlyQty[17], row.xJam17 || 0);
-      groups[key].hourlyTarget[17] = Math.max(groups[key].hourlyTarget[17], row.target17 || 0);
-
-      // Kolom Jam 19: Muncul jika jam komputer sudah melewati jam 17 (5 sore)
-      if (currentHour >= 17) {
-        groups[key].hourlyQty[19] = Math.max(groups[key].hourlyQty[19], row.xJam19 || 0);
-        groups[key].hourlyTarget[19] = Math.max(groups[key].hourlyTarget[19], row.target19 || 0);
-      } else {
-        groups[key].hourlyQty[19] = 0;
-        groups[key].hourlyTarget[19] = 0;
-      }
-
-      // Kolom Jam 22: Muncul jika jam komputer sudah melewati jam 19 (7 malam)
-      if (currentHour >= 19) {
-        groups[key].hourlyQty[22] = Math.max(groups[key].hourlyQty[22], row.xJam22 || 0);
-        groups[key].hourlyTarget[22] = Math.max(groups[key].hourlyTarget[22], row.target22 || 0);
-      } else {
-        groups[key].hourlyQty[22] = 0;
-        groups[key].hourlyTarget[22] = 0;
-      }
-    }
-  });
-
-  return Object.values(groups);
-});
-
-const filteredProductionData = computed(() => {
-  const isShift1 = currentShift.value === 1;
-
-  const filtered = groupedData.value.filter(item => {
-    const isLineA = item.xGroup?.toUpperCase().includes("LINE A");
-    const isUnderRate = item.xTRealRate < 50;
-    const isSenior = item.xJoinMonth > 4;
-    
-    if (!isLineA || !isUnderRate || !isSenior) return false;
-
-    // Singkirkan data kosong sisa shift sebelumnya dari render tabel berjalan
-    if (isShift1) {
-      return (item.hourlyQty[8] > 0 || item.hourlyQty[11] > 0 || item.hourlyQty[14] > 0);
-    } else {
-      return (item.hourlyQty[17] > 0 || item.hourlyQty[19] > 0 || item.hourlyQty[22] > 0);
-    }
-  });
-
-  return filtered.sort((a, b) => {
-    const orderA = getProcessOrder(a.xWorkName);
-    const orderB = getProcessOrder(b.xWorkName);
-    if (orderA !== orderB) return orderA - orderB;
-    return (a.xEmplName || '').localeCompare(b.xEmplName || '');
-  });
-});
-
-const paginatedData = computed(() => filteredProductionData.value.slice((currentPage.value - 1) * itemsPerPage.value, currentPage.value * itemsPerPage.value));
-const paginatedUnder60 = computed(() => under60Data.value.slice((currentUnder60Page.value - 1) * itemsPerPage.value, currentUnder60Page.value * itemsPerPage.value));
-
-const fetchAllData = async () => {
-  try {
-    currentHourRealtime.value = new Date().getHours();
-
-    const [resD, resU, resS] = await Promise.all([
-      axios.get(`${API_BASE_URL}/tv-baru/target3jam-sulam`),
-      axios.get(`${API_BASE_URL}/tv-baru/under50sulam`),
-      axios.get(`${API_BASE_URL}/tv-baru/sulamreport`)
-    ]);
-    
-    rawData.value = resD.data.success ? resD.data.data : [];
-    
-    if (resU.data.success) {
-      const filteredUnder60 = resU.data.data.filter(x => 
-        x.xGroup?.toUpperCase().includes("LINE B") && 
-        x.xJoinMonth > 4 && 
-        x.xTRealRate < 50
-      );
-      
-      under60Data.value = filteredUnder60.sort((a, b) => {
-        const orderA = getProcessOrder(a.xWorkName);
-        const orderB = getProcessOrder(b.xWorkName);
-        if (orderA !== orderB) return orderA - orderB;
-        return (a.xEmplName || '').localeCompare(b.xEmplName || '');
+export default {
+  name: 'TvFinishingGedungB',
+  data() {
+    return {
+      gedung: 'B',
+      endpoint: `${API_BASE_URL.replace(/\/$/, '')}/tv-finishing/tv-d`,
+      rows: [],
+      fetchFailed: false,
+      lastUpdate: '-',
+      clockTime: '--:--:--',
+      clockDate: '-',
+      shiftLabel: 'SHIFT 1',
+      shiftClass: 'shift1',
+      now: new Date(),
+      _dataTimer: null,
+      _clockTimer: null,
+      _animFrameId: null,
+      _scrollDir: 1, // 1 = bergerak ke bawah, -1 = bergerak ke atas
+      _startTime: null,
+      _startScrollTop: 0,
+      _pausedUntil: 0,
+    };
+  },
+  computed: {
+    filteredRows() {
+      return this.rows.filter((r) => (r.Gedung || '-') === this.gedung);
+    },
+    scrollRows() {
+      return this.filteredRows;
+    },
+    // Menyiapkan data untuk ditampilkan dengan kolom Style & Gedung digabung (rowspan)
+    // untuk setiap xMark yang punya lebih dari satu baris pekerjaan (mis. SULAM + QC LAMPU).
+    displayRows() {
+      const rows = this.filteredRows;
+      const spanCount = {};
+      rows.forEach((r) => {
+        spanCount[r.xMark] = (spanCount[r.xMark] || 0) + 1;
       });
-    } else {
-      under60Data.value = [];
-    }
-    
-    if (resS.data.success) {
-      summaryData.value = resS.data.data.filter(i => i.xLine === 'LINE B');
-    }
-  } catch (e) { 
-    console.error("Error Fetching Data:", e); 
-  }
-};
 
-const runTimer = (ms) => new Promise(res => {
-  const start = Date.now();
-  const timer = setInterval(() => {
-    const elapsed = Date.now() - start;
-    scrollProgress.value = (elapsed / ms) * 100;
-    if (elapsed >= ms) { 
-      clearInterval(timer); 
-      res(); 
-    }
-  }, 50);
-});
+      const seen = {};
+      return rows.map((r) => {
+        const isFirst = !seen[r.xMark];
+        seen[r.xMark] = true;
+        return {
+          ...r,
+          _isFirst: isFirst,
+          _span: spanCount[r.xMark],
+        };
+      });
+    },
+    markCount() {
+      return new Set(this.filteredRows.map((r) => r.xMark)).size;
+    },
+    activeJamColumns() {
+      const hour = this.now.getHours() + this.now.getMinutes() / 60;
 
-const startDisplayLoop = async () => {
-  await fetchAllData();
-  isLoading.value = false;
+      let passedIdx = -1;
+      JAM_COLUMNS.forEach((c, i) => {
+        if (hour >= c.hour) passedIdx = i;
+      });
 
-  setTimeout(() => {
-    window.location.reload(true); 
-  }, 60 * 60 * 1000);
-
-  setInterval(() => {
-    currentHourRealtime.value = new Date().getHours();
-  }, 60000);
-
-  while (true) {
-    activeView.value = 'summary';
-    await runTimer(10000);
-
-    activeView.value = 'under60';
-    const uPageCount = Math.ceil(under60Data.value.length / itemsPerPage.value) || 1;
-    for (let p = 1; p <= uPageCount; p++) {
-      currentUnder60Page.value = p;
-      await runTimer(15000);
-    }
-
-    activeView.value = 'table';
-    const tData = filteredProductionData.value;
-    const tPageCount = Math.ceil(tData.length / itemsPerPage.value) || 1;
-
-    if (tData.length > 0) {
-      for (let p = 1; p <= tPageCount; p++) {
-        currentPage.value = p;
-        await runTimer(20000);
+      let startIdx = 0;
+      if (passedIdx >= 2) {
+        startIdx = Math.min(passedIdx - 1, JAM_COLUMNS.length - 3);
       }
-    } else {
-      await runTimer(2000);
-    }
-  }
+      startIdx = Math.max(0, startIdx);
+
+      return JAM_COLUMNS.slice(startIdx, startIdx + 3);
+    },
+  },
+  watch: {
+    filteredRows: {
+      handler() {
+        this.$nextTick(() => {
+          this.startAutoScroll();
+        });
+      },
+      deep: true,
+      immediate: true,
+    },
+  },
+  methods: {
+    formatNum(v) {
+      return Number(v || 0).toLocaleString('id-ID');
+    },
+    async fetchData() {
+      try {
+        const res = await fetch(this.endpoint, { cache: 'no-store' });
+        const json = await res.json();
+        if (!json.status) throw new Error(json.message || 'Gagal mengambil data');
+        this.rows = json.data || [];
+        this.fetchFailed = false;
+        this.lastUpdate = new Date().toLocaleTimeString('id-ID');
+      } catch (err) {
+        console.error('Fetch error:', err);
+        this.fetchFailed = true;
+      }
+    },
+    updateClock() {
+      this.now = new Date();
+      const pad = (n) => n.toString().padStart(2, '0');
+      this.clockTime = `${pad(this.now.getHours())}:${pad(this.now.getMinutes())}:${pad(
+        this.now.getSeconds()
+      )}`;
+      const hariList = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+      const bulanList = [
+        'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun',
+        'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des',
+      ];
+      this.clockDate = `${hariList[this.now.getDay()]}, ${this.now.getDate()} ${
+        bulanList[this.now.getMonth()]
+      } ${this.now.getFullYear()}`;
+
+      const hour = this.now.getHours() + this.now.getMinutes() / 60;
+      const isShift1 = hour >= 7 && hour < 14;
+      this.shiftLabel = isShift1 ? 'SHIFT 1' : 'SHIFT 2';
+      this.shiftClass = isShift1 ? 'shift1' : 'shift2';
+    },
+    startAutoScroll() {
+      this.stopAutoScroll();
+
+      const el = this.$refs.scrollViewport;
+      if (el) {
+        el.scrollTop = 0; // Kembalikan posisi ke atas
+      }
+
+      this._scrollDir = 1;
+      this._startTime = null;
+      // Memberi jeda 5 detik saat pertama kali halaman terbuka / data dimuat
+      this._pausedUntil = performance.now() + SCROLL_PAUSE_MS;
+
+      const step = (timestamp) => {
+        const viewportEl = this.$refs.scrollViewport;
+
+        if (!viewportEl) {
+          this._animFrameId = requestAnimationFrame(step);
+          return;
+        }
+
+        const maxScroll = viewportEl.scrollHeight - viewportEl.clientHeight;
+
+        // Jika data sedikit dan muat di layar, tidak perlu scroll
+        if (maxScroll <= 0) {
+          this._startTime = null;
+          this._animFrameId = requestAnimationFrame(step);
+          return;
+        }
+
+        // Cek apakah masih dalam masa jeda 5 detik (di posisi atas atau bawah)
+        if (timestamp < this._pausedUntil) {
+          this._startTime = null;
+          this._animFrameId = requestAnimationFrame(step);
+          return;
+        }
+
+        if (!this._startTime) {
+          this._startTime = timestamp;
+          this._startScrollTop = viewportEl.scrollTop;
+        }
+
+        const elapsed = timestamp - this._startTime;
+        const progress = Math.min(elapsed / SCROLL_DURATION_MS, 1);
+
+        if (this._scrollDir === 1) {
+          // Bergerak perlahan ke bawah
+          viewportEl.scrollTop = this._startScrollTop + (maxScroll - this._startScrollTop) * progress;
+        } else {
+          // Bergerak perlahan ke atas
+          viewportEl.scrollTop = this._startScrollTop * (1 - progress);
+        }
+
+        // Ketika pergerakan mencapai ujung (bawah atau atas)
+        if (progress >= 1) {
+          this._pausedUntil = timestamp + SCROLL_PAUSE_MS; // Jeda 5 detik
+          this._scrollDir = this._scrollDir === 1 ? -1 : 1; // Balik arah
+          this._startTime = null;
+        }
+
+        this._animFrameId = requestAnimationFrame(step);
+      };
+
+      this._animFrameId = requestAnimationFrame(step);
+    },
+    stopAutoScroll() {
+      if (this._animFrameId) {
+        cancelAnimationFrame(this._animFrameId);
+        this._animFrameId = null;
+      }
+    },
+  },
+  mounted() {
+    this.updateClock();
+    this.fetchData();
+    this._clockTimer = setInterval(this.updateClock, 1000);
+    this._dataTimer = setInterval(this.fetchData, REFRESH_DATA_MS);
+  },
+  beforeUnmount() {
+    clearInterval(this._clockTimer);
+    clearInterval(this._dataTimer);
+    this.stopAutoScroll();
+  },
 };
-
-onMounted(() => {
-  startDisplayLoop();
-});
 </script>
+
 <style scoped>
-/* BASE */
-.font-main { font-family: 'Arial Black', Gadget, sans-serif; letter-spacing: -1.5px; }
-.bg-silver { background-color: #f0f0f0; }
-.bg-navy { background: #001f3f !important; }
+#app {
+  --bg: #eef1f5;
+  --panel: #ffffff;
+  --header-bg: #ffffff;
+  --navy: #0b3d66;
+  --navy-dark: #062a49;
+  --blue: #1f6fb2;
+  --line: #d7dee6;
+  --line-strong: #b9c4d0;
+  --ink: #10233a;
+  --ink-soft: #3d5266;
+  --green-bg: #e5f6ec;
+  --green: #157a3d;
+  --amber-bg: #fdf3e3;
+  --amber: #9a6400;
+  --red: #b3261e;
+  --red-bg: #fbe9e7;
+  --row-alt: #f5f8fb;
 
-/* SLIDE 2 & 3: TABLE ORIGINAL STYLES */
-.header-danger-custom { background: #b71c1c; border-bottom: 6px solid #000; }
-.header-navy-custom { background: #001f3f; border-bottom: 6px solid #000; }
-.table-custom { width: 100%; border-collapse: collapse; height: 100%; }
-.table-custom th, .table-custom td { border: 2px solid #000; vertical-align: middle; text-align: center; }
-.table-fixed { table-layout: fixed; }
-.bg-yellow-soft { background-color: #fffde7 !important; }
-.bg-light-blue { background-color: #e3f2fd !important; }
-.border-end-dark { border-right: 2px solid #000 !important; }
-.border-start-dark { border-left: 2px solid #000 !important; }
-.border-bottom-dark { border-bottom: 2px solid #000 !important; }
-.display-3 { font-size: 4rem; }
-.display-4 { font-size: 3.5rem; }
-.display-6 { font-size: 2.5rem; }
-
-/* ANIMATION & LOADING */
-.loading-overlay { position: fixed; inset: 0; background: #000; z-index: 999; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-.loader-box { width: 80px; height: 80px; border: 8px solid #333; border-top: 8px solid #ffc107; border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 20px; }
-@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-.fade-slide-enter-active, .fade-slide-leave-active { transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1); }
-.fade-slide-enter-from { opacity: 0; transform: scale(0.9) translateY(40px); }
-.fade-slide-leave-to { opacity: 0; transform: scale(1.1) translateY(-40px); }
-
-/* --- PREMIUM SLIDE 1 STYLES --- */
-.bg-main-summary { background: #0a0c10; background-image:  radial-gradient(at 0% 0%, rgba(0, 123, 255, 0.15) 0px, transparent 50%), radial-gradient(at 100% 100%, rgba(220, 53, 69, 0.15) 0px, transparent 50%); overflow: hidden;}
-.line-height-1 { line-height: 1; }
-.central-planning-card { background: rgba(255, 255, 255, 0.03); border: 2px solid rgba(255, 193, 7, 0.3); border-radius: 30px; padding: 15px 30px; text-align: center; backdrop-filter: blur(20px); box-shadow: 0 0 40px rgba(255, 193, 7, 0.1);}
-.planning-label { font-size: 1.2rem; color: #fff; font-weight: 800; letter-spacing: 4px; margin-bottom: 5px; }
-.planning-value { font-size: 5rem; font-weight: 900; line-height: 1;}
-.planning-unit { font-size: 1.5rem; font-weight: 700; }
-.planning-date { color: rgba(255,255,255,0.4); font-weight: bold; letter-spacing: 1px; }
-.summary-card { background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 50px; position: relative; overflow: hidden; backdrop-filter: blur(15px);}
-.card-glow { position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; z-index: 0; opacity: 0.1;}
-.glow-primary { background: radial-gradient(circle, #007bff 0%, transparent 70%); }
-.glow-danger { background: radial-gradient(circle, #dc3545 0%, transparent 70%); }
-.line-pill { padding: 12px 45px; border-radius: 20px; font-size: 2.5rem; font-weight: 900; color: white; letter-spacing: 2px;}
-.status-pill { background: rgba(255,255,255,0.05); padding: 8px 20px; border-radius: 50px; color: #fff; font-weight: bold; border: 1px solid rgba(255,255,255,0.1);}
-.data-box-premium { text-align: center; padding: 20px;}
-.label-premium { font-size: 2rem; color: rgba(255,255,255,0.6); font-weight: 700; letter-spacing: 5px;}
-.value-premium { font-size: 11rem; font-weight: 950; color: #fff; line-height: 1; text-shadow: 0 10px 30px rgba(0,0,0,0.5);}
-.unit-premium {
-  font-size: 3rem;
-  color: rgba(255,255,255,0.3);
-  font-weight: 800;
-  margin-left: 15px;
-}
-/* Tambahkan di style jika diperlukan agar layout tidak pecah */
-.table-fixed {
-  table-layout: fixed;
-  width: 100%;
-}
-
-.hour-col {
-  width: 160px; /* Atur lebar tetap untuk kolom JAM */
-}
-.bg-yellow-soft {
-  background-color: #fff9c4 !important;
-}
-
-/* Progress Bar */
-.progress-container {
-  height: 12px;
-  background: rgba(255,255,255,0.05);
-  border-radius: 10px;
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: 'Segoe UI', 'Arial', 'Helvetica Neue', sans-serif;
   overflow: hidden;
 }
-.progress-bar-fill {
-  height: 100%;
-  background: linear-gradient(90deg, #ffc107, #ff9800);
-  box-shadow: 0 0 15px rgba(255, 193, 7, 0.5);
-  transition: width 1s ease-in-out;
-}
 
-/* Operator Section Glass */
-.operator-glass-section {
-  background: rgba(255, 255, 255, 0.04);
-  padding: 30px;
-  border-radius: 30px;
-  border: 1px solid rgba(255,255,255,0.05);
+header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 28px;
+  background: var(--header-bg);
+  border-bottom: 4px solid var(--navy);
+  flex: 0 0 auto;
 }
-
-.operator-avatar {
-  width: 70px;
-  height: 70px;
-  background: rgba(255,255,255,0.1);
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.logoBox {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  background: var(--navy);
+  color: #fff;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 20px;
-  font-size: 2.5rem;
-  color: #fff;
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: 1px;
 }
-
-.operator-count {
-  font-size: 4.5rem;
+.titleBlock h1 {
+  font-size: 23px;
+  font-weight: 800;
+  color: var(--navy-dark);
+  letter-spacing: 0.3px;
+  line-height: 1.15;
+}
+.subtitle {
+  font-size: 13px;
+  color: var(--ink-soft);
+  letter-spacing: 0.5px;
+  font-weight: 700;
+}
+.headerRight {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+.clockBox {
+  text-align: right;
+}
+.clockBox .time {
+  font-size: 30px;
+  font-weight: 800;
+  color: var(--navy-dark);
+  letter-spacing: 1px;
+  font-variant-numeric: tabular-nums;
   line-height: 1;
 }
+.clockBox .date {
+  font-size: 13px;
+  color: var(--ink-soft);
+  letter-spacing: 0.3px;
+  margin-top: 3px;
+  font-weight: 700;
+}
+.shiftBadge {
+  padding: 9px 20px;
+  border-radius: 8px;
+  font-weight: 800;
+  font-size: 17px;
+  letter-spacing: 1px;
+  border: 2px solid transparent;
+}
+.shiftBadge.shift1 {
+  background: var(--green-bg);
+  color: var(--green);
+  border-color: var(--green);
+}
+.shiftBadge.shift2 {
+  background: #eaf1fb;
+  color: var(--blue);
+  border-color: var(--blue);
+}
 
-.status-badge {
-  display: inline-block;
-  background: #198754;
+.gedungBar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 10px 28px 0 28px;
+  flex: 0 0 auto;
+}
+.gedungTab {
+  padding: 9px 32px;
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+  border-radius: 8px 8px 0 0;
   color: #fff;
-  padding: 5px 15px;
-  border-radius: 5px;
-  font-size: 1rem;
-  font-weight: 900;
-  letter-spacing: 2px;
+  background: var(--navy);
+}
+.rowCount {
+  font-size: 15px;
+  color: var(--ink-soft);
+  font-weight: 700;
+}
+
+main {
+  flex: 1 1 auto;
+  padding: 0 28px 10px 28px;
+  overflow: hidden;
+  display: flex;
+  min-height: 0;
+}
+.tableWrap {
+  width: 100%;
+  border: 3px solid var(--navy);
+  border-radius: 0 12px 12px 12px;
+  overflow: hidden;
+  background: var(--panel);
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.headTable thead th {
+  background: var(--navy);
+  color: #ffffff;
+  font-size: 25px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  padding: 16px 10px;
+  text-align: center;
+  font-weight: 800;
+}
+
+.scrollViewport {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+.scrollViewport::-webkit-scrollbar {
+  display: none;
+}
+
+.bodyTable tbody tr.group-first td {
+  border-top: 3px solid var(--line-strong);
+}
+.bodyTable tbody tr:nth-child(even) {
+  background: var(--row-alt);
+}
+.bodyTable tbody td {
+  padding: 24px 12px;
+  text-align: center;
+  font-size: 37px;
+  border-bottom: 1px solid var(--line);
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  color: var(--ink);
+}
+td.xmark {
+  font-size: 50px;
+  font-weight: 800;
+  color: var(--navy-dark);
+  letter-spacing: 0.5px;
+  vertical-align: middle;
+  background: #f7fafc;
+}
+td.gedung {
+  color: var(--ink-soft);
+  font-size: 32px;
+  font-weight: 800;
+  vertical-align: middle;
+  background: #f7fafc;
+}
+td.pekerjaan {
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  font-size: 32px;
+}
+td.pekerjaan.sulam {
+  color: #0b5fa5;
+}
+td.pekerjaan.qc {
+  color: #b2650a;
+}
+td.team {
+  font-size: 29px;
+  color: var(--ink-soft);
+  font-weight: 700;
+}
+td.plan {
+  color: var(--ink-soft);
+  font-size: 34px;
+  font-weight: 800;
+}
+td.jam {
+  font-weight: 800;
+  font-size: 41px;
+}
+td.jam.zero {
+  color: #9aa7b3;
+  font-weight: 700;
+}
+td.jam.hasQty {
+  color: var(--green);
+}
+
+footer {
+  flex: 0 0 auto;
+  padding: 6px 28px 10px 28px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 15px;
+  color: var(--ink-soft);
+  font-weight: 700;
+}
+.legend {
+  display: flex;
+  gap: 22px;
+  align-items: center;
+}
+.legend span {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.dotGreen,
+.dotGray {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  display: inline-block;
+}
+.dotGreen {
+  background: var(--green);
+}
+.dotGray {
+  background: #9aa7b3;
+}
+.lastUpdateLabel b {
+  color: var(--navy-dark);
+}
+.refreshInfo {
+  font-weight: 600;
+}
+
+.empty {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 30px;
+  color: var(--ink-soft);
+  letter-spacing: 1px;
+  font-weight: 700;
+  text-align: center;
+  padding: 40px;
+}
+.errBox {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: var(--red);
+  font-size: 26px;
+  font-weight: 700;
+  gap: 14px;
+  text-align: center;
+  padding: 0 46px;
+}
+.errIcon {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: var(--red-bg);
+  color: var(--red);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 34px;
+  font-weight: 800;
+  border: 3px solid var(--red);
+}
+.errUrl {
+  font-size: 17px;
+  color: var(--ink-soft);
+  font-weight: 500;
 }
 </style>

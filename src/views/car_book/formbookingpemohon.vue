@@ -28,7 +28,7 @@
               <i class="bi bi-translate text-primary"></i>
               <select class="form-select form-select-sm border-0 bg-transparent fw-medium" v-model="currentLang">
                 <option value="id">🇮🇩 Bahasa Indonesia</option>
-                <option value="en">🇺🇸 English</option>
+                <option value="en">🇺🇸 English Language</option>
               </select>
             </div>
           </div>
@@ -36,7 +36,7 @@
           <!-- Quick stat strip -->
           <div class="hero-stat-strip position-relative mt-4">
             <div class="hero-stat">
-              <span class="hero-stat-icon"><i class="bi bi-truck"></i></span>
+              <span class="hero-stat-icon"><i class="bi bi-car-front"></i></span>
               <div>
                 <small class="d-block text-white-50">{{ t('fleetAvailable') }}</small>
                 <strong class="text-white fs-5">{{ totalMobilTersedia }} <span class="fs-6 fw-normal">{{ t('unit') }}</span></strong>
@@ -67,9 +67,8 @@
               <h5 class="fw-bold mb-0 text-dark">{{ t('formHeader') }}</h5>
             </div>
             
-            <!-- Badge Info Jumlah Mobil Berstatus 'Tersedia' -->
             <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-3 py-2 rounded-pill">
-              <i class="bi bi-truck me-1"></i> {{ t('fleetAvailable') }}: <strong>{{ totalMobilTersedia }} {{ t('unit') }}</strong>
+              <i class="bi bi-car-front"></i> {{ t('fleetAvailable') }}: <strong>{{ totalMobilTersedia }} {{ t('unit') }}</strong>
             </span>
           </div>
 
@@ -157,14 +156,37 @@
                           <option v-for="loc in listTujuan" :key="'asal-' + loc.id" :value="loc.id">{{ loc.nama_lokasi }}</option>
                           <option value="__custom__">➕ {{ t('addNewLocation') }}</option>
                         </select>
-                        <input
-                          v-if="asalPilihan === '__custom__'"
-                          type="text"
-                          class="form-control rounded-3 fs-6 mt-2"
-                          v-model="asalCustom"
-                          :placeholder="t('customLocationPlaceholder')"
-                          required
-                        />
+                        <template v-if="asalPilihan === '__custom__'">
+                          <input
+                            type="text"
+                            class="form-control rounded-3 fs-6 mt-2"
+                            v-model="asalCustom"
+                            :placeholder="t('customLocationPlaceholder')"
+                            required
+                          />
+                          <div class="location-type-tabs mt-2">
+                            <button
+                              type="button"
+                              class="location-type-btn"
+                              :class="{ active: asalCustomTipe === 'dalam' }"
+                              :disabled="!asalCustom.trim()"
+                              @click="applyLocationType('asal', 'dalam')"
+                            >
+                              <i class="bi bi-geo-alt-fill"></i> {{ t('dalamKota') }}
+                            </button>
+                            <button
+                              type="button"
+                              class="location-type-btn"
+                              :class="{ active: asalCustomTipe === 'luar' }"
+                              :disabled="!asalCustom.trim()"
+                              @click="applyLocationType('asal', 'luar')"
+                            >
+                              <i class="bi bi-signpost-2-fill"></i> {{ t('luarKota') }}
+                            </button>
+                          </div>
+                          <small v-if="!asalCustom.trim()" class="text-muted d-block mt-1">{{ t('locationTypeHint') }}</small>
+                          <small v-else-if="!asalCustomTipe" class="text-danger d-block mt-1">{{ t('locationTypeRequired') }}</small>
+                        </template>
                       </div>
                     </div>
 
@@ -190,14 +212,37 @@
                           <option v-for="loc in listTujuan" :key="'tujuan-' + loc.id" :value="loc.id">{{ loc.nama_lokasi }}</option>
                           <option value="__custom__">➕ {{ t('addNewLocation') }}</option>
                         </select>
-                        <input
-                          v-if="tujuanPilihan === '__custom__'"
-                          type="text"
-                          class="form-control rounded-3 fs-6 mt-2"
-                          v-model="tujuanCustom"
-                          :placeholder="t('customLocationPlaceholder')"
-                          required
-                        />
+                        <template v-if="tujuanPilihan === '__custom__'">
+                          <input
+                            type="text"
+                            class="form-control rounded-3 fs-6 mt-2"
+                            v-model="tujuanCustom"
+                            :placeholder="t('customLocationPlaceholder')"
+                            required
+                          />
+                          <div class="location-type-tabs mt-2">
+                            <button
+                              type="button"
+                              class="location-type-btn"
+                              :class="{ active: tujuanCustomTipe === 'dalam' }"
+                              :disabled="!tujuanCustom.trim()"
+                              @click="applyLocationType('tujuan', 'dalam')"
+                            >
+                              <i class="bi bi-geo-alt-fill"></i> {{ t('dalamKota') }}
+                            </button>
+                            <button
+                              type="button"
+                              class="location-type-btn"
+                              :class="{ active: tujuanCustomTipe === 'luar' }"
+                              :disabled="!tujuanCustom.trim()"
+                              @click="applyLocationType('tujuan', 'luar')"
+                            >
+                              <i class="bi bi-signpost-2-fill"></i> {{ t('luarKota') }}
+                            </button>
+                          </div>
+                          <small v-if="!tujuanCustom.trim()" class="text-muted d-block mt-1">{{ t('locationTypeHint') }}</small>
+                          <small v-else-if="!tujuanCustomTipe" class="text-danger d-block mt-1">{{ t('locationTypeRequired') }}</small>
+                        </template>
                       </div>
                     </div>
                   </div>
@@ -228,23 +273,37 @@
                     </div>
                   </div>
                 </div>
-                <div class="col-md-6">
+                <div class="col-md-6" v-if="formBooking.jenis_perjalanan !== 'Sekali Jalan'">
                   <div class="schedule-box schedule-box-return p-3 rounded-3">
                     <div class="d-flex align-items-center gap-2 mb-3">
                       <span class="schedule-icon bg-info-subtle text-info"><i class="bi bi-box-arrow-in-left"></i></span>
                       <strong class="text-dark">{{ t('returnSchedule') }}</strong>
-                      <span class="badge bg-light text-muted fw-normal ms-auto" v-if="formBooking.jenis_perjalanan === 'Sekali Jalan'">{{ t('optional') }}</span>
-                      <span class="badge bg-danger-subtle text-danger fw-semibold ms-auto" v-else>Wajib Diisi</span>
+                      <span class="badge bg-danger-subtle text-danger fw-semibold ms-auto">Wajib Diisi</span>
                     </div>
                     <div class="row g-2">
                       <div class="col-6">
-                        <label class="form-label small text-muted mb-1">{{ t('date') }} <span v-if="formBooking.jenis_perjalanan !== 'Sekali Jalan'" class="text-danger">*</span></label>
-                        <input type="date" class="form-control rounded-3" :min="formBooking.tgl_berangkat || minDate" v-model="formBooking.tgl_kembali" :required="formBooking.jenis_perjalanan !== 'Sekali Jalan'" />
+                        <label class="form-label small text-muted mb-1">{{ t('date') }} <span class="text-danger">*</span></label>
+                        <input type="date" class="form-control rounded-3" :min="formBooking.tgl_berangkat || minDate" v-model="formBooking.tgl_kembali" required />
                       </div>
                       <div class="col-6">
-                        <label class="form-label small text-muted mb-1">{{ t('time') }} <span v-if="formBooking.jenis_perjalanan !== 'Sekali Jalan'" class="text-danger">*</span></label>
-                        <input type="time" class="form-control rounded-3" v-model="formBooking.jam_kembali" :required="formBooking.jenis_perjalanan !== 'Sekali Jalan'" />
+                        <label class="form-label small text-muted mb-1">{{ t('time') }} <span class="text-danger">*</span></label>
+                        <input type="time" class="form-control rounded-3" v-model="formBooking.jam_kembali" required />
                       </div>
+                      <div class="col-12">
+                        <small class="text-muted"><i class="bi bi-info-circle me-1"></i>{{ t('returnScheduleSameDayHint') }}</small>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-md-6" v-else>
+                  <div class="schedule-box schedule-box-return p-3 rounded-3 h-100 d-flex flex-column justify-content-center">
+                    <div class="d-flex align-items-center gap-2 mb-2">
+                      <span class="schedule-icon bg-info-subtle text-info"><i class="bi bi-box-arrow-in-left"></i></span>
+                      <strong class="text-dark">{{ t('returnSchedule') }}</strong>
+                      <span class="badge bg-light text-muted fw-normal ms-auto">{{ t('optional') }}</span>
+                    </div>
+                    <div class="small text-muted">
+                      <i class="bi bi-info-circle me-1"></i>{{ t('returnScheduleOneWayNotice') }}
                     </div>
                   </div>
                 </div>
@@ -276,22 +335,48 @@
                   ℹ️ Slot waktu ini beririsan dengan <strong>{{ fleetCheck.count }} booking lain</strong>. Armada masih tersedia (Sisa Kuota: <strong>{{ totalMobilTersedia - fleetCheck.count }} mobil</strong>).
                 </div>
               </div>
-              <div class="col-12 mt-3 mb-3">
+
+              <!-- SEARCH LOKASI OTOMATIS BEBAS GRATIS VIA OPENSTREETMAP (NOMINATIM) -->
+              <div class="col-12 mt-3 mb-3 position-relative">
                 <label class="form-label fw-medium text-secondary">{{ t('mapsLocation') }}</label>
                 <div class="input-group input-group-lg">
-                  <span class="input-group-text bg-white"><i class="bi bi-map-fill text-primary"></i></span>
+                  <span class="input-group-text bg-white"><i class="bi bi-geo-alt-fill text-primary"></i></span>
                   <input
-                    class="form-control rounded-end-3 fs-6"
-                    v-model="formBooking.maps"
-                    :placeholder="t('mapsPlaceholder')"
+                    type="text"
+                    class="form-control fs-6"
+                    v-model="searchQueryLocation"
+                    @input="searchOsmLocation"
+                    placeholder="Ketik nama tempat/gedung/jalan (cth: Monas, Jakarta)..."
                   />
                   <button
                     type="button"
-                    class="btn btn-primary d-flex align-items-center gap-1"
-                    @click="openMapPicker">
-                    <i class="bi bi-geo-alt-fill"></i>
-                    <span class="d-none d-sm-inline">{{ t('pickFromMap') }}</span>
+                    class="btn btn-outline-primary d-flex align-items-center gap-1"
+                    @click="openMapPicker"
+                    title="Pilih Titik Lokasi di Peta"
+                  >
+                    <i class="bi bi-map"></i>
+                    <span class="d-none d-sm-inline">Buka Peta</span>
                   </button>
+                </div>
+                <div class="form-text">
+                  <i class="bi bi-info-circle me-1"></i>Kalau nama tempat gak ketemu di pencarian, klik <strong>"Buka Peta"</strong> lalu tap langsung titik lokasinya.
+                </div>
+
+                <!-- Dropdown Hasil Pencarian OpenStreetMap -->
+                <ul v-if="osmSuggestions.length > 0" class="dropdown-menu show w-100 shadow-lg mt-1 overflow-auto" style="max-height: 250px; z-index: 1050;">
+                  <li v-for="(item, index) in osmSuggestions" :key="index">
+                    <a class="dropdown-item py-2 border-bottom text-wrap" href="javascript:void(0)" @click="selectOsmLocation(item)">
+                      <i class="bi bi-geo-alt text-primary me-2"></i>
+                      <span class="small fw-semibold">{{ item.display_name }}</span>
+                    </a>
+                  </li>
+                </ul>
+
+                <!-- Hidden Input / Preview Link Google Maps yang terisi Otomatis -->
+                <div v-if="formBooking.maps" class="mt-2 text-success small d-flex align-items-center gap-2 bg-success-subtle p-2 rounded-3 border border-success-subtle">
+                  <i class="bi bi-check-circle-fill fs-6 text-success"></i>
+                  <span class="text-truncate"><strong>Link Maps Terisi Otomatis:</strong> {{ formBooking.maps }}</span>
+                  <button type="button" class="btn-close ms-auto btn-sm" @click="clearMapsLink"></button>
                 </div>
               </div>
 
@@ -436,7 +521,15 @@
                   </div>
                 </div>
 
-                <div class="booking-ticket-action">
+                <div class="booking-ticket-action d-flex flex-column align-items-end gap-2">
+                  <button
+                    v-if="canEditReturnTime(b)"
+                    class="btn btn-sm btn-outline-primary rounded-3 d-inline-flex align-items-center gap-1"
+                    @click="openReturnTimeModal(b)"
+                    :title="t('editReturnTime')"
+                  >
+                    <i class="bi bi-clock-history"></i> {{ t('editReturnTimeBtn') }}
+                  </button>
                   <button 
                     v-if="['Waiting GA', 'Waiting Finance', 'Waiting Manager', 'Ready'].includes(b.status_booking)"
                     class="btn btn-sm btn-outline-danger rounded-3 d-inline-flex align-items-center gap-1"
@@ -453,11 +546,70 @@
       </main>
     </div>
     <Footer />
+
+    <!-- MODAL: UBAH WAKTU KEMBALI (PERPANJANG / PERPENDEK) -->
+    <div v-if="showReturnTimeModal" class="map-picker-overlay" @click.self="closeReturnTimeModal">
+      <div class="map-picker-box" style="max-width: 420px;">
+        <div class="map-picker-header">
+          <div class="d-flex align-items-center gap-2">
+            <i class="bi bi-clock-history text-primary fs-5"></i>
+            <strong>{{ t('editReturnTimeModalTitle') }}</strong>
+          </div>
+          <button type="button" class="btn-close" @click="closeReturnTimeModal"></button>
+        </div>
+        <div class="p-4">
+          <div class="mb-3">
+            <label class="form-label fw-medium text-secondary">{{ t('editReturnTimeNewDate') }}</label>
+            <input type="date" class="form-control rounded-3" v-model="returnTimeForm.tgl_kembali" />
+          </div>
+          <div class="mb-1">
+            <label class="form-label fw-medium text-secondary">{{ t('editReturnTimeNewTime') }}</label>
+            <input type="time" class="form-control rounded-3" v-model="returnTimeForm.jam_kembali" />
+          </div>
+        </div>
+        <div class="map-picker-footer">
+          <button type="button" class="btn btn-light rounded-3 ms-auto" @click="closeReturnTimeModal">
+            {{ t('editReturnTimeCancel') }}
+          </button>
+          <button type="button" class="btn btn-primary rounded-3" :disabled="savingReturnTime" @click="submitReturnTime">
+            <span v-if="savingReturnTime" class="spinner-border spinner-border-sm me-1"></span>
+            {{ t('editReturnTimeSave') }}
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL: PILIH TITIK LOKASI DI PETA (LEAFLET / OPENSTREETMAP) -->
+    <div v-if="showMapPicker" class="map-picker-overlay" @click.self="closeMapPicker">
+      <div class="map-picker-box">
+        <div class="map-picker-header">
+          <div class="d-flex align-items-center gap-2">
+            <i class="bi bi-map text-primary fs-5"></i>
+            <strong>Tap / Klik di peta untuk taruh titik lokasi tujuan</strong>
+          </div>
+          <button type="button" class="btn-close" @click="closeMapPicker"></button>
+        </div>
+
+        <div id="leafletMapContainer" class="map-picker-canvas"></div>
+
+        <div class="map-picker-footer">
+          <div class="small text-muted flex-grow-1">
+            <i class="bi bi-geo-alt-fill text-danger me-1"></i>
+            <span v-if="pickedLatLng">{{ pickedAddressPreview || 'Mengambil nama lokasi...' }}</span>
+            <span v-else>Belum ada titik dipilih. Klik di peta.</span>
+          </div>
+          <button type="button" class="btn btn-outline-secondary" @click="closeMapPicker">Batal</button>
+          <button type="button" class="btn btn-primary" :disabled="!pickedLatLng" @click="confirmMapPicker">
+            <i class="bi bi-check-lg me-1"></i>Gunakan Titik Ini
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { ref, reactive, watch, computed, onMounted } from 'vue'
+import { ref, reactive, watch, computed, onMounted, nextTick } from 'vue'
 import axios from 'axios'
 import Header from '../../components/Header.vue'
 import Sidebar from '../../components/Sidebar.vue'
@@ -490,14 +642,19 @@ const translations = {
     myTotalBookings: 'Total Booking Saya',
     onProgress: 'Sedang Diproses',
     swapRoute: 'Tukar lokasi asal & tujuan',
-    mapsLocation: 'Lokasi Google Maps',
-    mapsPlaceholder: 'Paste link Google Maps atau pilih dari peta',
-    pickFromMap: 'Pilih dari Peta',
+    mapsLocation: 'Lokasi Google Maps / Peta',
     searchPlaceholder: 'Cari kode booking atau tujuan...',
     noResults: 'Tidak ada booking yang cocok dengan pencarian/filter.',
     notAssignedYet: 'Belum ditentukan',
     cancelBooking: 'Batalkan Booking',
     cancelBtn: 'Batal',
+    editReturnTime: 'Ubah tanggal & jam kembali',
+    editReturnTimeBtn: 'Ubah Waktu Kembali',
+    editReturnTimeModalTitle: 'Perpanjang / Perpendek Waktu Kembali',
+    editReturnTimeNewDate: 'Tanggal Kembali Baru',
+    editReturnTimeNewTime: 'Jam Kembali Baru',
+    editReturnTimeSave: 'Simpan Perubahan',
+    editReturnTimeCancel: 'Batal',
     filterAll: 'Semua',
     filterOnProgress: 'Diproses',
     filterApproved: 'Disetujui',
@@ -520,25 +677,25 @@ const translations = {
     selectLocation: '— pilih lokasi —',
     addNewLocation: 'Tambah lokasi baru',
     customLocationPlaceholder: 'Ketik nama lokasi baru...',
+    dalamKota: 'Dalam Kota Tegal',
+    luarKota: 'Luar Kota',
+    locationTypeHint: 'Isi nama lokasi terlebih dahulu untuk memilih Dalam Kota / Luar Kota.',
+    locationTypeRequired: 'Wajib pilih Dalam Kota atau Luar Kota.',
     departureSchedule: 'Waktu Berangkat',
     returnSchedule: 'Waktu Kembali',
     optional: 'Opsional',
+    returnScheduleOneWayNotice: 'Untuk Sekali Jalan, waktu kembali tidak perlu diisi di sini. Setelah booking berjalan, driver akan mengisi/mengubah waktu kembali langsung dari aplikasi.',
+    returnScheduleSameDayHint: 'Boleh pulang di hari yang sama, asalkan jam kembalinya lebih siang/malam dari jam berangkat.',
     date: 'Tanggal',
     time: 'Jam',
     passengerList: 'Daftar Nama Penumpang',
-    passengerPlaceholder: 'Contoh: Rudi (QC), Siska (HR)',
-    purpose: 'Keperluan / Catatan / Link Maps',
-    purposePlaceholder: 'Keperluan dinas luar, kunjungan vendor, atau masukkan link Google Maps.',
+    passengerPlaceholder: 'Contoh: nama penumpang',
+    purpose: 'Keperluan / Catatan',
+    purposePlaceholder: 'Keperluan dinas luar, kunjungan vendor, dll.',
     financeNotice: 'Kategori biaya & nominal kasbon akan diisi oleh tim Finance setelah booking disetujui GA.',
     submitBtn: 'Kirim Pengajuan',
     myBookingsHeader: 'Booking Saya',
     refresh: 'Refresh',
-    colCode: 'Kode',
-    colType: 'Tipe',
-    colDate: 'Tanggal',
-    colDestination: 'Tujuan',
-    colCar: 'Mobil',
-    colStatus: 'Status',
     noBookings: 'Belum ada pengajuan booking.'
   },
   en: {
@@ -550,14 +707,19 @@ const translations = {
     myTotalBookings: 'My Total Bookings',
     onProgress: 'In Progress',
     swapRoute: 'Swap departure & destination',
-    mapsLocation: 'Google Maps Location',
-    mapsPlaceholder: 'Paste Google Maps link or pick from the map',
-    pickFromMap: 'Pick from Map',
+    mapsLocation: 'Google Maps / Map Location',
     searchPlaceholder: 'Search booking code or destination...',
     noResults: 'No bookings match your search/filter.',
     notAssignedYet: 'Not assigned yet',
     cancelBooking: 'Cancel Booking',
     cancelBtn: 'Cancel',
+    editReturnTime: 'Change return date & time',
+    editReturnTimeBtn: 'Change Return Time',
+    editReturnTimeModalTitle: 'Extend / Shorten Return Time',
+    editReturnTimeNewDate: 'New Return Date',
+    editReturnTimeNewTime: 'New Return Time',
+    editReturnTimeSave: 'Save Changes',
+    editReturnTimeCancel: 'Cancel',
     filterAll: 'All',
     filterOnProgress: 'In Progress',
     filterApproved: 'Approved',
@@ -573,32 +735,32 @@ const translations = {
     oneWay: 'One Way',
     roundTrip: 'Round Trip',
     scheduled: 'Scheduled (Advance Booking)',
-    scheduledNotice: 'isi semua form.',
+    scheduledNotice: 'Fill in all forms.',
     passengerCount: 'Passenger Count',
     departureLocation: 'Departure Location',
     destination: 'Destination',
     selectLocation: '— select a location —',
     addNewLocation: 'Add new location',
     customLocationPlaceholder: 'Type new location name...',
+    dalamKota: 'In-City Tegal',
+    luarKota: 'Out-of-City',
+    locationTypeHint: 'Fill in the location name first to choose In-City / Out-of-City.',
+    locationTypeRequired: 'You must choose In-City or Out-of-City.',
     departureSchedule: 'Departure Time',
     returnSchedule: 'Return Time',
     optional: 'Optional',
+    returnScheduleOneWayNotice: 'For One Way trips, you don\'t need to set the return time here. Once the booking is underway, the driver will set/update the return time from the app.',
+    returnScheduleSameDayHint: 'You can return the same day, as long as the return time is later than the departure time.',
     date: 'Date',
     time: 'Time',
     passengerList: 'Passenger List',
-    passengerPlaceholder: 'E.g., Rudi (QC), Siska (HR)',
-    purpose: 'Purpose / Remark / Maps Link',
-    purposePlaceholder: 'Business trip purpose, vendor visit, or paste Google Maps link.',
-    financeNotice: 'fill in all forms.',
+    passengerPlaceholder: 'E.g., name pasengger',
+    purpose: 'Purpose / Remark',
+    purposePlaceholder: 'Business trip purpose, vendor visit, etc.',
+    financeNotice: 'Fill in all forms.',
     submitBtn: 'Submit Request',
     myBookingsHeader: 'My Bookings',
     refresh: 'Refresh',
-    colCode: 'Code',
-    colType: 'Type',
-    colDate: 'Date',
-    colDestination: 'Destination',
-    colCar: 'Car',
-    colStatus: 'Status',
     noBookings: 'No booking requests found.'
   }
 }
@@ -622,12 +784,234 @@ const loading = ref(false)
 const listTujuan = ref([])
 const myBookings = ref([])
 const allSystemBookings = ref([])
-const totalMobilTersedia = ref(0) // Nilai diambil dinamis dari DB
+const totalMobilTersedia = ref(0)
 
 const asalPilihan = ref('')
 const asalCustom = ref('')
+const asalCustomTipe = ref('') // 'dalam' | 'luar'
 const tujuanPilihan = ref('')
 const tujuanCustom = ref('')
+const tujuanCustomTipe = ref('') // 'dalam' | 'luar'
+
+const NAMA_KOTA_DEFAULT = 'Tegal'
+
+// --- SET TIPE LOKASI (DALAM KOTA / LUAR KOTA) UNTUK LOKASI CUSTOM ---
+// Saat "Dalam Kota" dipilih, nama kota (Tegal) otomatis ditambahkan di belakang.
+// Saat "Luar Kota" dipilih, suffix nama kota tersebut dihapus lagi.
+const applyLocationType = (field, tipe) => {
+  const customRef = field === 'asal' ? asalCustom : tujuanCustom
+  const tipeRef = field === 'asal' ? asalCustomTipe : tujuanCustomTipe
+
+  // Jaga-jaga: tombol seharusnya sudah disabled selama teks lokasi masih kosong,
+  // tapi tetap dicegah di sini supaya tidak bisa "ke-skip" lewat cara lain.
+  if (!customRef.value.trim()) return
+
+  tipeRef.value = tipe
+
+  const suffixRegex = new RegExp(`\\s*,?\\s*${NAMA_KOTA_DEFAULT}\\s*$`, 'i')
+  const namaBersih = customRef.value.trim().replace(suffixRegex, '').trim()
+
+  if (tipe === 'dalam') {
+    customRef.value = namaBersih ? `${namaBersih} ${NAMA_KOTA_DEFAULT}` : namaBersih
+  } else {
+    customRef.value = namaBersih
+  }
+}
+
+// Reset tipe & teks custom setiap kali dropdown lokasi asal/tujuan diganti
+watch(asalPilihan, (val) => {
+  if (val !== '__custom__') {
+    asalCustom.value = ''
+    asalCustomTipe.value = ''
+  }
+})
+watch(tujuanPilihan, (val) => {
+  if (val !== '__custom__') {
+    tujuanCustom.value = ''
+    tujuanCustomTipe.value = ''
+  }
+})
+
+// --- INTEGRASI OPENSTREETMAP (NOMINATIM) ---
+const searchQueryLocation = ref('')
+const osmSuggestions = ref([])
+
+// --- MAP PICKER (KLIK LANGSUNG DI PETA VIA LEAFLET/OPENSTREETMAP) ---
+const showMapPicker = ref(false)
+const pickedLatLng = ref(null)
+const pickedAddressPreview = ref('')
+let leafletMapInstance = null
+let leafletMarker = null
+let leafletLoadingPromise = null
+
+const loadLeaflet = () => {
+  if (window.L && window.L.Control.Geocoder) return Promise.resolve()
+  if (leafletLoadingPromise) return leafletLoadingPromise
+
+  leafletLoadingPromise = new Promise((resolve, reject) => {
+    // CSS Leaflet
+    const cssLink = document.createElement('link')
+    cssLink.rel = 'stylesheet'
+    cssLink.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css'
+    document.head.appendChild(cssLink)
+
+    // CSS Geocoder Search Control
+    const cssGeocoder = document.createElement('link')
+    cssGeocoder.rel = 'stylesheet'
+    cssGeocoder.href = 'https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css'
+    document.head.appendChild(cssGeocoder)
+
+    // JS Leaflet
+    const script = document.createElement('script')
+    script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'
+    script.onload = () => {
+      // JS Geocoder Search Control
+      const scriptGeocoder = document.createElement('script')
+      scriptGeocoder.src = 'https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js'
+      scriptGeocoder.onload = () => resolve()
+      scriptGeocoder.onerror = () => reject(new Error('Gagal memuat plugin geocoder.'))
+      document.head.appendChild(scriptGeocoder)
+    }
+    script.onerror = () => reject(new Error('Gagal memuat peta.'))
+    document.head.appendChild(script)
+  })
+  return leafletLoadingPromise
+}
+
+const reverseGeocode = async (lat, lng) => {
+  try {
+    const res = await axios.get('https://nominatim.openstreetmap.org/reverse', {
+      params: { lat, lon: lng, format: 'json' }
+    })
+    pickedAddressPreview.value = res.data?.display_name || `Titik (${lat.toFixed(5)}, ${lng.toFixed(5)})`
+  } catch (e) {
+    pickedAddressPreview.value = `Titik (${lat.toFixed(5)}, ${lng.toFixed(5)})`
+  }
+}
+
+const placeMarker = (lat, lng) => {
+  pickedLatLng.value = { lat, lng }
+  if (leafletMarker) {
+    leafletMarker.setLatLng([lat, lng])
+  } else {
+    leafletMarker = window.L.marker([lat, lng], { draggable: true }).addTo(leafletMapInstance)
+    leafletMarker.on('dragend', () => {
+      const pos = leafletMarker.getLatLng()
+      pickedLatLng.value = { lat: pos.lat, lng: pos.lng }
+      reverseGeocode(pos.lat, pos.lng)
+    })
+  }
+  reverseGeocode(lat, lng)
+}
+
+const openMapPicker = async () => {
+  showMapPicker.value = true
+  pickedLatLng.value = null
+  pickedAddressPreview.value = ''
+
+  await loadLeaflet()
+  await nextTick()
+
+  let startLat = -6.2088
+  let startLng = 106.8456
+  const existingMatch = formBooking.maps.match(/q=(-?\d+\.\d+),(-?\d+\.\d+)/)
+  if (existingMatch) {
+    startLat = parseFloat(existingMatch[1])
+    startLng = parseFloat(existingMatch[2])
+  }
+
+  if (leafletMapInstance) {
+    leafletMapInstance.remove()
+    leafletMapInstance = null
+    leafletMarker = null
+  }
+
+  leafletMapInstance = window.L.map('leafletMapContainer').setView([startLat, startLng], 13)
+  window.L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '&copy; OpenStreetMap contributors',
+    maxZoom: 19
+  }).addTo(leafletMapInstance)
+
+  // --- FITUR SEARCH BAR DI DALAM PETA ---
+  if (window.L.Control.geocoder) {
+    const geocoder = window.L.Control.geocoder({
+      defaultMarkGeocode: false,
+      placeholder: 'Cari lokasi/alamat...',
+      errorMessage: 'Lokasi tidak ditemukan.'
+    })
+      .on('markgeocode', (e) => {
+        const { center, name } = e.geocode
+        leafletMapInstance.setView(center, 16)
+        placeMarker(center.lat, center.lng)
+        pickedAddressPreview.value = name
+      })
+      .addTo(leafletMapInstance)
+  }
+
+  leafletMapInstance.on('click', (e) => {
+    placeMarker(e.latlng.lat, e.latlng.lng)
+  })
+
+  if (existingMatch) {
+    placeMarker(startLat, startLng)
+  }
+
+  setTimeout(() => leafletMapInstance && leafletMapInstance.invalidateSize(), 200)
+}
+
+const closeMapPicker = () => {
+  showMapPicker.value = false
+}
+
+const confirmMapPicker = () => {
+  if (!pickedLatLng.value) return
+  const { lat, lng } = pickedLatLng.value
+  formBooking.maps = `https://www.google.com/maps?q=${lat},${lng}`
+  searchQueryLocation.value = pickedAddressPreview.value || `Titik (${lat.toFixed(5)}, ${lng.toFixed(5)})`
+  osmSuggestions.value = []
+  showMapPicker.value = false
+}
+let osmDebounceTimer = null
+
+const searchOsmLocation = () => {
+  clearTimeout(osmDebounceTimer)
+  if (!searchQueryLocation.value || searchQueryLocation.value.trim().length < 3) {
+    osmSuggestions.value = []
+    return
+  }
+
+  // Debounce agar API tidak kelebihan request
+  osmDebounceTimer = setTimeout(async () => {
+    try {
+      const response = await axios.get('https://nominatim.openstreetmap.org/search', {
+        params: {
+          q: searchQueryLocation.value,
+          format: 'json',
+          addressdetails: 1,
+          limit: 5,
+          countrycodes: 'id' // Batasi hasil pencarian hanya di Indonesia
+        }
+      })
+      osmSuggestions.value = response.data || []
+    } catch (error) {
+      console.error('Gagal mengambil data lokasi dari OpenStreetMap:', error)
+    }
+  }, 400)
+}
+
+const selectOsmLocation = (item) => {
+  const lat = item.lat
+  const lon = item.lon
+  // Membuat link Google Maps otomatis berdasarkan koordinat lat/lng
+  formBooking.maps = `https://www.google.com/maps?q=${lat},${lon}`
+  searchQueryLocation.value = item.display_name
+  osmSuggestions.value = []
+}
+
+const clearMapsLink = () => {
+  formBooking.maps = ''
+  searchQueryLocation.value = ''
+}
 
 // --- TRIP TYPE TABS ---
 const tripTypeOptions = [
@@ -721,7 +1105,8 @@ const formBooking = reactive({
   jam_kembali: '',
   jumlah_org: 1,
   daftar_penumpang: '',
-  remark: ''
+  remark: '',
+  maps: ''
 })
 
 watch(() => formBooking.jenis_perjalanan, (newType) => {
@@ -750,9 +1135,6 @@ watch([tujuanPilihan, tujuanCustom], () => {
   }
 })
 
-// =========================================================================
-// COMPUTED LOGIKA BENTROK ARMADA REALTIME (BERDASARKAN DAFTAR MOBIL TERSEDIA)
-// =========================================================================
 const fleetCheck = computed(() => {
   if (!formBooking.tgl_berangkat || !formBooking.jam_berangkat) {
     return { isConflict: false, count: 0 }
@@ -762,12 +1144,14 @@ const fleetCheck = computed(() => {
   if (isNaN(startA)) return { isConflict: false, count: 0 }
 
   let endTgl = formBooking.tgl_kembali || formBooking.tgl_berangkat
-  let endJam = formBooking.jam_kembali || (formBooking.jenis_perjalanan === 'Sekali Jalan' ? '23:59:59' : formBooking.jam_berangkat + ':00')
+  // Untuk Sekali Jalan waktu kembali otomatis disamakan dengan waktu berangkat
+  // (driver yang update nanti dari app), jadi estimasi konfliknya ikut jam berangkat.
+  let endJam = formBooking.jam_kembali || (formBooking.jenis_perjalanan === 'Sekali Jalan' ? formBooking.jam_berangkat + ':00' : formBooking.jam_berangkat + ':00')
   let endA = new Date(`${endTgl}T${endJam}`).getTime()
   if (isNaN(endA)) endA = startA
 
-  // Buffer istirahat 3 jam (3 * 3600 * 1000 ms)
-  const endAWithBuffer = endA + (3 * 60 * 60 * 1000)
+  const JEDA_ISTIRAHAT_MS = 1 * 60 * 60 * 1000 // 1 jam, samakan dengan backend
+  const endAWithBuffer = endA + JEDA_ISTIRAHAT_MS
 
   let overlappingCount = 0
 
@@ -777,17 +1161,16 @@ const fleetCheck = computed(() => {
     const startB = new Date(`${exist.tgl_berangkat}T${exist.jam_berangkat || '00:00:00'}`).getTime()
     
     let existEndTgl = exist.tgl_kembali || exist.tgl_berangkat
-    let existEndJam = exist.jam_kembali || '23:59:59'
+    let existEndJam = exist.jam_kembali || (exist.jam_berangkat ? exist.jam_berangkat + ':00' : '23:59:59')
     let endB = new Date(`${existEndTgl}T${existEndJam}`).getTime()
     
-    const endBWithBuffer = endB + (3 * 60 * 60 * 1000)
+    const endBWithBuffer = endB + JEDA_ISTIRAHAT_MS
 
     if (startA < endBWithBuffer && endAWithBuffer > startB) {
       overlappingCount++
     }
   }
 
-  // Bentrok terjadi jika irisan booking >= jumlah mobil berstatus Tersedia
   const isConflict = overlappingCount >= totalMobilTersedia.value
 
   return {
@@ -795,13 +1178,6 @@ const fleetCheck = computed(() => {
     count: overlappingCount
   }
 })
-
-// Catatan: fungsi ini dipanggil dari tombol "Pilih dari Peta" namun sebelumnya
-// belum didefinisikan di script asli. Implementasi dasar: buka Google Maps di tab baru
-// agar pengguna bisa menyalin link lokasi. Ganti dengan integrasi map picker sungguhan bila tersedia.
-const openMapPicker = () => {
-  window.open('https://www.google.com/maps', '_blank')
-}
 
 const statusBadge = (status) => {
   const map = {
@@ -831,7 +1207,6 @@ const fetchData = async () => {
     myBookings.value = resMy.data.data || []
     allSystemBookings.value = resAll.data.data || []
 
-    // ✅ DIPERBAIKI: Menggunakan field `status` dari database (bukan status_mobil)
     if (resMobil && resMobil.data?.data) {
       const mobilTersediaList = resMobil.data.data.filter(
         m => m.status && m.status.trim().toLowerCase() === 'tersedia'
@@ -847,12 +1222,14 @@ const resetForm = () => {
   Object.assign(formBooking, {
     jenis_perjalanan: 'Sekali Jalan', dari_lokasi: '', tujuan_id: '', lokasi_tujuan_custom: '',
     tgl_berangkat: '', jam_berangkat: '', tgl_kembali: '', jam_kembali: '',
-    jumlah_org: 1, daftar_penumpang: '', remark: ''
+    jumlah_org: 1, daftar_penumpang: '', remark: '', maps: ''
   })
   asalPilihan.value = ''
   asalCustom.value = ''
   tujuanPilihan.value = ''
   tujuanCustom.value = ''
+  searchQueryLocation.value = ''
+  osmSuggestions.value = []
 }
 
 const submitBooking = async () => {
@@ -865,9 +1242,32 @@ const submitBooking = async () => {
     return
   }
 
+  // Lokasi custom (input manual) wajib menentukan Dalam Kota / Luar Kota dulu, tidak boleh di-skip.
+  if (asalPilihan.value === '__custom__' && !asalCustomTipe.value) {
+    alert(currentLang.value === 'en' ? 'Please choose In-City or Out-of-City for the departure location.' : 'Mohon pilih Dalam Kota atau Luar Kota untuk lokasi asal terlebih dahulu.')
+    return
+  }
+  if (tujuanPilihan.value === '__custom__' && !tujuanCustomTipe.value) {
+    alert(currentLang.value === 'en' ? 'Please choose In-City or Out-of-City for the destination.' : 'Mohon pilih Dalam Kota atau Luar Kota untuk lokasi tujuan terlebih dahulu.')
+    return
+  }
+
   if (['PP', 'Terjadwal'].includes(formBooking.jenis_perjalanan)) {
     if (!formBooking.tgl_kembali || !formBooking.jam_kembali) {
       alert('Untuk jenis perjalanan PP & Terjadwal, Tanggal & Jam Kembali Wajib Diisi!')
+      return
+    }
+    // Patokannya datetime lengkap (tanggal + jam), bukan tanggal doang — jadi PP/Terjadwal
+    // boleh pulang di HARI YANG SAMA (misal berangkat pagi, pulang sore), asal jam
+    // kembalinya benar-benar setelah jam berangkat.
+    const startDT = new Date(`${formBooking.tgl_berangkat}T${formBooking.jam_berangkat}:00`)
+    const endDT = new Date(`${formBooking.tgl_kembali}T${formBooking.jam_kembali}:00`)
+    if (isNaN(startDT.getTime()) || isNaN(endDT.getTime()) || endDT <= startDT) {
+      alert(
+        currentLang.value === 'en'
+          ? `Return time (${formBooking.tgl_kembali} ${formBooking.jam_kembali}) must be after departure time (${formBooking.tgl_berangkat} ${formBooking.jam_berangkat}). It can be the same day, as long as the return time is later than the departure time.`
+          : `Waktu kembali (${formBooking.tgl_kembali} ${formBooking.jam_kembali}) harus setelah waktu berangkat (${formBooking.tgl_berangkat} ${formBooking.jam_berangkat}). Boleh di hari yang sama, asalkan jam kembalinya lebih siang/malam dari jam berangkat.`
+      )
       return
     }
   }
@@ -878,7 +1278,7 @@ const submitBooking = async () => {
   }
 
   if (fleetCheck.value.isConflict) {
-    alert(`ARMADA FULL BOOKED!\n\nPada jam/tanggal tersebut sudah ada ${fleetCheck.value.count} booking aktif (termasuk buffer istirahat 3 jam). Jumlah armada 'Tersedia' saat ini adalah ${totalMobilTersedia.value} unit. Silakan tentukan waktu lain.`)
+    alert(`ARMADA FULL BOOKED!\n\nPada jam/tanggal tersebut sudah ada ${fleetCheck.value.count} booking aktif (termasuk buffer istirahat 1 jam). Jumlah armada 'Tersedia' saat ini adalah ${totalMobilTersedia.value} unit. Silakan tentukan waktu lain.`)
     return
   }
 
@@ -896,7 +1296,6 @@ const submitBooking = async () => {
   }
 }
 
-// FUNGSI BATALKAN BOOKING OLEH PEMOHON
 const cancelBooking = async (bookingId) => {
   const confirmCancel = confirm(
     currentLang.value === 'en'
@@ -925,6 +1324,70 @@ const cancelBooking = async (bookingId) => {
   }
 }
 
+// --- UBAH (PERPANJANG / PERPENDEK) WAKTU KEMBALI ---
+const showReturnTimeModal = ref(false)
+const returnTimeTarget = ref(null) // booking yang sedang diedit
+const returnTimeForm = reactive({ tgl_kembali: '', jam_kembali: '' })
+const savingReturnTime = ref(false)
+
+const canEditReturnTime = (b) => ['Ready', 'In Transit'].includes(b.status_booking) && b.jenis_perjalanan !== 'Sekali Jalan'
+
+const openReturnTimeModal = (b) => {
+  returnTimeTarget.value = b
+  returnTimeForm.tgl_kembali = b.tgl_kembali || b.tgl_berangkat
+  returnTimeForm.jam_kembali = b.jam_kembali || ''
+  showReturnTimeModal.value = true
+}
+
+const closeReturnTimeModal = () => {
+  showReturnTimeModal.value = false
+  returnTimeTarget.value = null
+}
+
+const submitReturnTime = async () => {
+  if (!returnTimeTarget.value) return
+  if (!returnTimeForm.tgl_kembali || !returnTimeForm.jam_kembali) {
+    alert(currentLang.value === 'en' ? 'Date and time are required' : 'Tanggal dan jam wajib diisi')
+    return
+  }
+  // Sama seperti form pengajuan: patokan datetime lengkap, boleh sama hari
+  // asal jamnya setelah waktu berangkat — bebas mau pulang hari itu juga,
+  // besok, atau beberapa hari kemudian.
+  const b = returnTimeTarget.value
+  const startDT = new Date(`${b.tgl_berangkat}T${b.jam_berangkat}:00`)
+  const endDT = new Date(`${returnTimeForm.tgl_kembali}T${returnTimeForm.jam_kembali}:00`)
+  if (isNaN(startDT.getTime()) || isNaN(endDT.getTime()) || endDT <= startDT) {
+    alert(
+      currentLang.value === 'en'
+        ? `Return time (${returnTimeForm.tgl_kembali} ${returnTimeForm.jam_kembali}) must be after departure time (${b.tgl_berangkat} ${b.jam_berangkat}). It can be the same day, as long as the return time is later than the departure time.`
+        : `Waktu kembali (${returnTimeForm.tgl_kembali} ${returnTimeForm.jam_kembali}) harus setelah waktu berangkat (${b.tgl_berangkat} ${b.jam_berangkat}). Boleh di hari yang sama, asalkan jam kembalinya lebih siang/malam dari jam berangkat.`
+    )
+    return
+  }
+  try {
+    savingReturnTime.value = true
+    await axios.patch(
+      `${API_BASE_URL}/carbook/booking/${returnTimeTarget.value.id}/return-time`,
+      {
+        tgl_kembali: returnTimeForm.tgl_kembali,
+        jam_kembali: returnTimeForm.jam_kembali,
+        requested_by: user.value.id
+      },
+      getAuthHeaders()
+    )
+    alert(currentLang.value === 'en' ? 'Return time updated!' : 'Waktu kembali berhasil diubah!')
+    closeReturnTimeModal()
+    fetchData()
+  } catch (err) {
+    alert(
+      err.response?.data?.message ||
+      (currentLang.value === 'en' ? 'Failed to update return time' : 'Gagal mengubah waktu kembali')
+    )
+  } finally {
+    savingReturnTime.value = false
+  }
+}
+
 onMounted(() => {
   detectBrowserLanguage()
   fetchData()
@@ -932,9 +1395,6 @@ onMounted(() => {
 </script>
 
 <style scoped>
-/* =========================================================================
-   DESIGN TOKENS
-   ========================================================================= */
 .d-flex.flex-column.min-vh-100 {
   --brand-blue: #0a63e0;
   --brand-blue-dark: #063d8c;
@@ -946,9 +1406,6 @@ onMounted(() => {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
-/* =========================================================================
-   HERO BANNER
-   ========================================================================= */
 .hero-banner {
   background: linear-gradient(120deg, var(--brand-blue-dark) 0%, var(--brand-blue) 55%, var(--brand-teal) 130%);
   box-shadow: 0 10px 30px -12px rgba(10, 99, 224, 0.45);
@@ -1001,9 +1458,6 @@ onMounted(() => {
   flex-shrink: 0;
 }
 
-/* =========================================================================
-   SHARED UI
-   ========================================================================= */
 .applicant-card {
   background-color: var(--surface-muted);
   border: 1px solid var(--bs-border-color-translucent);
@@ -1056,9 +1510,6 @@ onMounted(() => {
   font-weight: 700;
 }
 
-/* =========================================================================
-   TRIP TYPE TABS
-   ========================================================================= */
 .trip-type-tabs {
   display: flex;
   gap: 0.4rem;
@@ -1090,9 +1541,40 @@ onMounted(() => {
   box-shadow: 0 2px 8px rgba(10, 99, 224, 0.18);
 }
 
-/* =========================================================================
-   ROUTE PICKER (Asal <-> Tujuan) with swap button
-   ========================================================================= */
+.location-type-tabs {
+  display: flex;
+  gap: 0.4rem;
+}
+.location-type-btn {
+  flex: 1;
+  border: 1px solid var(--bs-border-color-translucent);
+  background: #fff;
+  color: var(--ink-soft);
+  font-weight: 600;
+  font-size: 0.8rem;
+  padding: 0.4rem 0.6rem;
+  border-radius: 0.55rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+.location-type-btn:hover { border-color: var(--brand-blue); color: var(--brand-blue); }
+.location-type-btn.active {
+  background: var(--brand-blue);
+  border-color: var(--brand-blue);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(10, 99, 224, 0.18);
+}
+.location-type-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: var(--surface-muted);
+}
+.location-type-btn:disabled:hover { border-color: var(--bs-border-color-translucent); color: var(--ink-soft); }
+
 .route-picker {
   position: relative;
   background: var(--surface-muted);
@@ -1153,9 +1635,6 @@ onMounted(() => {
   .route-swap-btn:hover { transform: rotate(180deg); }
 }
 
-/* =========================================================================
-   SCHEDULE / TICKET BOXES
-   ========================================================================= */
 .ticket-row { position: relative; }
 .schedule-box {
   background-color: var(--surface-muted);
@@ -1174,9 +1653,6 @@ onMounted(() => {
   font-size: 1rem;
 }
 
-/* =========================================================================
-   SUBMIT BUTTON
-   ========================================================================= */
 .btn-submit {
   background: linear-gradient(135deg, var(--brand-blue), var(--brand-blue-dark));
   border: none;
@@ -1191,9 +1667,6 @@ onMounted(() => {
 }
 .btn-submit:disabled { opacity: 0.6; }
 
-/* =========================================================================
-   RIWAYAT BOOKING — SEARCH & FILTER TOOLBAR
-   ========================================================================= */
 .search-box {
   position: relative;
   min-width: 220px;
@@ -1239,9 +1712,6 @@ onMounted(() => {
   color: #fff;
 }
 
-/* =========================================================================
-   RIWAYAT BOOKING — TICKET CARD LIST
-   ========================================================================= */
 .booking-list {
   display: flex;
   flex-direction: column;
@@ -1313,9 +1783,6 @@ onMounted(() => {
 
 .empty-state { color: var(--ink-soft); }
 
-/* =========================================================================
-   BASE OVERRIDES
-============================================================================ */
 .bg-primary-subtle { background-color: #e7f1ff !important; }
 .bg-success-subtle { background-color: #e6f4ea !important; }
 .bg-warning-subtle { background-color: #fef7e0 !important; }
@@ -1326,5 +1793,48 @@ onMounted(() => {
 .form-control:focus, .form-select:focus {
   border-color: var(--brand-blue);
   box-shadow: 0 0 0 0.25rem rgba(10, 99, 224, 0.15);
+}
+
+/* --- MAP PICKER MODAL --- */
+.map-picker-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.55);
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+.map-picker-box {
+  background: #fff;
+  border-radius: 1rem;
+  width: 100%;
+  max-width: 720px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+.map-picker-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.9rem 1.1rem;
+  border-bottom: 1px solid var(--bs-border-color-translucent);
+}
+.map-picker-canvas {
+  width: 100%;
+  height: 60vh;
+  min-height: 320px;
+}
+.map-picker-footer {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.9rem 1.1rem;
+  border-top: 1px solid var(--bs-border-color-translucent);
+  flex-wrap: wrap;
 }
 </style>

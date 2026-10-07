@@ -11,6 +11,8 @@
           marginTop: '56px',
         }"
       >
+      <!-- BUNGKUS DENGAN v-if="hasAccess" UNTUK UAC -->
+      <div v-if="hasAccess" class="container-fluid retur-page max-w-7xl mx-auto p-0">
         <div class="container-lg">
           <h2 class="mb-4 text-primary">Lowongan Kerja</h2>
           <p class="text-secondary">Kelola data loker dengan mudah.</p>
@@ -52,6 +54,14 @@
               </div>
             </div>
           </div>
+        </div>
+        </div>
+
+        <!-- OPSI TAMPILAN BLANK (JIKA TIDAK ADA AKSES) -->
+        <div v-else class="d-flex flex-column align-items-center justify-content-center h-100 pt-5 mt-5">
+           <!-- Halaman Blank, Jika ingin dibuat benar-benar kosong hapus komentar html ini. -->
+            <h1>hi anda tersesat nih, Mohon untuk Logout Segera </h1>
+            <a href="/logout" class="btn btn-primary">back to jungle</a>
         </div>
       </main>
     </div>
@@ -147,6 +157,8 @@ import Sidebar from '../../components/Sidebar.vue';
 import Footer from '../../components/Footer.vue';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
+const hasAccess = ref(false);
 
 const user = ref({});
 const sidebarOpen = ref(false);
@@ -328,9 +340,24 @@ async function loadDataAndReloadTable() {
 onMounted(async () => {
   const userData = localStorage.getItem('user');
   if (userData) user.value = JSON.parse(userData);
+  try {
+    const pagesData = localStorage.getItem('pages') || localStorage.getItem('user_pages');
+    const pages = pagesData ? JSON.parse(pagesData) : [];
+    
+    // Ganti 'KODE_HALAMAN' sesuai kode di database (misal: 'suratjalan', 'loker', dll)
+    hasAccess.value = pages.includes('loker');
+  } catch (e) {
+    hasAccess.value = false;
+  }
 
-  const initialData = await loadData();
-  reloadDataTable(initialData);
+  // 4. Hanya load data & DataTable jika punya akses
+  if (hasAccess.value) {
+    const initialData = await loadData();
+    reloadDataTable(initialData);
+  }
+
+  // const initialData = await loadData();
+  // reloadDataTable(initialData);
 });
 
 onBeforeUnmount(() => {

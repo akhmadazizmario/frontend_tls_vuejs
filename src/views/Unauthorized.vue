@@ -4,6 +4,9 @@ import { useRouter } from 'vue-router'
 import axios from 'axios'
 import Header from '../components/Header.vue'
 import Footer from '../components/Footer.vue'
+// import api from '../api.js'
+
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 const router = useRouter()
 const user = ref(JSON.parse(localStorage.getItem('user')) || null)

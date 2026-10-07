@@ -13,6 +13,8 @@
           marginTop: '56px',
         }"
       >
+      <!-- BUNGKUS DENGAN v-if="hasAccess" UNTUK UAC -->
+      <div v-if="hasAccess" class="container-fluid retur-page max-w-7xl mx-auto p-0">
         <div class="container-fluid idppo-page">
 
           <!-- PAGE HEADER -->
@@ -200,6 +202,14 @@
             </div>
           </div>
         </div>
+        </div>
+
+        <!-- OPSI TAMPILAN BLANK (JIKA TIDAK ADA AKSES) -->
+        <div v-else class="d-flex flex-column align-items-center justify-content-center h-100 pt-5 mt-5">
+           <!-- Halaman Blank, Jika ingin dibuat benar-benar kosong hapus komentar html ini. -->
+            <h1>hi anda tersesat nih, Mohon untuk Logout Segera </h1>
+            <a href="/logout" class="btn btn-primary">back to jungle</a>
+        </div>
       </main>
     </div>
 
@@ -311,6 +321,8 @@ import Sidebar from "../../components/Sidebar.vue";
 import Footer from "../../components/Footer.vue";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
+const hasAccess = ref(false);
 
 const items = ref([]);
 const user = ref({});
@@ -651,10 +663,33 @@ async function deleteItem(id) {
 }
 
 onMounted(() => {
+  // 2. Ambil data User dari localStorage
   const userData = localStorage.getItem("user");
-  if (userData) user.value = JSON.parse(userData);
-  loadItems();
+  if (userData) {
+    try {
+      user.value = JSON.parse(userData);
+    } catch (e) {
+      console.error("Error parsing user data", e);
+    }
+  }
 
+  // 3. LOGIKA UAC (Cek Hak Akses)
+  try {
+    const pagesData = localStorage.getItem("pages") || localStorage.getItem("user_pages");
+    const pages = pagesData ? JSON.parse(pagesData) : [];
+
+    // Ganti 'KODE_HALAMAN' sesuai kode halaman ini di database UAC kamu (misal: 'idppo')
+    hasAccess.value = pages.includes("idppo");
+  } catch (e) {
+    hasAccess.value = false;
+  }
+
+  // 4. Panggil API/loadItems HANYA jika user memiliki akses
+  if (hasAccess.value) {
+    loadItems();
+  }
+
+  // 5. Event Listener UI tetap berjalan normal
   window.addEventListener("resize", () => {
     windowWidth.value = window.innerWidth;
   });
@@ -662,7 +697,8 @@ onMounted(() => {
 });
 
 onBeforeUnmount(() => {
-  if ($.fn.DataTable.isDataTable("#idpPoTable")) {
+  // Kode ini sudah AMAN karena DataTable hanya di-destroy jika tabelnya benar-benar ada
+  if ($.fn?.DataTable?.isDataTable("#idpPoTable")) {
     $("#idpPoTable").DataTable().destroy();
   }
   document.removeEventListener("click", handleClickOutside);

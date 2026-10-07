@@ -11,6 +11,8 @@
           marginLeft: sidebarOpen && windowWidth >= 768 ? '16rem' : '0',
         }"
       >
+      <!-- BUNGKUS DENGAN v-if="hasAccess" UNTUK UAC -->
+      <div v-if="hasAccess" class="container-fluid retur-page max-w-7xl mx-auto p-0">
         <div class="container-fluid py-3" style="max-width: 1280px">
           <!-- Page heading -->
           <div class="d-flex flex-wrap align-items-end justify-content-between mb-4 gap-3">
@@ -432,6 +434,14 @@
             </form>
           </div>
         </div>
+        </div>
+
+        <!-- OPSI TAMPILAN BLANK (JIKA TIDAK ADA AKSES) -->
+        <div v-else class="d-flex flex-column align-items-center justify-content-center h-100 pt-5 mt-5">
+           <!-- Halaman Blank, Jika ingin dibuat benar-benar kosong hapus komentar html ini. -->
+            <h1>hi anda tersesat nih, Mohon untuk Logout Segera </h1>
+            <a href="/logout" class="btn btn-primary">back to jungle</a>
+        </div>
       </main>
     </div>
 
@@ -451,6 +461,8 @@ import Footer from '../../components/Footer.vue';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 const API2_BASE_URL = import.meta.env.VITE_API2_BASE_URL;
+
+const hasAccess = ref(false);
 
 /* -------------------------------------------------------------------- */
 /* Small inline component: checkbox filter dropdown for a table header  */
@@ -1018,32 +1030,55 @@ async function deleteComplain(id) {
 /* Lifecycle + realtime socket sync                                     */
 /* -------------------------------------------------------------------- */
 onMounted(() => {
-  loadData();
-  window.addEventListener('resize', onResize);
-
+  // 1. Ambil data User dari localStorage
   const userData = localStorage.getItem('user');
-  if (userData) user.value = JSON.parse(userData);
-
-  socket.on('complain:new', (newComplain) => {
-    if (newComplain.status === 'pending') {
-      complains.value.unshift(newComplain);
+  if (userData) {
+    try {
+      user.value = JSON.parse(userData);
+    } catch (e) {
+      console.error("Error parsing user data", e);
     }
-  });
+  }
 
-  socket.on('complain:updated', (updatedComplain) => {
-    const idx = complains.value.findIndex((c) => c.id === updatedComplain.id);
-    if (updatedComplain.status !== 'pending') {
-      if (idx !== -1) complains.value.splice(idx, 1);
-    } else if (idx !== -1) {
-      complains.value[idx] = updatedComplain;
-    } else {
-      complains.value.unshift(updatedComplain);
-    }
-  });
+  // 2. LOGIKA UAC (Cek Hak Akses 'complain')
+  try {
+    const pagesData = localStorage.getItem('pages') || localStorage.getItem('user_pages');
+    const pages = pagesData ? JSON.parse(pagesData) : [];
+    
+    // Sesuaikan 'complain' dengan 'code' halaman di database UAC kamu
+    hasAccess.value = pages.includes('complain/status');
+  } catch (e) {
+    hasAccess.value = false;
+  }
 
-  socket.on('complain:deleted', (id) => {
-    complains.value = complains.value.filter((c) => c.id !== parseInt(id));
-  });
+  // 3. Load Data & Listener Socket HANYA jika user punya akses
+  if (hasAccess.value) {
+    loadData();
+
+    socket.on('complain:new', (newComplain) => {
+      if (newComplain.status === 'pending') {
+        complains.value.unshift(newComplain);
+      }
+    });
+
+    socket.on('complain:updated', (updatedComplain) => {
+      const idx = complains.value.findIndex((c) => c.id === updatedComplain.id);
+      if (updatedComplain.status !== 'pending') {
+        if (idx !== -1) complains.value.splice(idx, 1);
+      } else if (idx !== -1) {
+        complains.value[idx] = updatedComplain;
+      } else {
+        complains.value.unshift(updatedComplain);
+      }
+    });
+
+    socket.on('complain:deleted', (id) => {
+      complains.value = complains.value.filter((c) => c.id !== parseInt(id));
+    });
+  }
+
+  // 4. Listener tampilan/UI tetap dipasang
+  window.addEventListener('resize', onResize);
 });
 
 onBeforeUnmount(() => {

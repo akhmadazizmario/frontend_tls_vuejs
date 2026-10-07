@@ -119,7 +119,8 @@
                     <th class="py-3 px-4">ID</th>
                     <th class="py-3 px-4">Nama Tim</th>
                     <th class="py-3 px-4">Kode Dept</th>
-                    <th class="py-3 px-4 text-center">Jml Orang</th>
+                    <th class="py-3 px-4 text-center">Jml_ORG shift 1</th>
+                    <th class="py-3 px-4 text-center">Jml_ORG shift 2</th>
                     <th class="py-3 px-4">Keterangan</th>
                     <th class="py-3 px-4 text-center">Aksi</th>
                   </tr>
@@ -153,6 +154,7 @@
                       <span v-else class="text-muted small">-</span>
                     </td>
                     <td class="py-3 px-4 text-center fw-bold text-dark fs-6">{{ item.jml_org }}</td>
+                    <td class="py-3 px-4 text-center fw-bold text-dark fs-6">{{ item.jml_org2 }}</td>
                     <td class="py-3 px-4 text-muted small text-truncate" style="max-width: 200px;">
                       {{ item.keterangan || '-' }}
                     </td>
@@ -241,6 +243,19 @@
                   required
                   class="form-control fw-semibold"
                   placeholder="Masukkan jumlah orang..."
+                />
+              </div>
+
+               <!-- Jml Orang -->
+              <div class="mb-3">
+                <label class="form-label text-xs fw-bold text-uppercase text-muted">Jml Orang 2*</label>
+                <input
+                  v-model="form.jml_org2"
+                  type="number"
+                  min="0"
+                  required
+                  class="form-control fw-semibold"
+                  placeholder="Masukkan jumlah orang 2..."
                 />
               </div>
 
@@ -344,6 +359,7 @@ const form = ref({
   nama_team: "",
   kode_dept: "",
   jml_org: 0,
+  jml_org2: 0,
   keterangan: ""
 });
 
@@ -387,6 +403,7 @@ const openModal = (mode, data = null) => {
       nama_team: data.nama_team || "",
       kode_dept: data.kode_dept || "",
       jml_org: data.jml_org || 0,
+      jml_org2: data.jml_org2 || 0,
       keterangan: data.keterangan || ""
     };
   } else {
@@ -396,6 +413,7 @@ const openModal = (mode, data = null) => {
       nama_team: "",
       kode_dept: "",
       jml_org: 0,
+      jml_org2: 0,
       keterangan: ""
     };
   }

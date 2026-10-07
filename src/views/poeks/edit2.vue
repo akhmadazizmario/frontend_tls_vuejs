@@ -601,7 +601,7 @@ export default {
   // MENU EDIT/UPDATE (terpisah dari menu Create/Insert).
   // - Load data: GET  /poeks/combined-update  -> ppcController.getCombinedKombinasiDataupdate
   //   (ambil data yang SUDAH PERNAH disimpan dari kombinasiprod8andprod7, bukan dari tabel sumber luar)
-  // - Simpan  : POST /poeks/upsertpo         -> ppcController.upsertKombinasiSelected (tetap sama dengan menu Create)
+  // - Simpan  : POST /poeks/upserta1s1     -> ppcController.upsertA1S1Selected (khusus kolom A1/S1, terpisah dari menu Update)
   // ===================================================================
   name: 'EditKombinasiFinishing',
   data() {
@@ -1029,7 +1029,9 @@ recalcS1Total(row) {
       });
     },
 
-    // Bentuk 1 item payload siap-kirim ke /poeks/upsertpo. Dipakai simpan manual & Sinkronisasi Massal A1/S1.
+    // Bentuk 1 item payload siap-kirim ke /poeks/upserta1s1. HANYA identitas baris + kolom
+    // A1/S1 -- endpoint ini tidak pernah menyentuh qty ERP, jadi qty tidak perlu dikirim.
+    // Dipakai simpan manual & Sinkronisasi Massal A1/S1.
     buildUpsertPayload(item, dateForSave) {
       const a1Fields = {};
       let a1Total = 0;
@@ -1046,14 +1048,21 @@ recalcS1Total(row) {
         s1Total += valS1;
       }
       return {
-        ...item,
+        // Identitas baris, dipakai backend untuk mencari baris ERP yang mau diupdate A1/S1-nya
+        xPO: item.xPO,
+        xNO: item.xNO,
+        xMColor: item.xMColor,
+        xFtyDate: item.xFtyDate,
+        xBuyer: item.xBuyer,
+        xRegion: item.xRegion,
+        xDateTime: dateForSave,
+        // Kolom A1/S1
         ...a1Fields,
         A1TOT: a1Total,
         a1workname: item.a1workname || '',
         ...s1Fields,
         S1TOT: s1Total,
-        s1workname: item.s1workname || '',
-        xDateTime: dateForSave
+        s1workname: item.s1workname || ''
       };
     },
 
@@ -1143,7 +1152,7 @@ recalcS1Total(row) {
       }
 
       const payloadItems = rowsToUpdate.map((item) => this.buildUpsertPayload(item, targetDate));
-      const saveResponse = await axios.post(`${API_BASE_URL}/poeks/upsertpo`, { items: payloadItems });
+      const saveResponse = await axios.post(`${API_BASE_URL}/poeks/upserta1s1`, { items: payloadItems });
       if (!saveResponse.data.success) {
         throw new Error(saveResponse.data.message || 'Gagal menyimpan data.');
       }
@@ -1227,7 +1236,7 @@ recalcS1Total(row) {
 
       this.isSaving = true;
       try {
-        const response = await axios.post(`${API_BASE_URL}/poeks/upsertpo`, { items: payloadItems });
+        const response = await axios.post(`${API_BASE_URL}/poeks/upserta1s1`, { items: payloadItems });
         if (response.data.success) {
           alert('Sukses! Data berhasil disimpan.');
           this.selectedItems = [];

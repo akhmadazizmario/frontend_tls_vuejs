@@ -19,58 +19,88 @@
       </div>
     </Transition>
 
-<Transition name="fade">
-  <div v-if="activeView === 'under60'" class="vh-100 d-flex flex-column p-3 bg-white text-dark overflow-hidden">
+<Transition name="fade" mode="out-in">
+  <div 
+    v-if="activeView === 'under60'" 
+    class="vh-100 d-flex flex-column p-3 bg-white text-dark overflow-hidden"
+    key="under60-view"
+  >
+    
+    <!-- HEADER -->
     <div class="mb-3 p-3 rounded-4 bg-danger text-white text-center shadow-lg">
       <h2 class="fw-black display-6 m-0">
-        ⚠️ KARYAWAN Hasil < 50%
+        ⚠️ KARYAWAN Hasil dibawah 50%
       </h2>
       <p class="mb-0">KHUSUS LINKING LINE A</p>
     </div>
+
+    <!-- TABLE -->
     <div class="flex-grow-1 shadow-2xl rounded-4 overflow-hidden border border-3 bg-white">
       <table class="table table-bordered m-0 h-100 text-center">
+        
+        <!-- THEAD -->
         <thead class="bg-dark text-white">
           <tr>
             <th style="width:5%" class="fs-2">NO</th>
             <th style="width:10%" class="fs-2">LINE</th>
             <th style="width:25%" class="fs-2">NAMA</th>
             <th style="width:15%" class="fs-2">MASA KERJA</th>
-            <th style="width:10%" class="fs-2">RATE</th>
+            <th style="width:15%" class="fs-2">RATE</th>
           </tr>
         </thead>
-        <tbody>
-          <tr  v-for="(item, index) in paginatedUnder60" :key="index" class="align-middle">
-            <td class="fw-bold text-muted ">
+
+        <!-- BODY -->
+        <tbody v-if="paginatedUnder60.length > 0">
+          <tr 
+            v-for="(item, index) in paginatedUnder60" 
+            :key="item.xEmplName + '_' + index"
+            class="align-middle"
+          >
+            <!-- NO -->
+            <td class="fw-bold text-muted">
               {{ (currentUnder60Page - 1) * itemsPerPage + index + 1 }}
             </td>
+
+            <!-- LINE -->
             <td class="fw-bold text-navy fs-2">
-              {{ formatLineName(item.xLine) }}
+              {{ formatLineName(item.xGroup) }}
             </td>
+
+            <!-- NAMA -->
             <td class="text-start fw-black fs-2 text-black text-uppercase">
               {{ item.xEmplName }}
             </td>
+
+            <!-- LOS -->
             <td class="fw-bold text-primary fs-2">
               {{ formatLOS(item.xJoinMonth) }}
             </td>
+
+            <!-- RATE -->
             <td 
-              class="fw-black text-white fs-1"
+              class="fw-black fs-1 text-white"
               :class="{
-                'bg-danger': item.xTRealRate < 50,
-                'bg-warning text-dark': item.xTRealRate >= 50 && item.xTRealRate < 50
+                'bg-danger': item.computedRate < 50,
+                'bg-warning text-dark': item.computedRate >= 50 && item.computedRate < 60
               }"
             >
-              {{ Math.round(item.xTRealRate) }}%
-            </td>
-          </tr>
-          <!-- EMPTY STATE -->
-          <tr v-if="paginatedUnder60.length === 0">
-            <td colspan="7" class="text-center text-muted fw-bold py-5">
-              ✅ Tidak ada karyawan di bawah 60%
+              {{ Math.round(item.computedRate || 0) }}%
             </td>
           </tr>
         </tbody>
+
+        <!-- EMPTY STATE -->
+        <tbody v-else>
+          <tr>
+            <td colspan="5" class="text-center text-muted fw-bold py-5 fs-3">
+              ✅ Tidak ada karyawan di bawah 50%
+            </td>
+          </tr>
+        </tbody>
+
       </table>
     </div>
+
   </div>
 </Transition>
 
@@ -80,6 +110,7 @@
           <h2 class="fw-black text-navy mb-0">📊 SUMMARY ALL LINES LINKING A</h2>
           <p class="text-muted fw-bold fs-5 mb-0">{{ dateRangeText || "Memuat Periode..." }}</p>
         </div>
+
         <div class="flex-grow-1 rounded-3 shadow-2xl overflow-hidden bg-white">
           <table class="table table-bordered m-0 w-100 h-100 layout-fixed" style="border-color: black;">
             <thead>
@@ -117,50 +148,71 @@
     </Transition>
 
     <Transition name="fade">
-      <div v-if="activeView === 'table'" class="vh-100 d-flex flex-column p-3 bg-white text-dark overflow-hidden">
-        <div class="d-flex justify-content-between align-items-center mb-3 px-5 py-2 bg-light rounded-pill border-start border-warning border-10 shadow-sm">
-          <h4 class="m-0 fw-black text-navy display-6 text-uppercase">Data Hasil Produksi Tiap Operator LINKING LINE A </h4>
-          <div class="badge bg-navy px-4 py-2 fs-4">Tanggal: {{ onlyDate }}</div>
-        </div>
-        <div class="flex-grow-1 shadow-2xl rounded-4 overflow-hidden border border-3 bg-white">
-          <table class="table table-bordered m-0 h-100 layout-fixed">
-            <thead class="bg-navy text-white text-center">
-              <tr>
-                <th rowspan="2" class="fs-4 align-middle" style="width: 4%">NO</th>
-                <th rowspan="2" class="fs-4 align-middle" style="width: 5%">LINE</th>
-                <th rowspan="2" class="fs-4 align-middle" style="width: 15%">OPERATOR NAMA</th>
-                <th rowspan="2" class="fs-4 align-middle" style="width: 8%">TGL JOIN</th>
-                <th rowspan="2" class="fs-4 align-middle" style="width: 8%">MASA KERJA</th>
-                <th rowspan="2" class="fs-4 align-middle" style="width: 12%">STYLE</th>
-                <th rowspan="2" class="fs-4 align-middle" style="width: 14%">PROSES</th>
-                <th colspan="3" class="bg-navy-light text-white fs-5 py-2">OUTPUT PER 3 JAM</th>
-                <th rowspan="2" class="bg-dark text-warning fs-5 align-middle" style="width: 6%">TOTAL</th>
-              </tr>
-              <tr class="bg-light text-navy">
-                <th v-for="n in currentHourColumns" :key="n" class="fs-4 py-1">{{ n }}:00</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="(item, index) in paginatedData" :key="index" class="align-middle border-2 text-center">
-                <td class="fw-bold fs-5 text-muted">{{ (currentPage - 1) * itemsPerPage + index + 1 }}</td>
-                <td class="fs-3 text-muted fw-bold">{{ formatLineName(item.xGroup) }}</td>
-                <td class="fw-black text-navy fs-2 text-uppercase text-start px-3 text-truncate">{{ item.xEmplName }}</td>
-                <td class="fs-3 text-muted fw-bold">{{ formatJoinDate(item.xJoinDate) }}</td>
-                <td class="fw-bold text-primary fs-3">{{ formatLOS(item.xJoinMonth) }}</td>
-                <td class="fs-3 fw-bold text-truncate text-muted">{{ item.xMark }}</td>
-                <td class="fs-3 fw-bold text-truncate text-muted">{{ item.xWorkName }}</td>
-                <td v-for="n in currentHourColumns" :key="n" 
-                    class="fs-1 fw-black border-start" 
-                    :class="{'bg-warning-light': item.hourlyQty[n]}">
-                  {{ item.hourlyQty[n] || '-' }} 
-                </td>
-                <td class="fw-black bg-navy text-white display-6 fs-1">{{ item.currentTotal }}</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+  <div v-if="activeView === 'table'" class="vh-100 d-flex flex-column p-3 bg-white text-dark overflow-hidden">
+    
+    <div class="d-flex justify-content-between align-items-center mb-3 px-5 py-2 bg-light rounded-pill border-start border-warning border-10 shadow-sm">
+      <h4 class="m-0 fw-black text-navy display-6 text-uppercase">
+        Data Hasil Produksi Tiap Operator LINKING LINE A
+      </h4>
+      <div class="badge bg-navy px-4 py-2 fs-4">
+        Tanggal: {{ onlyDate }}
       </div>
-    </Transition>
+    </div>
+
+    <div class="flex-grow-1 shadow-2xl rounded-4 overflow-hidden border border-3 bg-white">
+      <table class="table table-bordered m-0 h-100 layout-fixed">
+
+        <thead class="bg-navy text-white text-center">
+  <tr>
+    <th rowspan="2" class="fs-4 align-middle" style="width: 4%">NO</th>
+    <th rowspan="2" class="fs-4 align-middle" style="width: 5%">LINE</th>
+    <th rowspan="2" class="fs-4 align-middle" style="width: 15%">OPERATOR NAMA</th>
+    <th rowspan="2" class="fs-4 align-middle" style="width: 8%">MASA KERJA</th>
+    <th rowspan="2" class="fs-4 align-middle" style="width: 12%">STYLE</th>
+    <th rowspan="2" class="fs-4 align-middle" style="width: 14%">PROSES</th>
+    <th rowspan="2" class="fs-4 align-middle" style="width: 8%">TARGET (3J)</th> <th :colspan="activePeriodeHeaders.length" class="bg-navy-light text-white fs-5 py-2">
+      OUTPUT
+    </th>
+    
+    <th rowspan="2" class="bg-dark text-warning fs-5 align-middle" style="width: 6%">
+      TOTAL
+    </th>
+  </tr>
+
+  <tr class="bg-light text-navy">
+    <th v-for="p in activePeriodeHeaders" :key="p" class="fs-4 py-1">
+      {{ p }}
+    </th>
+  </tr>
+</thead>
+
+        <tbody>
+  <tr v-for="(item, index) in paginatedData" :key="index" class="align-middle border-2 text-center">
+    <td class="fw-bold fs-5 text-muted">{{ (currentPage - 1) * itemsPerPage + index + 1 }}</td>
+    <td class="fs-3 text-muted fw-bold">{{ formatLineName(item.xGroup) }}</td>
+    <td class="fw-black text-navy fs-2 text-uppercase text-start px-3 text-truncate">{{ item.xEmplName }}</td>
+    <td class="fw-bold text-primary fs-3">{{ formatLOS(item.xJoinMonth) }}</td>
+    <td class="fs-3 fw-bold text-truncate text-muted">{{ item.xMark }}</td>
+    <td class="fs-3 fw-bold text-truncate text-muted">{{ item.xWorkName }}</td>
+    
+    <td class="fs-3 fw-bold text-danger">
+      {{ item.xTarget3Jam }}
+    </td>
+
+    <td v-for="p in activePeriodeHeaders" :key="p" class="fs-1 fw-black border-start bg-warning-light">
+      {{ item.periodeQty[p] || '-' }}
+    </td>
+
+    <td class="fw-black bg-navy text-white display-6 fs-1">
+      {{ item.currentTotal }}
+    </td>
+  </tr>
+</tbody>
+
+      </table>
+    </div>
+  </div>
+</Transition>
 
     <div class="fixed-bottom p-1">
       <div class="progress bg-dark" style="height: 10px; border-radius: 10px;">
@@ -173,75 +225,89 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue';
 import axios from 'axios';
+
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
 // ================= STATE =================
 const rawData = ref([]);
 const summaryData = ref({});
 const summaryLines = ref([]);
 const dateHeaders = ref([]);
 const dateRangeText = ref("");
+
 const under60Data = ref([]);
+
 const activeView = ref('summary');
+
 const currentPage = ref(1);
 const currentSummaryPage = ref(1);
 const currentUnder60Page = ref(1);
+
 const itemsPerPage = ref(8);
 const scrollProgress = ref(0);
+
 const currentDateTime = ref('');
 const onlyDate = ref('');
-// ================= JAM SLIDING =================
-const currentHourColumns = computed(() => {
-  const now = new Date();
-  const currentH = now.getHours();
-  let start = currentH - 2;
-  if (start < 6) start = 6;
-  if (start > 15) start = 15;
-  return [start, start + 1, start + 2];
+
+// ================= PERIODE DEFINITION =================
+const activePeriodeHeaders = computed(() => {
+  const periods = new Set();
+  rawData.value.forEach(row => {
+    if (row.xPeriode) periods.add(row.xPeriode);
+  });
+  return Array.from(periods).sort(); 
 });
+
 // ================= GROUPING DATA =================
 const groupedData = computed(() => {
   const groups = {};
-  const filtered = rawData.value.filter(r =>
-    r.xGroup?.toUpperCase().includes("LINKING LINE A")
-  );
+
+  const filtered = rawData.value.filter(r => {
+    const isLineA = r.xLine === "LINE A" || r.xGroup?.toUpperCase().includes("LINE A");
+    const isLinkingDept = r.xDeptName?.toUpperCase().includes("LINKING");
+    const isNotSontex = !r.xDeptName?.toUpperCase().includes("SONTEX");
+
+    return isLineA && isLinkingDept && isNotSontex;
+  });
 
   filtered.forEach(row => {
-    const key = `${row.xEmplCode}_${row.xWorkName}`;
-    let realHour = 0;
-    if (row.xDateTime?.includes('T')) {
-      realHour = parseInt(row.xDateTime.split('T')[1].substring(0, 2));
-    }
+    const key = `${row.xEmplName}_${row.xMark}_${row.xWorkName}`;
+
     if (!groups[key]) {
       groups[key] = {
         xEmplCode: row.xEmplCode,
         xEmplName: row.xEmplName,
-        xJoinDate: row.xJoinDate,
+        xTarget3Jam: row.xTarget3Jam || 0,
         xJoinMonth: row.xJoinMonth,
         xGroup: row.xGroup,
         xWorkName: row.xWorkName,
         xMark: row.xMark,
-        hourlyQty: {}
+        xRealRate: row.xRealRate,
+        xtRealRate: row.xtRealRate || 0,
+        periodeQty: {}
       };
     }
-    if (realHour >= 6 && realHour <= 17) {
-      groups[key].hourlyQty[realHour] =
-        (groups[key].hourlyQty[realHour] || 0) + row.xQty;
+
+    if (row.xPeriode) {
+      groups[key].periodeQty[row.xPeriode] = row.xQty;
     }
   });
+
   return Object.values(groups);
 });
 
-// ================= FILTER 3 JAM =================
+// ================= FINAL CALCULATION =================
 const filteredByActiveHours = computed(() => {
-  const activeHours = currentHourColumns.value;
-  return groupedData.value
-    .map(item => {
-      const total = activeHours.reduce((acc, h) => {
-        return acc + (item.hourlyQty[h] || 0);
-      }, 0);
-      return { ...item, currentTotal: total };
-    })
-    .filter(item => item.currentTotal > 0);
+  return groupedData.value.map(item => {
+    const total = Object.values(item.periodeQty).reduce((a, b) => a + b, 0);
+    const rate = item.xtRealRate;
+
+    return { 
+      ...item, 
+      currentTotal: total,
+      computedRate: rate 
+    };
+  }).filter(item => item.currentTotal > 0);
 });
 
 // ================= PAGINATION =================
@@ -260,73 +326,73 @@ const paginatedUnder60 = computed(() => {
   return under60Data.value.slice(start, start + itemsPerPage.value);
 });
 
-// ================= FORMAT =================
+// ================= FORMATTERS =================
 const formatLineName = (name) => {
   if (!name) return "-";
   return name.toUpperCase().replace("LINKING LINE ", "").trim();
 };
 
 const formatLOS = (m) => {
-  if (!m || m < 1) return '-';
+  if (m === null || m === undefined || m < 0) return '-';
+  if (m === 0) return 'Baru';
   const y = Math.floor(m / 12);
   const mm = m % 12;
   return `${y ? y + 'th ' : ''}${mm ? mm + 'bln' : ''}`.trim();
 };
 
-const formatJoinDate = (d) => {
-  if (!d) return '-';
-  const x = new Date(d);
-  return `${String(x.getDate()).padStart(2, '0')}/${String(x.getMonth()+1).padStart(2, '0')}/${String(x.getFullYear()).slice(-2)}`;
-};
-
 const formatDate = (d) => {
   const x = new Date(d);
-  return `${x.getDate()}/${x.getMonth()+1}`;
+  return isNaN(x) ? '-' : `${x.getDate()}/${x.getMonth()+1}`;
 };
 
 // ================= FETCH DATA =================
 const fetchAllData = async () => {
   try {
-    // SUMMARY TABLE
+    // 1. SUMMARY
     const resSummary = await axios.get(`${API_BASE_URL}/tv-target-linkinga/summary-linking`);
     if (resSummary.data.success) {
       const dept = resSummary.data.departments.find(d => d.deptName === "LINKING");
       if (dept) {
         summaryLines.value = dept.lines.filter(l =>
-          l.lineName.toUpperCase().includes("LINKING LINE A")
+          l.lineName.toUpperCase().includes("LINE A")
         );
       }
       dateHeaders.value = resSummary.data.meta.dateHeaders || [];
       dateRangeText.value = `PERIODE: ${resSummary.data.meta.sbDate} S/D ${resSummary.data.meta.seDate}`;
     }
-    // CARD
+
+    // 2. CARDS
     const resCards = await axios.get(`${API_BASE_URL}/tv-target-linkinga/hasil-linking`);
     summaryData.value = resCards.data;
-    // DETAIL
-    const resDetail = await axios.get(`${API_BASE_URL}/tv-target-linkinga/hasil-produksi`);
-    if (resDetail.data.status === "success") {
-      rawData.value = resDetail.data.data;
-    }
-    // 🔴 UNDER 60
-const resUnder60 = await axios.get(`${API_BASE_URL}/tv-target-linkinga/karayawanunder60persen`);
 
-if (resUnder60.data.success) {
-  under60Data.value = resUnder60.data.data
-    .filter(x =>
-      x.xLine?.toUpperCase().includes("LINE A") && // ✅ filter LINE A
-      x.xJoinMonth > 4 &&                           // ✅ LOS > 4 bulan
-      x.xTRealRate < 50                              // ✅ < 60%
-    )
-    .map(x => ({
-      xLine: x.xGroup,
-      xEmplName: x.xEmplName,
-      xJoinMonth: x.xJoinMonth,
-      xTRealRate: x.xTRealRate
-    }))
-    .sort((a, b) => a.xTRealRate - b.xTRealRate); // 🔥 paling jelek di atas
-}
+    // 3. DETAIL PRODUKSI
+    const resDetail = await axios.get(`${API_BASE_URL}/tv-target-linkinga/hasil-produksi`);
+    if (resDetail.data && resDetail.data.status === "success") {
+      rawData.value = resDetail.data.data || [];
+    }
+
+    // 🔴 4. UNDER 60 (PAKAI API SENDIRI - FIX)
+    const resUnder60 = await axios.get(`${API_BASE_URL}/tv-target-linkinga/karayawanunder60persen`);
+
+    if (resUnder60.data.success) {
+      under60Data.value = resUnder60.data.data
+        .filter(x =>
+          x.xLine?.toUpperCase().includes("LINE A") &&
+          x.xJoinMonth > 4 &&
+          x.xTRealRate < 50 &&
+          x.xTRealRate > 0
+        )
+        .map(x => ({
+          xGroup: x.xGroup,
+          xEmplName: x.xEmplName,
+          xJoinMonth: x.xJoinMonth,
+          computedRate: x.xTRealRate
+        }))
+        .sort((a, b) => a.computedRate - b.computedRate);
+    }
+
   } catch (e) {
-    console.error("Gagal fetch:", e);
+    console.error("Gagal fetch data:", e);
   }
 };
 
@@ -343,28 +409,28 @@ const animate = (time) => new Promise(res => {
   }, 50);
 });
 
-// ================= LOOP DISPLAY =================
+// ================= LOOP =================
 const startDisplayLoop = async () => {
   const DURATION = 15000;
+
   while (true) {
-    // 1. SUMMARY
     activeView.value = 'summary';
     await animate(DURATION);
-    // 2. SUMMARY TABLE
+
     activeView.value = 'summary-table';
     const sumPages = Math.ceil(summaryLines.value.length / itemsPerPage.value) || 1;
     for (let p = 1; p <= sumPages; p++) {
       currentSummaryPage.value = p;
       await animate(DURATION);
     }
-    // 3. 🔴 UNDER 60
+
     activeView.value = 'under60';
     const uPages = Math.ceil(under60Data.value.length / itemsPerPage.value) || 1;
     for (let p = 1; p <= uPages; p++) {
       currentUnder60Page.value = p;
       await animate(DURATION);
     }
-    // 4. DETAIL TABLE
+
     activeView.value = 'table';
     const pages = Math.ceil(filteredByActiveHours.value.length / itemsPerPage.value) || 1;
     for (let p = 1; p <= pages; p++) {
@@ -383,10 +449,10 @@ const getHealthClasses = (val) => {
   return 'bg-success text-white';
 };
 
-// ================= CARD =================
+// ================= CARDS =================
 const summaryCards = computed(() => ({
-  "Qty Primary all Linking": { value: summaryData.value.today_finish || 0, icon: "bi-check-circle-fill text-success" },
-  "Target All Linking": { value: summaryData.value.target || 0, icon: "bi-lightning-charge-fill text-warning" },
+  "QTY Finish": { value: summaryData.value.today_finish || 0, icon: "bi-check-circle-fill text-success" },
+  "Target Linking": { value: summaryData.value.target || 0, icon: "bi-lightning-charge-fill text-warning" },
   "%": { value: summaryData.value.finish_percentage || '0%', icon: "bi-graph-up-arrow text-primary" },
   "Empl All linking": { value: summaryData.value.attendance || 0, icon: "bi-people-fill text-info" }
 }));
@@ -395,11 +461,13 @@ const summaryCards = computed(() => ({
 onMounted(async () => {
   setInterval(() => {
     const now = new Date();
-    currentDateTime.value = `${now.toLocaleDateString('id-ID')} (time: ${now.toLocaleTimeString('id-ID')})`;
+    currentDateTime.value = `${now.toLocaleDateString('id-ID')} (${now.toLocaleTimeString('id-ID')})`;
     onlyDate.value = now.toLocaleDateString('id-ID');
   }, 1000);
+
   await fetchAllData();
   startDisplayLoop();
+
   setInterval(fetchAllData, 300000);
 });
 </script>

@@ -19,7 +19,7 @@
               <input 
                 v-model="form.title" 
                 class="form-control form-control-lg border-0 bg-light rounded-3 mb-3" 
-                placeholder="Judul Form (Contoh: Survei tentang kegiatan Seminar)"
+                placeholder="Judul Form (Contoh: Survei Kepuasan Pelanggan)"
               />
               <textarea 
                 v-model="form.description" 

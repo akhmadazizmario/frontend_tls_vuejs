@@ -859,7 +859,7 @@ const exportToExcelweb = () => {
           ["KIRIM SONTEX A1", item.total_sontekkea1, item.akum_sontekkea1, item.sisa_kirim],
           ["KIRIM LAMPU A1", item.total_lampukea1, item.akum_lampukea1, item.sisa_kirim],
           ["KIRIM SULAM A1", item.total_sulamkea1, item.akum_sulamkea1, item.sisa_kirim],
-          ["KIRIM SULAM BELUM SOOM", item.total_sulambelumsoomkea1, item.akum_sulambelumsoomkea1, item.sisa_kirim],
+          ["KIRIM SULAM BELUM SOOM A1", item.total_sulambelumsoomkea1, item.akum_sulambelumsoomkea1, item.sisa_kirim],
           ["KIRIM SAMPLE A1", item.total_samplekea1, item.akum_samplekea1, item.sisa_kirim],
         ];
 

@@ -154,10 +154,10 @@
                   <tr v-for="group in filteredDisplayData" :key="group.xMark" class="border-bottom bg-white" :class="{'table-warning-subtle': group.total_linkingP > 0 && !group.dept}">
                     <td class="ps-4">
                       <div class="d-flex gap-2">
-                        <!-- <button @click="handleSave(group)" :disabled="group.isSaving" class="btn btn-success btn-sm rounded-pill px-3 shadow-sm">
+                        <!--- <button @click="handleSave(group)" :disabled="group.isSaving" class="btn btn-success btn-sm rounded-pill px-3 shadow-sm">
                           <i v-if="group.isSaving" class="spinner-border spinner-border-sm me-1"></i>
                           <i v-else class="bi bi-save me-1"></i> SIMPAN
-                        </button> -->
+                        </button> --->
                         <button v-if="group.id" @click="handleDelete(group.id, group.xMark)" class="btn btn-outline-danger btn-sm rounded-circle border-0">
                           <i class="bi bi-trash-fill"></i>
                         </button>

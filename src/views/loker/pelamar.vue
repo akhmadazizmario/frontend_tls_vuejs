@@ -1,172 +1,3 @@
-<!-- <template>
-  <div class="d-flex flex-column min-vh-100 bg-light-soft">
-    <Header :user="user" @toggle-sidebar="toggleSidebar" @logout="logout" />
-
-    <div class="d-flex flex-grow-1">
-      <Sidebar :isOpen="sidebarOpen" />
-
-      <main class="flex-grow-1 p-3 p-md-5" :style="mainContentStyle">
-        <div class="container-fluid">
-          <h2 class="fw-bold mb-3 text-dark">
-            <i class="bi bi-people-fill me-2 text-primary"></i> Daftar Pelamar
-          </h2>
-          <hr />
-
-          <div class="card shadow-sm border-0 mb-4 rounded-3">
-            <div class="card-body py-3">
-              <h5 class="card-title mb-3 text-primary fw-semibold">
-                <i class="bi bi-funnel me-2"></i> Filter Data
-              </h5>
-              <div class="row g-3">
-                <div class="col-md-2 col-sm-6">
-                  <label for="startDate" class="form-label text-muted small mb-1"
-                    >Tanggal Awal</label
-                  >
-                  <input
-                    type="date"
-                    v-model="filters.startDate"
-                    class="form-control form-control-sm"
-                  />
-                </div>
-                <div class="col-md-2 col-sm-6">
-                  <label for="endDate" class="form-label text-muted small mb-1"
-                    >Tanggal Akhir</label
-                  >
-                  <input
-                    type="date"
-                    v-model="filters.endDate"
-                    class="form-control form-control-sm"
-                  />
-                </div>
-                <div class="col-md-3 col-sm-6">
-                  <label for="posisi" class="form-label text-muted small mb-1"
-                    >Posisi</label
-                  >
-                  <select v-model="filters.posisi" class="form-select form-select-sm">
-                    <option value="">-- Semua Posisi --</option>
-                    <option v-for="l in lokerList" :key="l.id" :value="l.id">
-                      {{ l.posisi }}
-                    </option>
-                  </select>
-                </div>
-                <div class="col-md-2 col-sm-6">
-                  <label for="posisi" class="form-label text-muted small mb-1"
-                    >Jenis Kelamin</label
-                  >
-                  <select v-model="filters.jenis_kelamin" class="form-select form-select-sm">
-                    <option value="">-- Semua Jenis Kelamin --</option>
-                    <option value="Laki-laki">Laki-laki</option>
-                    <option value="Perempuan">Perempuan</option>
-                  </select>
-                </div>
-                <div class="col-md-3 col-sm-6 d-flex align-items-end gap-2">
-                  <button @click="loadPelamar" class="btn btn-primary btn-sm flex-grow-1">
-                    <i class="bi bi-search me-1"></i> Terapkan Filter
-                  </button>
-                  <button @click="exportExcel" class="btn btn-success btn-sm flex-grow-1">
-                    <i class="bi bi-file-earmark-excel me-1"></i> Export Excel
-                  </button>
-               
-                  <button @click="confirmDeleteMassal" class="btn btn-danger btn-sm flex-grow-1">
-                    <i class="bi bi-trash3 me-1"></i> Hapus Massal
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div class="card shadow-lg border-0 rounded-4">
-            <div class="card-body">
-              <div v-if="loading" class="text-center py-5">
-                <div class="spinner-border text-primary" role="status">
-                  <span class="visually-hidden">Loading...</span>
-                </div>
-                <p class="mt-2 text-muted">Memuat data pelamar...</p>
-              </div>
-
-              <div
-                v-else-if="pelamar.length === 0"
-                class="text-center py-5 text-muted"
-              >
-                <i class="bi bi-inbox-fill fs-2 mb-3"></i>
-                <p>Belum ada pelamar.</p>
-              </div>
-
-              <div v-else class="table-responsive">
-                <table
-                  id="pelamarTable"
-                  class="table table-striped table-hover align-middle table-fixed-min-width"
-                >
-                  <thead class="table-primary">
-                    <tr>
-                      <th class="text-center">No</th>
-                      <th>Nama</th>
-                      <th>Email</th>
-                      <th>Whastapp</th>
-                      <th>TTL</th>
-                      <th>JK</th>
-                      <th>Usia</th>
-                      <th>Posisi Dilamar</th>
-                      <th>Tanggal Lamar</th>
-                      <th class="text-center">Aksi</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr v-for="(p, index) in pelamar" :key="p.id">
-                      <td class="text-center">{{ index + 1 }}</td>
-                      <td>{{ p.nama_lengkap }}</td>
-                      <td>{{ p.email }}</td>
-                      <td>{{ p.no_hp }}</td>
-                      <td>{{ p.tempat_lahir }}, {{ p.tanggal_lahir }}</td>
-                      <td>{{ p.jenis_kelamin }}</td>
-                      <td>{{ p.usia }}</td>
-                      <td>{{ p.loker?.posisi || "-" }}</td>
-                      <td :data-order="new Date(p.createdAt).toISOString()">{{ formatDateTime(p.createdAt) }}</td>
-                      <td class="text-center text-nowrap">
-                        <div
-                          class="btn-group btn-group-sm"
-                          role="group"
-                          aria-label="Aksi Pelamar"
-                        >
-                          <button
-                            class="btn btn-info me-1"
-                            title="Lihat Detail"
-                            @click="detailPelamar(p.id)"
-                          >
-                            <i class="bi bi-eye text-white"></i>
-                          </button>
-
-                          <button
-                            class="btn btn-warning me-1"
-                            title="Export PDF"
-                            @click="exportPdf(p.id)"
-                          >
-                            <i class="bi bi-file-earmark-pdf"></i>
-                          </button>
-
-                          <button
-                            class="btn btn-danger"
-                            title="Hapus Pelamar"
-                            @click="confirmDelete(p.id)"
-                          >
-                            <i class="bi bi-trash"></i>
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-        </div>
-      </main>
-    </div>
-
-    <Footer />
-  </div>
-</template> -->
-
-
 <template>
   <div class="jp-admin d-flex flex-column min-vh-100">
     <Header :user="user" @toggle-sidebar="toggleSidebar" @logout="logout" />
@@ -175,6 +6,8 @@
       <Sidebar :isOpen="sidebarOpen" />
 
       <main class="flex-grow-1 p-2 p-md-4 main-content-wrapper" :style="mainContentStyle">
+        <!-- BUNGKUS DENGAN v-if="hasAccess" UNTUK UAC -->
+      <div v-if="hasAccess" class="container-fluid retur-page max-w-7xl mx-auto p-0">
         <div class="container-fluid">
           <div class="jp-page-head">
             <div>
@@ -221,8 +54,17 @@
                 <button @click="exportExcel" class="jp-btn jp-btn-success" title="Export Excel">
                   <i class="bi bi-file-earmark-excel"></i>
                 </button>
-                <button @click="confirmDeleteMassal" class="jp-btn jp-btn-danger" title="Hapus Massal">
+                <button @click="exportTlsZip" class="jp-btn jp-btn-success" title="Export Pelamar Pernah Kerja di TLS (Excel + PDF, ZIP)">
+                  <i class="bi bi-file-earmark-zip"></i>
+                </button>
+                <button @click="confirmDeleteMassal" class="jp-btn jp-btn-danger" title="Hapus Massal (rentang tanggal)">
                   <i class="bi bi-trash3"></i>
+                </button>
+                <button @click="confirmDeleteByTlsStatus('Ya')" class="jp-btn jp-btn-danger" title="Hapus Semua Pelamar Pernah Kerja di TLS">
+                  <i class="bi bi-person-x"></i>
+                </button>
+                <button @click="confirmDeleteByTlsStatus('Tidak')" class="jp-btn jp-btn-danger" title="Hapus Semua Pelamar Tidak Pernah Kerja di TLS">
+                  <i class="bi bi-person-dash"></i>
                 </button>
               </div>
             </div>
@@ -413,9 +255,17 @@
             </template>
           </div>
         </div>
+        </div>
+
+        <!-- OPSI TAMPILAN BLANK (JIKA TIDAK ADA AKSES) -->
+        <div v-else class="d-flex flex-column align-items-center justify-content-center h-100 pt-5 mt-5">
+           <!-- Halaman Blank, Jika ingin dibuat benar-benar kosong hapus komentar html ini. -->
+            <h1>hi anda tersesat nih, Mohon untuk Logout Segera </h1>
+            <a href="/logout" class="btn btn-primary">back to jungle</a>
+        </div>
       </main>
     </div>
-
+    
     <Footer />
 
     <!-- ===== TELEPORTED FILTER DROPDOWN ===== -->
@@ -480,6 +330,7 @@ import Footer from "../../components/Footer.vue";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
+const hasAccess = ref(false);
 // State utama
 const pelamar = ref([]);
 const loading = ref(false);
@@ -575,6 +426,8 @@ async function detailPelamar(id) {
       ${detailRow("provinsi", p.provinsi)}
       ${detailRow("kabupaten/kota", p.kabupatenkota)}
       ${detailRow("Kecamatan", p.kecamatan)}
+      ${detailRow("Rt", p.rt)}
+      ${detailRow("Rw", p.rw)}
     `;
 
     // Kolom Kanan: Data Posisi & Pendidikan
@@ -585,12 +438,17 @@ async function detailPelamar(id) {
       ${detailRow("Nama Sekolah", p.nama_sekolah)}
       ${detailRow("Jurusan", p.jurusan)}
       ${detailRow("Nilai", p.nilai_sekolah)}
+
+      <h5 class="text-warning fw-bold mb-3 mt-4">Pengalaman & Sumber Info</h5>
+      ${detailRow("Pernah Kerja di TLS", p.pengalaman_kerja_tlsi)}
+      ${detailRow("Detail Pengalaman TLS", p.detail_pengalaman_tls)}
+      ${detailRow("Sumber Loker Utama", p.sumberinfoloker)}
+      ${detailRow("Sumber Loker Detail", p.sumber_informasidua)}
     `;
 
     // Bagian Bawah: Dokumen & Tanggal
     const dataTambahan = `
       <hr class="mt-4 mb-3">
-      ${detailRow("Sumber Loker", p.sumberinfoloker)}
       ${detailRow("Tanggal Lamar", formatDateTime(p.createdAt))}
       <p class="mb-2"><b>Dokumen Tambahan:</b> 
         ${
@@ -701,6 +559,79 @@ const exportExcel = async () => {
   }
 };
 
+// Export ZIP: Excel rekap + PDF lamaran, khusus pelamar yang PERNAH kerja di TLS
+const exportTlsZip = async () => {
+  try {
+    Swal.fire({
+      title: "Menyiapkan berkas...",
+      html: "Sedang membuat Excel & mengumpulkan PDF lamaran. Mohon tunggu, proses ini bisa memakan waktu beberapa saat.",
+      allowOutsideClick: false,
+      didOpen: () => Swal.showLoading(),
+    });
+
+    const res = await axios.get(`${API_BASE_URL}/rekruitment-tlsi/export-tls-zip`, {
+      params: {
+        from: filters.value.startDate || null,
+        to: filters.value.endDate || null,
+        posisi: filters.value.posisi || null,
+        jenis_kelamin: filters.value.jenis_kelamin || null,
+      },
+      responseType: "blob",
+    });
+
+    const blob = new Blob([res.data], { type: "application/zip" });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", `Pelamar-Pernah-TLS-${Date.now()}.zip`);
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+
+    Swal.fire("Berhasil", "ZIP (Excel + PDF lamaran) pelamar pernah kerja di TLS berhasil diunduh.", "success");
+  } catch (err) {
+    console.error("Gagal export ZIP TLS:", err);
+    if (err.response?.status === 404) {
+      Swal.fire("Info", "Tidak ada pelamar yang pernah kerja di TLS pada filter saat ini.", "info");
+    } else {
+      Swal.fire("Error", "Gagal export ZIP pelamar TLS", "error");
+    }
+  }
+};
+
+async function confirmDeleteByTlsStatus(status) {
+  const label = status === "Ya" ? "PERNAH kerja di TLS" : "TIDAK PERNAH kerja di TLS";
+
+  const result = await Swal.fire({
+    title: "Yakin hapus massal? ⚠️",
+    html: `Seluruh data pelamar dengan status <b>${label}</b> akan dihapus permanen beserta file dokumennya.`,
+    icon: "warning",
+    showCancelButton: true,
+    confirmButtonColor: "#dc3545",
+    cancelButtonColor: "#6c757d",
+    cancelButtonText: "Batal",
+    confirmButtonText: "Ya, Hapus Semua!",
+  });
+
+  if (result.isConfirmed) {
+    deletePelamarByTlsStatus(status);
+  }
+}
+
+async function deletePelamarByTlsStatus(status) {
+  try {
+    await axios.delete(`${API_BASE_URL}/rekruitment-tlsi/pelamar/mass-delete-tls-status`, {
+      data: { status },
+    });
+
+    Swal.fire("Berhasil", "Data pelamar berhasil dihapus massal berdasarkan status TLS!", "success");
+    await loadPelamar();
+  } catch (err) {
+    console.error("Gagal delete massal by status TLS:", err);
+    Swal.fire("Gagal", err.response?.data?.error || "Gagal menghapus pelamar berdasarkan status TLS", "error");
+  }
+}
+
 async function confirmDeleteMassal() {
   if (!filters.value.startDate || !filters.value.endDate) {
     return Swal.fire("Error", "Tanggal awal dan akhir harus diisi!", "warning");
@@ -784,6 +715,8 @@ const columns = [
   { key: "provinsi", label: "Provinsi", get: (p) => p.provinsi, filterable: true },
   { key: "kabupatenkota", label: "Kabupaten/Kota", get: (p) => p.kabupatenkota, filterable: true },
   { key: "kecamatan", label: "Kecamatan", get: (p) => p.kecamatan, filterable: true },
+  { key: "rt", label: "Rt", get: (p) => p.rt, filterable: true },
+  { key: "rw", label: "Rw", get: (p) => p.rw, filterable: true },
   { key: "posisi", label: "Posisi Dilamar", get: (p) => p.loker?.posisi, filterable: true },
   { key: "jenjang_pendidikan", label: "Jenjang Pendidikan", get: (p) => p.jenjang_pendidikan, filterable: true },
   { key: "nama_sekolah", label: "Nama Sekolah", get: (p) => p.nama_sekolah, filterable: true },
@@ -890,8 +823,19 @@ function resetAllColumnFilters() {
 }
 
 // Tutup dropdown saat scroll / resize agar posisi tidak "ngambang"
-function handleScrollOrResize() {
-  if (openFilterKey.value) openFilterKey.value = null;
+// (tapi JANGAN tutup kalau scroll-nya terjadi di dalam panel filter itu sendiri,
+// misalnya saat user scroll daftar checkbox)
+function handleScrollOrResize(e) {
+  if (!openFilterKey.value) return;
+  const target = e.target;
+  if (
+    target &&
+    typeof target.closest === "function" &&
+    target.closest(".jp-filter-panel")
+  ) {
+    return;
+  }
+  openFilterKey.value = null;
 }
 onMounted(() => {
   window.addEventListener("scroll", handleScrollOrResize, true);
@@ -973,16 +917,38 @@ watch(pageSize, () => {
 
 // --- Lifecycle ---
 onMounted(async () => {
-  await loadPelamar();
+  //await loadPelamar();
+  try {
+    const pagesData = localStorage.getItem('pages') || localStorage.getItem('user_pages');
+    const pages = pagesData ? JSON.parse(pagesData) : [];
+    
+    // Ganti 'loker' atau 'pelamar' sesuai `code` halaman di database UAC kamu
+    hasAccess.value = pages.includes('daftar-pelamar'); 
+  } catch (e) {
+    hasAccess.value = false;
+  }
+
+  // 3. Hanya panggil API jika user punya akses
+  if (hasAccess.value) {
+    await loadPelamar();
+    
+    try {
+      const res = await axios.get(`${API_BASE_URL}/loker`);
+      lokerList.value = res.data;
+    } catch (error) {
+      console.error("Gagal memuat daftar loker:", error);
+      lokerList.value = [];
+    }
+  }
   checkMobile(); // Panggil saat awal load
   window.addEventListener("resize", checkMobile)
-  try {
-    const res = await axios.get(`${API_BASE_URL}/loker`);
-    lokerList.value = res.data;
-  } catch (error) {
-    console.error("Gagal memuat daftar loker:", error);
-    lokerList.value = [];
-  }
+  // try {
+  //   const res = await axios.get(`${API_BASE_URL}/loker`);
+  //   lokerList.value = res.data;
+  // } catch (error) {
+  //   console.error("Gagal memuat daftar loker:", error);
+  //   lokerList.value = [];
+  // }
   window.addEventListener("resize", () => {
     windowWidth.value = window.innerWidth;
   });
@@ -1423,6 +1389,7 @@ thead .jp-sticky-right { z-index: 4; background: var(--primary-soft); }
   background: transparent;
 }
 
+/* Cari .jp-filter-panel dan sesuaikan style ini */
 .jp-filter-panel {
   position: fixed;
   z-index: 2001;
@@ -1430,9 +1397,16 @@ thead .jp-sticky-right { z-index: 4; background: var(--primary-soft); }
   background: #ffffff;
   border: 1px solid #e3e6ec;
   border-radius: 12px;
-  box-shadow: 0 20px 40px -12px rgba(16,24,40,.28);
+  box-shadow: 0 20px 40px -12px rgba(16, 24, 40, .28);
   font-family: 'Inter', system-ui, sans-serif;
-  overflow: hidden;
+  
+  /* PERBAIKAN 1: Gunakan display flex agar komponen anak teratur */
+  display: flex;
+  flex-direction: column;
+  max-height: 380px; /* Batasi tinggi maksimum panel */
+  
+  /* Hapus atau atur overflow menjadi visible/unset */
+  overflow: visible; 
 }
 
 .jp-filter-search {
@@ -1478,10 +1452,33 @@ thead .jp-sticky-right { z-index: 4; background: var(--primary-soft); }
 .jp-filter-quick button:hover { text-decoration: underline; }
 .jp-filter-quick span { color: #c3c8d1; font-size: 11px; }
 
+/* Cari .jp-filter-options dan sesuaikan style ini */
 .jp-filter-options {
+  /* PERBAIKAN 2: Aktifkan scrollbar vertikal */
   max-height: 220px;
   overflow-y: auto;
+  overscroll-behavior: contain; /* Mencegah scroll tembus ke halaman utama */
   padding: 6px 4px;
+  flex: 1;
+  min-height: 0; 
+}
+
+.jp-filter-options::-webkit-scrollbar {
+  width: 6px;
+}
+
+.jp-filter-options::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+.jp-filter-options::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 4px;
+}
+
+.jp-filter-options::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
 }
 
 .jp-checkbox-row {

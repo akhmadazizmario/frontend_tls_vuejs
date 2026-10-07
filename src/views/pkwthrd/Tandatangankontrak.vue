@@ -18,12 +18,24 @@
 
         <div class="search-card">
           <label for="xNO" class="field-label">Nomor Karyawan (NO KP)</label>
-          <div class="search-row">
+          <div class="search-row mb-3">
             <input
               type="text"
               id="xNO"
               v-model="searchQuery"
               placeholder="Ketik NO KP di sini…"
+              @keyup.enter="searchEmployee"
+              autocomplete="off"
+            >
+          </div>
+
+          <label for="xIDNo" class="field-label mt-3">Nomor KTP (NIK)</label>
+          <div class="search-row">
+            <input
+              type="text"
+              id="xIDNo"
+              v-model="searchIDNo"
+              placeholder="Ketik NIK KTP di sini…"
               @keyup.enter="searchEmployee"
               autocomplete="off"
             >
@@ -88,7 +100,7 @@
 
               <!-- ===================== PKWT KONTRAK BULANAN ===================== -->
               <template v-if="jenisKey === 'kontrakBulanan'">
-                <p>Perjanjian Kerja Waktu Tertentu (PKWT) ini dibuat dan ditanda tangani pada hari <strong>{{ currentDayName }}</strong> tanggal <strong>{{ currentDateOnly }}</strong> bulan <strong>{{ currentMonthName }}</strong> tahun <strong>{{ currentYear }}</strong> oleh dan antara :</p>
+                <p>Perjanjian Kerja Waktu Tertentu (PKWT) ini dibuat dan ditanda tangani pada hari <strong>{{ tandaTanganDayName }}</strong> tanggal <strong>{{ tandaTanganDateOnly }}</strong> bulan <strong>{{ tandaTanganMonthName }}</strong> tahun <strong>{{ tandaTanganYear }}</strong> oleh dan antara :</p>
 
                 <table class="party-table">
                   <tr><td width="3%">-</td><td width="20%">Nama</td><td width="2%">:</td><td><strong>Istiqomah, S.Pd</strong></td></tr>
@@ -196,7 +208,7 @@
 
               <!-- ===================== PKWT KONTRAK HARIAN ===================== -->
               <template v-else-if="jenisKey === 'kontrakHarian'">
-                <p>Perjanjian Kerja Waktu Tertentu (PKWT) ini dibuat dan ditanda tangani pada hari <strong>{{ currentDayName }}</strong> tanggal <strong>{{ currentDateOnly }}</strong> bulan <strong>{{ currentMonthName }}</strong> tahun <strong>{{ currentYear }}</strong> oleh dan antara :</p>
+                <p>Perjanjian Kerja Waktu Tertentu (PKWT) ini dibuat dan ditanda tangani pada hari <strong>{{ tandaTanganDayName }}</strong> tanggal <strong>{{ tandaTanganDateOnly }}</strong> bulan <strong>{{ tandaTanganMonthName }}</strong> tahun <strong>{{ tandaTanganYear }}</strong> oleh dan antara :</p>
 
                 <table class="party-table">
                   <tr><td width="3%">1.</td><td width="20%">Nama</td><td width="2%">:</td><td><strong>Istiqomah, S.Pd</strong></td></tr>
@@ -312,7 +324,7 @@
 
               <!-- ===================== PKWTT (TETAP BULANAN / HARIAN) ===================== -->
               <template v-else-if="jenisKey === 'tetapBulanan' || jenisKey === 'tetapHarian'">
-                <p>Perjanjian Kerja Waktu Tidak Tertentu (PKWTT) ini dibuat dan ditanda tangani pada hari <strong>{{ currentDayName }}</strong> tanggal <strong>{{ currentDateOnly }}</strong> bulan <strong>{{ currentMonthName }}</strong> tahun <strong>{{ currentYear }}</strong>, oleh dan antara :</p>
+                <p>Perjanjian Kerja Waktu Tidak Tertentu (PKWTT) ini dibuat dan ditanda tangani pada hari <strong>{{ tandaTanganDayName }}</strong> tanggal <strong>{{ tandaTanganDateOnly }}</strong> bulan <strong>{{ tandaTanganMonthName }}</strong> tahun <strong>{{ tandaTanganYear }}</strong>, oleh dan antara :</p>
 
                 <table class="party-table">
                   <tr><td width="3%">-</td><td width="20%">Nama</td><td width="2%">:</td><td><strong>Istiqomah, S.Pd</strong> ( P )</td></tr>
@@ -473,7 +485,7 @@
 
             <div class="signature-section">
               <div class="date-location">
-                Tegal, {{ currentDateOnly }} {{ currentMonthName }} {{ currentYear }}
+                Tegal, {{ tandaTanganDateOnly }} {{ tandaTanganMonthName }} {{ tandaTanganYear }}
               </div>
               <table class="sig-table">
                 <tr>
@@ -563,7 +575,7 @@
           </div>
           <h3>Dokumen Berhasil Ditandatangani</h3>
           <p>File PDF telah dibuat dan dikirimkan ke email <strong>{{ employeeData.email }}</strong></p>
-          <a :href="apiBaseUrl + downloadUrl" target="_blank" class="btn-download">Unduh PDF</a>
+          <!--<a :href="apiBaseUrl + downloadUrl" target="_blank" class="btn-download">Unduh PDF</a>-->
         </div>
 
       </div>
@@ -576,11 +588,12 @@ import { ref, computed, watch, nextTick } from 'vue';
 import axios from 'axios';
 
 // Konfigurasi Env
-const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000'; // Sesuaikan port backend anda
+const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api'; // Sesuaikan port backend anda
 const API_BASE_URL = apiBaseUrl;
 
 // State Variables Umum
 const searchQuery = ref('');
+const searchIDNo = ref('');
 const isLoading = ref(false);
 const errorMessage = ref('');
 const isContractVisible = ref(false);
@@ -665,14 +678,14 @@ const clearSignature = () => {
 // === SELESAI FUNGSI KANVAS ===
 
 // Computed Properties untuk Tanggal (Header)
-const d = new Date();
-const days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
-const months = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
-
-const currentDayName = computed(() => days[d.getDay()]);
-const currentDateOnly = computed(() => d.getDate());
-const currentMonthName = computed(() => months[d.getMonth()]);
-const currentYear = computed(() => d.getFullYear());
+// Semua tanggal yang tampil di dokumen (kalimat pembuka "dibuat dan ditanda tangani
+// pada hari..." maupun baris penutup "Tegal, ...") SEKARANG ikut xJoinDate karyawan,
+// sama seperti PDF final yang di-generate backend (getContractPreview & submitSignedContract
+// keduanya pakai emp.xJoinDate) -- BUKAN tanggal saat halaman ini dibuka/ditandatangani.
+const tandaTanganDayName = computed(() => employeeData.value.tandaTanganDayName || '-');
+const tandaTanganDateOnly = computed(() => employeeData.value.tandaTanganDateOnly || '-');
+const tandaTanganMonthName = computed(() => employeeData.value.tandaTanganMonthName || '-');
+const tandaTanganYear = computed(() => employeeData.value.tandaTanganYear || '-');
 
 // Computed Properties untuk Teks Dinamis
 // jenisKey dikirim backend (templateType / xKind / jenisKontrak) dalam berbagai
@@ -727,13 +740,24 @@ const currentStep = computed(() => {
 
 // API Calls
 const searchEmployee = async () => {
-  if (!searchQuery.value) return;
+  // xNO dan xIDNo wajib diisi -- verifikasi identitas 2 lapis sebelum surat
+  // kontrak boleh ditampilkan (sesuai validasi di backend). xName sengaja
+  // dihilangkan dari pencarian karena kadang nama di KTP dan di ERP berbeda
+  // (human error inputan HRD), jadi cukup pakai angka (No. Karyawan & NIK).
+  if (!searchQuery.value || !searchIDNo.value) {
+    errorMessage.value = "Nomor Karyawan dan Nomor KTP wajib diisi.";
+    return;
+  }
 
   isLoading.value = true;
   errorMessage.value = '';
 
   try {
-    const response = await axios.get(`${API_BASE_URL}/pkwthrd/karyawan/${searchQuery.value}/preview`);
+    const response = await axios.get(`${API_BASE_URL}/pkwthrd/karyawan/${searchQuery.value}/preview`, {
+      params: {
+        xIDNo: searchIDNo.value
+      }
+    });
     if (response.data.success) {
       employeeData.value = response.data.data;
       templateType.value = response.data.templateType || response.data.data.jenisKontrak;
@@ -741,7 +765,9 @@ const searchEmployee = async () => {
     }
   } catch (error) {
     if (error.response && error.response.status === 404) {
-      errorMessage.value = "Data karyawan tidak ditemukan. Pastikan xNO benar.";
+      errorMessage.value = "Data karyawan tidak ditemukan. Pastikan No. Karyawan dan No. KTP sudah benar.";
+    } else if (error.response && error.response.status === 400) {
+      errorMessage.value = error.response.data?.message || "Nomor Karyawan dan Nomor KTP wajib diisi.";
     } else {
       errorMessage.value = "Terjadi kesalahan pada server.";
     }
@@ -757,6 +783,7 @@ const submitContract = async () => {
 
   try {
     const payload = {
+      xIDNo: searchIDNo.value,
       ttdBase64: signatureBase64.value,
       email: employeeData.value.email,
       scrolledToBottom: true,
@@ -779,6 +806,7 @@ const submitContract = async () => {
 const resetSearch = () => {
   isContractVisible.value = false;
   searchQuery.value = '';
+  searchIDNo.value = '';
   hasAgreed.value = false;
   signatureBase64.value = '';
   isSubmitted.value = false;

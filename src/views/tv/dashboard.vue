@@ -204,6 +204,17 @@ const departments = ref([
     lines: ['OFFICE']
   },
   {
+    id: 'UTAMA',
+    name: 'OFFICE 2',
+    category: 'OFFICE 2',
+    path: '/tv-officebaru',
+    icon: 'bi-lightning-charge',
+    colorClass: 'bg-danger',
+    bgLightClass: 'bg-danger-light',
+    textClass: 'text-danger',
+    lines: ['OFFICE2']
+  },
+  {
     id: 'Expedisi',
     name: 'EXPEDISI',
     category: 'Expedisi',

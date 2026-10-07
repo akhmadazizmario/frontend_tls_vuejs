@@ -186,6 +186,34 @@
                             </div>
                           </div>
 
+                          <!-- BUKTI LAMPIRAN FOTO -->
+                          <div class="detail-card mb-3">
+                            <h6 class="fw-bold mb-3 text-dark font-sm">📷 Bukti Lampiran Foto</h6>
+                            <div v-if="!b.attachments || b.attachments.length === 0" class="text-muted small fst-italic">
+                              Belum ada lampiran foto untuk perjalanan ini.
+                            </div>
+                            <div v-else>
+                              <div v-for="(fotos, kategori) in groupAttachments(b.attachments)" :key="kategori" class="mb-3">
+                                <div class="text-muted small text-uppercase fw-semibold mb-2">
+                                  {{ kategori.replace(/_/g, ' ') }} <span class="text-secondary">({{ fotos.length }})</span>
+                                </div>
+                                <div class="d-flex flex-wrap gap-2">
+                                  <a
+                                    v-for="foto in fotos"
+                                    :key="foto.id"
+                                    :href="getFileUrl(foto.file_path)"
+                                    target="_blank"
+                                    rel="noopener"
+                                    class="attachment-thumb-link"
+                                    :title="foto.keterangan || kategori"
+                                  >
+                                    <img :src="getFileUrl(foto.file_path)" class="attachment-thumb" loading="lazy" alt="" />
+                                  </a>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+
                           <hr class="my-3" />
 
                           <!-- WARNING UNTUK TAB TERJADWAL JIKA BELUM HARI H -->
@@ -240,21 +268,7 @@
                                     💰 Langsung ke Finance <span class="text-muted fw-normal">(Waiting Finance)</span>
                                   </label>
                                 </div>
-                                <div class="form-check">
-                                  <input 
-                                    class="form-check-input" 
-                                    type="radio" 
-                                    name="next_step_option" 
-                                    id="stepManager" 
-                                    value="manager" 
-                                    v-model="actionForm.next_step"
-                                    :disabled="isScheduledNotReady(b)"
-                                  >
-                                  <label class="form-check-label small fw-semibold" for="stepManager">
-                                    👔 Ke Manager <span class="text-muted fw-normal">(Waiting Manager)</span>
-                                  </label>
-                                </div>
-                                <div class="form-check">
+                                <!---<div class="form-check">
                                   <input 
                                     class="form-check-input" 
                                     type="radio" 
@@ -267,7 +281,7 @@
                                   <label class="form-check-label small fw-semibold" for="stepReady">
                                     ⚡ Bypass All (Langsung Ready untuk Perjalanan)
                                   </label>
-                                </div>
+                                </div>-->
                               </div>
                             </div>
                           </div>
@@ -385,6 +399,44 @@
                               </div>
                             </div>
                           </div>
+
+                          <!-- BUKTI LAMPIRAN FOTO -->
+                          <div class="detail-card mt-3">
+                            <h6 class="fw-bold mb-3 text-dark font-sm">📷 Bukti Lampiran Foto</h6>
+                            <div v-if="!item.attachments || item.attachments.length === 0" class="text-muted small fst-italic">
+                              Belum ada lampiran foto untuk perjalanan ini.
+                            </div>
+                            <div v-else>
+                              <div v-for="(fotos, kategori) in groupAttachments(item.attachments)" :key="kategori" class="mb-3">
+                                <div class="text-muted small text-uppercase fw-semibold mb-2">
+                                  {{ kategori.replace(/_/g, ' ') }} <span class="text-secondary">({{ fotos.length }})</span>
+                                </div>
+                                <div class="d-flex flex-wrap gap-2">
+                                  <a
+                                    v-for="foto in fotos"
+                                    :key="foto.id"
+                                    :href="getFileUrl(foto.file_path)"
+                                    target="_blank"
+                                    rel="noopener"
+                                    class="attachment-thumb-link"
+                                    :title="foto.keterangan || kategori"
+                                  >
+                                    <img :src="getFileUrl(foto.file_path)" class="attachment-thumb" loading="lazy" alt="" />
+                                  </a>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                          <!-- TOMBOL CETAK SURAT JALAN & DOWNLOAD BARCODE -->
+                          <div v-if="['Ready', 'In Transit', 'Completed'].includes(item.status_booking)" class="mt-4 d-flex gap-2 justify-content-end flex-wrap">
+                            <button class="btn btn-outline-dark rounded-pill px-4 shadow-sm" @click.stop="downloadBarcode(item)">
+                              📱 Download Barcode
+                            </button>
+                            <button class="btn btn-dark rounded-pill px-4 shadow-sm" @click.stop="cetakSuratJalan(item.id)">
+                              🖨️ Cetak Surat Jalan / Tugas
+                            </button>
+                          </div>
+                          <!-- AKHIR TAMBAHAN -->
                         </div>
                       </td>
                     </tr>
@@ -405,6 +457,9 @@
 import { ref, reactive, computed, onMounted } from 'vue'
 import axios from 'axios'
 import * as XLSX from 'xlsx-js-style'
+import { jsPDF } from "jspdf";
+import autoTable from "jspdf-autotable";
+import QRCode from "qrcode";
 import Header from '../../components/Header.vue'
 import Sidebar from '../../components/Sidebar.vue'
 import Footer from '../../components/Footer.vue'
@@ -451,6 +506,19 @@ const toggleReportExpand = (id) => {
 }
 
 const initials = (name) => (name ? name.trim().split(/\s+/).slice(0, 2).map(w => w[0]).join('').toUpperCase() : '?')
+
+// File attachment di-serve dari root server, bukan dari prefix /api.
+const SERVER_BASE_URL = API_BASE_URL.replace(/\/api\/?$/, '')
+const getFileUrl = (path) => (path ? `${SERVER_BASE_URL}${path}` : '')
+const groupAttachments = (attachments) => {
+  const groups = {}
+  for (const foto of attachments || []) {
+    const key = foto.kategori_foto || 'Lainnya'
+    if (!groups[key]) groups[key] = []
+    groups[key].push(foto)
+  }
+  return groups
+}
 
 const todayDate = computed(() => new Date().toISOString().slice(0, 10))
 const isScheduledNotReady = (booking) => {
@@ -561,12 +629,207 @@ const processGA = async (bookingId, keputusan) => {
   }
 }
 
+// Download PDF Barcode (QR Code) booking -- dipakai kalau GA mau cetak
+// barcode-nya langsung di kantor buat ditempel/dibawa driver, tanpa perlu
+// buka dari HP driver. Sama persis rendering-nya (QR + label TLSI MOBIL
+// di tengah) dengan yang ada di aplikasi mobile driver.
+const downloadBarcode = async (item) => {
+  try {
+    const kodeBooking = item.kode_booking || '-'
+    const namaMobil = item.mobil?.nama_mobil || '-'
+    const platNomor = item.mobil?.plat_nomor || '-'
+    const destination = item.master_tujuan?.nama_lokasi || item.lokasi_tujuan_custom || '-'
+
+    // errorCorrectionLevel 'H' -- tetap bisa discan walau bagian tengah
+    // ketutup label teks "TLSI MOBIL"
+    const qrDataUrl = await QRCode.toDataURL(kodeBooking, {
+      errorCorrectionLevel: 'H',
+      margin: 1,
+      width: 500
+    })
+
+    const doc = new jsPDF({
+      orientation: 'portrait',
+      unit: 'mm',
+      format: 'a6' // ukuran kecil, cocok buat ditempel di dashboard mobil
+    })
+
+    const pageWidth = doc.internal.pageSize.getWidth()
+    const centerX = pageWidth / 2
+
+    doc.setFont('helvetica', 'bold')
+    doc.setFontSize(13)
+    doc.text('BOOKING MOBIL TLSI', centerX, 15, { align: 'center' })
+
+    doc.setFont('helvetica', 'normal')
+    doc.setFontSize(11)
+    doc.text(namaMobil, centerX, 22, { align: 'center' })
+    doc.setFontSize(9)
+    doc.setTextColor(120)
+    doc.text(platNomor, centerX, 27, { align: 'center' })
+    doc.setTextColor(0)
+
+    // Gambar QR code
+    const qrSize = 60
+    const qrX = centerX - qrSize / 2
+    const qrY = 33
+    doc.addImage(qrDataUrl, 'PNG', qrX, qrY, qrSize, qrSize)
+
+    // Kotak putih + label "TLSI MOBIL" di tengah QR
+    const boxW = 22
+    const boxH = 12
+    const boxY = qrY + qrSize / 2 - boxH / 2
+    doc.setFillColor(255, 255, 255)
+    doc.rect(centerX - boxW / 2, boxY, boxW, boxH, 'F')
+    doc.setFont('helvetica', 'bold')
+    doc.setFontSize(8)
+    doc.text('TLSI', centerX, boxY + 5, { align: 'center' })
+    doc.text('MOBIL', centerX, boxY + 9.5, { align: 'center' })
+
+    // Kode booking & info di bawah QR
+    doc.setFont('helvetica', 'bold')
+    doc.setFontSize(12)
+    doc.text(kodeBooking, centerX, qrY + qrSize + 10, { align: 'center' })
+
+    doc.setFont('helvetica', 'normal')
+    doc.setFontSize(9)
+    doc.text(`Tujuan: ${destination}`, centerX, qrY + qrSize + 17, { align: 'center' })
+    doc.text(`Jadwal: ${item.tgl_berangkat || '-'} ${item.jam_berangkat || ''}`, centerX, qrY + qrSize + 22, { align: 'center' })
+
+    doc.save(`Barcode_${kodeBooking}.pdf`)
+  } catch (err) {
+    console.error(err)
+    alert('Gagal membuat PDF barcode.')
+  }
+}
+
+// Format tanggal jadi format Indonesia, misal "25 Maret 2026"
+const NAMA_BULAN_INDO = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember']
+const formatTanggalIndo = (tglStr) => {
+  if (!tglStr) return ''
+  const d = new Date(tglStr)
+  if (isNaN(d.getTime())) return tglStr
+  return `${d.getDate()} ${NAMA_BULAN_INDO[d.getMonth()]} ${d.getFullYear()}`
+}
+
+const cetakSuratJalan = async (id) => {
+  try {
+    const response = await axios.get(`${API_BASE_URL}/carbook/booking/${id}/surat-jalan`, getAuthHeaders())
+    const data = response.data.data
+
+    // Memecah string tanggal dan jam dari API (asumsi format 'YYYY-MM-DD HH:mm')
+    const tglBerangkat = data.berangkat ? data.berangkat.split(' ')[0] : ''
+    const jamBerangkat = data.berangkat && data.berangkat.split(' ').length > 1 ? data.berangkat.split(' ')[1] : ''
+    const tglBerangkatFormatted = formatTanggalIndo(tglBerangkat)
+
+    // Jam/tgl kembali HANYA diisi kalau booking sudah Completed & datanya ada
+    // di database (backend sudah menjamin ini lewat field data.kembali).
+    // Kalau belum, dikosongin (diisi manual di kertas).
+    const sudahSelesai = data.status_booking === 'Completed'
+    const kembaliParts = (sudahSelesai && data.kembali) ? data.kembali.split(' ') : []
+    const tglKembaliFormatted = kembaliParts.length ? formatTanggalIndo(kembaliParts[0]) : ''
+    const jamKembali = kembaliParts.length > 1 ? kembaliParts[1] : ''
+
+    const kembaliText = tglKembaliFormatted
+      ? `${tglKembaliFormatted}      jam      ${jamKembali}`
+      : `......................      jam      ..........`
+
+    // Inisialisasi jsPDF dengan orientasi landscape, satuan mm, dan ukuran kustom
+    const doc = new jsPDF({
+      orientation: 'landscape',
+      unit: 'mm',
+      format: [215.9, 139.7]
+    })
+
+    // Mendefinisikan Variabel Dimensi
+    const pageHeight = 139.7
+    const pageWidth = 215.9
+    const margin = 5 // Margin 5mm untuk Kiri, Kanan, Atas, Bawah
+    const centerX = pageWidth / 2 // Titik tengah X = 107.95
+
+    // PENGATURAN HEADER
+    doc.setFont('times', 'bold')
+    doc.setFontSize(16)
+    // Ditaruh pada Y = 15mm agar ada jarak dari margin atas (5mm)
+    doc.text((data.jenis_surat || 'SURAT JALAN').toUpperCase(), centerX, 15, { align: 'center' })
+
+    // SUBTITLE
+    doc.setFont('times', 'normal')
+    doc.setFontSize(11)
+    doc.text('Dengan ini ditugaskan kepada :', margin, 25)
+
+    // TABEL INFORMASI
+    autoTable(doc, {
+      startY: 28, // Mulai sedikit di bawah subtitle
+      margin: { left: margin, right: margin, top: margin, bottom: margin },
+      theme: 'plain',
+      styles: { 
+        font: 'times', 
+        fontSize: 11, 
+        cellPadding: 2,
+        textColor: [0, 0, 0] 
+      },
+      columnStyles: {
+        0: { cellWidth: 35 },           // Label
+        1: { cellWidth: 5, halign: 'center' }, // Titik dua
+        2: { cellWidth: 'auto' }        // Value
+      },
+      body: [
+        ['NIK', ':', data.nik || '-'],
+        ['Nama', ':', data.nama || '-'],
+        ['Bagian', ':', data.bagian || '-'],
+        ['Berangkat', ':', `${tglBerangkatFormatted}      Jam      ${jamBerangkat}      s/d      ${kembaliText}`],
+        ['Tujuan', ':', data.tujuan || '-'],
+        ['Keperluan', ':', data.keperluan || '-'],
+        ['No. Kendaraan', ':', data.no_kendaraan || '-']
+      ]
+    })
+
+    // TEKS PENUTUP DI BAWAH TABEL
+    // doc.lastAutoTable.finalY mengambil koordinat Y terakhir setelah tabel selesai digambar
+    let finalY = doc.lastAutoTable.finalY || 80
+    // Taruh teks "Demikian..." dengan jarak 8mm dari baris terakhir tabel
+    doc.text('Demikian surat tugas ini diberikan untuk dilaksanakan sebagaimana mestinya dan penuh tanggung jawab :', margin, finalY + 8)
+
+    // TANDA TANGAN (SELALU DI FOOTER)
+    // Dihitung dari bawah ke atas agar selalu menetap di footer
+    const footerY = pageHeight - 32; // Header TTD berada 32mm dari bawah kertas
+    const footerNameY = pageHeight - 10; // Nama penandatangan berada 10mm dari bawah kertas (aman dari margin 5mm)
+
+    // Posisi X untuk meratakan 3 kolom tanda tangan
+    const col1X = 40;                // Kolom Kiri
+    const col2X = centerX;           // Kolom Tengah (107.95)
+    const col3X = pageWidth - 40;    // Kolom Kanan
+
+    // Header Tanda Tangan
+    doc.setFontSize(11)
+    doc.text('Disetujui,', col1X, footerY, { align: 'center' })
+    doc.text('Diberi Tugas,', col2X, footerY, { align: 'center' })
+    doc.text('Memberi Tugas,', col3X, footerY, { align: 'center' })
+
+    // Nama Penandatangan
+    // Disetujui -> jabatan Pimpinan (bukan nama orang)
+    // Diberi Tugas -> nama driver yang ditugaskan (data.nama)
+    // Memberi Tugas -> selalu "Dian Ramah"
+    doc.setFont('times', 'normal')
+    doc.text('Pimpinan', col1X, footerNameY, { align: 'center' })
+    doc.text(data.nama || '........', col2X, footerNameY, { align: 'center' })
+    doc.text('Dian Ramah', col3X, footerNameY, { align: 'center' })
+
+    // Trigger Download PDF Langsung
+    doc.save(`Surat_Jalan_${data.nama || id}.pdf`)
+
+  } catch (err) {
+    console.error(err)
+    alert(err.response?.data?.message || 'Gagal mengunduh Surat Jalan dari server.')
+  }
+}
+
 const exportToExcel = () => {
   if (!filteredReportList.value.length) {
     alert('Tidak ada data untuk diexport')
     return
   }
-
   const headers = [
     'Kode Booking', 'Nama Pemohon', 'No. Pegawai', 'Departemen', 'Jenis Perjalanan',
     'Dari Lokasi', 'Tujuan', 'Tgl Berangkat', 'Jam Berangkat', 'Tgl Kembali', 'Jam Kembali',
@@ -597,7 +860,6 @@ const exportToExcel = () => {
 
   const wsData = [headers, ...rows]
   const ws = XLSX.utils.aoa_to_sheet(wsData)
-
   const headerStyle = {
     font: { bold: true, color: { rgb: 'FFFFFF' } },
     fill: { fgColor: { rgb: '9a3412' } },
@@ -631,10 +893,8 @@ const exportToExcel = () => {
 
   ws['!cols'] = headers.map(h => ({ wch: Math.max(h.length + 4, 16) }))
   ws['!freeze'] = { xSplit: 0, ySplit: 1 }
-
   const wb = XLSX.utils.book_new()
   XLSX.utils.book_append_sheet(wb, ws, 'Laporan GA')
-
   const today = new Date().toISOString().slice(0, 10)
   XLSX.writeFile(wb, `Laporan-GA-CarBooking-${today}.xlsx`)
 }
@@ -723,6 +983,26 @@ onMounted(fetchData)
   border: 1px solid #e2e8f0;
   border-radius: 14px;
   padding: 1.1rem 1.25rem;
+}
+
+.attachment-thumb-link {
+  display: inline-block;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid #e2e8f0;
+  line-height: 0;
+  transition: transform 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+.attachment-thumb-link:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+.attachment-thumb {
+  width: 96px;
+  height: 96px;
+  object-fit: cover;
+  display: block;
+  background-color: #f1f5f9;
 }
 
 .empty-state { border: none; }

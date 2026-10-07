@@ -6,6 +6,8 @@
       <Sidebar :isOpen="sidebarOpen" />
 
       <main :class="['flex-grow-1 p-2 p-md-4 main-content transition-all', { 'content-shifted': sidebarOpen }]">
+        <!-- BUNGKUS DENGAN v-if="hasAccess" UNTUK UAC -->
+      <div v-if="hasAccess" class="container-fluid retur-page max-w-7xl mx-auto p-0">
         <div class="container-fluid px-md-4">
           
           <!-- Header Section (Identik Daily) -->
@@ -191,6 +193,14 @@
             <h5 class="mt-3 fw-bold text-muted">Data bulanan tidak ditemukan</h5>
           </div>
         </div>
+         </div>
+
+        <!-- OPSI TAMPILAN BLANK (JIKA TIDAK ADA AKSES) -->
+        <div v-else class="d-flex flex-column align-items-center justify-content-center h-100 pt-5 mt-5">
+           <!-- Halaman Blank, Jika ingin dibuat benar-benar kosong hapus komentar html ini. -->
+            <h1>hi anda tersesat nih, Mohon untuk Logout Segera </h1>
+            <a href="/logout" class="btn btn-primary">back to jungle</a>
+        </div>
       </main>
     </div>
   </div>
@@ -250,6 +260,7 @@ const MultiSelectFilter = {
 };
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+const hasAccess = ref(false);
 const user = ref({});
 const sidebarOpen = ref(false);
 const loading = ref(false);
@@ -397,7 +408,18 @@ const exportToPDF = () => {
 
 const toggleSidebar = () => sidebarOpen.value = !sidebarOpen.value;
 const logout = () => { localStorage.clear(); window.location.href = "/login"; };
-onMounted(() => { if (localStorage.getItem("user")) user.value = JSON.parse(localStorage.getItem("user")); });
+onMounted(() => {
+  try {
+    const pagesData = localStorage.getItem('pages') || localStorage.getItem('user_pages');
+    const pages = pagesData ? JSON.parse(pagesData) : [];
+    hasAccess.value = pages.includes('persen-target');
+  } catch {
+    hasAccess.value = false;
+  }
+  // const ud = localStorage.getItem("user");
+  // if (ud) user.value = JSON.parse(ud);
+});
+//onMounted(() => { if (localStorage.getItem("user")) user.value = JSON.parse(localStorage.getItem("user")); });
 </script>
 
 <style scoped>

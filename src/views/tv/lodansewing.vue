@@ -33,7 +33,7 @@
       <Transition name="fade">
         <div v-if="activeView === 'under60'" class="vh-100 d-flex flex-column p-3 bg-white text-dark overflow-hidden">
           <div class="mb-3 p-3 rounded-4 bg-danger text-white text-center shadow-lg">
-            <h2 class="fw-black display-6 m-0">⚠️ KARYAWAN {{ activeDept }} hasil < 50% Yesterday</h2>
+            <h2 class="fw-black display-6 m-0">⚠️ KARYAWAN {{ activeDept }} hasil < 50% </h2>
             <p class="mb-0 fw-bold"></p>
           </div>
           <div class="flex-grow-1 shadow-2xl rounded-4 overflow-hidden border border-3 bg-white">
@@ -62,7 +62,7 @@
                   </td>
                 </tr>
                 <tr v-if="paginatedUnder60.length === 0">
-                  <td colspan="7" class="text-center text-muted fw-bold py-5 fs-1">✅ Semua karyawan di atas 80%</td>
+                  <td colspan="7" class="text-center text-muted fw-bold py-5 fs-1">✅ Semua karyawan di atas 50%</td>
                 </tr>
               </tbody>
             </table>
@@ -104,50 +104,128 @@
       </Transition>
 
       <Transition name="fade">
-        <div v-if="activeView === 'table'" class="vh-100 d-flex flex-column p-3 bg-white text-dark overflow-hidden">
-          <div class="d-flex justify-content-between align-items-center mb-3 px-5 py-2 bg-light rounded-pill border-start border-warning border-10 shadow-sm">
-            <h2 class="m-0 fw-black text-navy display-6 text-uppercase">Data Hasil Produksi Operator {{ activeDept }}</h2>
-            <div class="badge bg-navy px-4 py-2 fs-4">{{ currentDateTime }}</div>
-          </div>
-          <div class="flex-grow-1 shadow-2xl rounded-4 overflow-hidden border border-3 bg-white">
-            <table class="table table-bordered m-0 h-100 layout-fixed text-center">
-              <thead class="bg-navy text-white text-center">
-              <tr>
-                <th rowspan="2" class="fs-4 align-middle" style="width: 4%">NO</th>
-                <th rowspan="2" class="fs-4 align-middle" style="width: 5%">LINE</th>
-                <th rowspan="2" class="fs-4 align-middle" style="width: 15%">OPERATOR NAMA</th>
-                <th rowspan="2" class="fs-4 align-middle" style="width: 8%">TGL JOIN</th>
-                <th rowspan="2" class="fs-4 align-middle" style="width: 8%">MASA KERJA</th>
-                <th rowspan="2" class="fs-4 align-middle" style="width: 12%">STYLE</th>
-                <th rowspan="2" class="fs-4 align-middle" style="width: 14%">PROSES</th>
-                <th colspan="3" class="bg-navy-light text-white fs-5 py-2">OUTPUT PER 3 JAM</th>
-                <th rowspan="2" class="bg-dark text-warning fs-5 align-middle" style="width: 6%">TOTAL</th>
-              </tr>
-              <tr class="bg-light text-navy">
-                <th v-for="n in currentHourColumns" :key="n" class="fs-4 py-1">{{ n }}:00</th>
-              </tr>
-            </thead>
-              <tbody>
-              <tr v-for="(item, index) in paginatedData" :key="index" class="align-middle border-2 text-center">
-                <td class="fw-bold fs-5 text-muted">{{ (currentPage - 1) * itemsPerPage + index + 1 }}</td>
-                <td class="fs-3 text-muted fw-bold">{{ formatLineRingkas(item.xGroup) }}</td>
-                <td class="fw-black text-navy fs-2 text-uppercase text-start px-3 text-truncate">{{ item.xEmplName }}</td>
-                <td class="fs-3 text-muted fw-bold">{{ formatJoinDate(item.xJoinDate) }}</td>
-                <td class="fw-bold text-primary fs-3">{{ formatLOS(item.xJoinMonth) }}</td>
-                <td class="fs-3 fw-bold text-truncate text-muted">{{ item.xMark }}</td>
-                <td class="fs-3 fw-bold text-truncate text-muted">{{ item.xWorkName }}</td>
-                <td v-for="n in currentHourColumns" :key="n" 
-                    class="fs-1 fw-black border-start" 
-                    :class="{'bg-warning-light': item.hourlyQty[n]}">
-                  {{ item.hourlyQty[n] || '-' }} 
-                </td>
-                <td class="fw-black bg-navy text-white display-6 fs-1">{{ item.totalQty }}</td>
-              </tr>
-            </tbody>
-            </table>
-          </div>
-        </div>
-      </Transition>
+  <div
+    v-if="activeView === 'table'"
+    class="vh-100 d-flex flex-column p-3 bg-white text-dark overflow-hidden"
+  >
+    <div
+      class="d-flex justify-content-between align-items-center mb-3 px-5 py-2 bg-light rounded-pill border-start border-warning border-10 shadow-sm"
+    >
+      <h2 class="m-0 fw-black text-navy display-6 text-uppercase">
+        Data Hasil Produksi Operator {{ activeDept }}
+      </h2>
+
+      <div class="badge bg-navy px-4 py-2 fs-4">
+        {{ currentDateTime }}
+      </div>
+    </div>
+
+    <div class="flex-grow-1 shadow-2xl rounded-4 overflow-hidden border border-3 bg-white">
+      <table class="table table-bordered m-0 h-100 layout-fixed text-center">
+
+        <!-- HEADER -->
+        <thead class="bg-navy text-white text-center">
+          <tr>
+            <th rowspan="2" class="fs-4 align-middle" style="width:4%">NO</th>
+            <th rowspan="2" class="fs-4 align-middle" style="width:5%">LINE</th>
+            <th rowspan="2" class="fs-4 align-middle" style="width:15%">OPERATOR</th>
+            <!-- <th rowspan="2" class="fs-4 align-middle" style="width:8%">JOIN</th> -->
+            <th rowspan="2" class="fs-4 align-middle" style="width:8%">MASA KERJA</th>
+            <th rowspan="2" class="fs-4 align-middle" style="width:12%">STYLE</th>
+            <th rowspan="2" class="fs-4 align-middle" style="width:14%">PROSES</th>
+            <th rowspan="2" class="fs-4 align-middle" style="width: 8%">TARGET </th>
+            <th
+              :colspan="activePeriodeHeaders.length"
+              class="bg-navy-light text-white fs-5 py-2"
+            >
+              OUTPUT PER PERIODE
+            </th>
+
+            <th rowspan="2" class="bg-dark text-warning fs-5 align-middle" style="width:6%">
+              TOTAL
+            </th>
+          </tr>
+
+          <tr class="bg-light text-navy">
+            <th
+              v-for="periode in activePeriodeHeaders"
+              :key="periode"
+              class="fs-5 py-1"
+            >
+              {{ periode }}
+            </th>
+          </tr>
+        </thead>
+
+        <!-- BODY -->
+        <tbody>
+          <tr
+            v-for="(item, index) in paginatedData"
+            :key="index"
+            class="align-middle border-2 text-center"
+          >
+            <td class="fw-bold fs-5 text-muted">
+              {{ (currentPage - 1) * itemsPerPage + index + 1 }}
+            </td>
+
+            <td class="fs-3 text-muted fw-bold">
+              {{ formatLineRingkas(item.xGroup) }}
+            </td>
+
+            <td class="fw-black text-navy fs-2 text-uppercase text-start px-3 text-truncate">
+              {{ item.xEmplName }}
+            </td>
+
+            <!-- <td class="fs-3 text-muted fw-bold">
+              {{ formatJoinDate(item.xJoinDate) }}
+            </td> -->
+
+            <td class="fw-bold text-primary fs-3">
+              {{ formatLOS(item.xJoinMonth) }}
+            </td>
+
+            <td class="fs-3 fw-bold text-truncate text-muted">
+              {{ item.xMark }}
+            </td>
+
+            <td class="fs-3 fw-bold text-truncate text-muted">
+              {{ item.xWorkName }}
+            </td>
+
+            <td class="fs-3 fw-bold text-danger">
+      {{ item.xTarget3Jam }}
+    </td>
+
+            <!-- PERIODE -->
+            <td
+              v-for="periode in activePeriodeHeaders"
+              :key="periode"
+              class="fs-1 fw-black border-start"
+              :class="{ 'bg-warning-light': item.periodeQty[periode] }"
+            >
+              {{ item.periodeQty[periode] || '-' }}
+            </td>
+
+            <!-- TOTAL -->
+            <td class="fw-black bg-navy text-white display-6 fs-1">
+              {{ item.currentTotal }}
+            </td>
+          </tr>
+
+          <tr v-if="paginatedData.length === 0">
+            <td
+              :colspan="8 + activePeriodeHeaders.length"
+              class="text-center py-5 fs-2 fw-bold text-muted"
+            >
+              Belum ada data produksi
+            </td>
+          </tr>
+        </tbody>
+
+      </table>
+    </div>
+  </div>
+</Transition>
     </template>
 
     <div class="fixed-bottom p-1">
@@ -164,192 +242,404 @@ import axios from 'axios';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
-// --- STATE ---
+/* ==================================================
+   STATE
+================================================== */
 const sewingData = ref({ cards: {}, summaryLines: [], operators: [], under80: [] });
 const loData = ref({ cards: {}, summaryLines: [], operators: [], under80: [] });
+
 const activeDept = ref('SEWING');
 const activeView = ref('summary');
 const isLoading = ref(true);
+
 const dateHeaders = ref([]);
 const dateRangeText = ref("");
 const currentDateTime = ref('');
+
 const currentPage = ref(1);
 const currentSummaryPage = ref(1);
 const currentUnderPage = ref(1);
+
 const scrollProgress = ref(0);
 const itemsPerPage = ref(8);
 
-// --- JAM DINAMIS (ROLLING 3 JAM) ---
-const currentHourColumns = computed(() => {
-  const hr = new Date().getHours();
-  let start = hr - 2;
-  if (start < 6) start = 6;
-  if (start > 20) start = 20;
-  return [start, start + 1, start + 2];
-});
-
+/* ==================================================
+   FORMATTER
+================================================== */
 const formatJoinDate = (dStr) => {
   if (!dStr) return '-';
   const d = new Date(dStr);
   return isNaN(d.getTime()) ? dStr : d.toLocaleDateString('id-ID');
 };
 
-// --- FORMATTERS (RINGKAS XGROUP) ---
+const formatLOS = (m) => {
+  if (!m || m < 1) return '-';
+
+  const y = Math.floor(m / 12);
+  const mon = m % 12;
+
+  return y > 0 ? `${y} Th ${mon} Bln` : `${mon} Bln`;
+};
+
+const formatDate = (s) => {
+  if (!s) return '';
+  const d = new Date(s);
+  return `${d.getDate()}/${d.getMonth() + 1}`;
+};
+
 const formatLineRingkas = (name) => {
   if (!name) return "-";
-  // Regex untuk mengambil kode Line (misal A01, B12, dll) dari berbagai format string
+
   const match = name.match(/([A-Z]\d{2})/);
-  return match ? match[1] : name.replace(/STICK LINE|L.O LINE|LO LINE/gi, "").trim();
+  if (match) return match[1];
+
+  return name
+    .replace(/STICK LINE/gi, "")
+    .replace(/L\.O LINE/gi, "")
+    .replace(/LO LINE/gi, "")
+    .trim();
 };
 
-const formatLOS = (m) => m ? (m >= 12 ? `${Math.floor(m/12)}th ${m%12}bln` : `${m}bln`) : '-';
-const formatDate = (s) => s ? `${new Date(s).getDate()}/${new Date(s).getMonth()+1}` : '';
 const getHealthClasses = (v) => {
   v = Math.round(v || 0);
+
   if (v === 0) return 'text-secondary opacity-25 bg-light';
-  return v < 50 ? 'bg-danger text-white' : v <= 70 ? 'bg-warning text-dark' : 'bg-success text-white';
+  if (v < 50) return 'bg-danger text-white';
+  if (v <= 70) return 'bg-warning text-dark';
+
+  return 'bg-success text-white';
 };
 
-// --- DATA PROCESSING (DENGAN FILTER STICK UNTUK SEWING) ---
+/* ==================================================
+   PERIODE MODE (SAMA KAYAK SULAM)
+================================================== */
+const activePeriodeHeaders = computed(() => {
+  const rows =
+    activeDept.value === 'SEWING'
+      ? sewingData.value.operators
+      : loData.value.operators;
+
+  const periods = new Set();
+
+  rows.forEach(row => {
+    if (row.xPeriode) periods.add(row.xPeriode);
+  });
+
+  return Array.from(periods).sort();
+});
+
+/* ==================================================
+   FILTER GROUP
+================================================== */
+const isValidDeptRow = (groupName, dept) => {
+  const g = (groupName || "").toUpperCase();
+
+  if (dept === 'SEWING') return g.includes("STICK");
+  if (dept === 'LO') return g.includes("L.O") || g.includes("LO");
+
+  return true;
+};
+
+/* ==================================================
+   DATA PRODUKSI PAKAI PERIODE
+================================================== */
 const getFilteredOps = (data, dept) => {
   const groups = {};
-  const activeHours = currentHourColumns.value;
-  
+
   data.forEach(row => {
-    const groupName = (row.xGroup || "").toUpperCase();
-    
-    // FILTER: Jika Sewing, wajib mengandung STICK. Jika LO, wajib mengandung L.O atau LO.
-    if (dept === 'SEWING' && !groupName.includes("STICK")) return;
-    if (dept === 'LO' && !groupName.includes("L.O") && !groupName.includes("LO")) return;
+    if (!isValidDeptRow(row.xGroup, dept)) return;
 
-    const key = `${row.xEmplCode}_${row.xWorkName}`;
-    let hr = row.xDateTime ? parseInt(row.xDateTime.split('T')[1]?.substring(0, 2)) : -1;
+    const key =
+      `${row.xEmplCode}_${row.xMark}_${row.xWorkName}`;
 
-    if (!groups[key]) groups[key] = { ...row, hourlyQty: {}, totalQty: 0 };
-    if (activeHours.includes(hr)) {
-      groups[key].hourlyQty[hr] = (groups[key].hourlyQty[hr] || 0) + (row.xQty || 0);
+    if (!groups[key]) {
+      groups[key] = {
+        xEmplCode: row.xEmplCode,
+        xEmplName: row.xEmplName,
+        xTarget3Jam: row.xTarget3Jam || 0,
+        xJoinMonth: row.xJoinMonth,
+        xGroup: row.xGroup,
+        xWorkName: row.xWorkName,
+        xMark: row.xMark,
+        xRealRate: row.xRealRate,
+        xtRealRate: row.xtRealRate || 0,
+        periodeQty: {}
+      };
+    }
+
+    if (row.xPeriode) {
+      groups[key].periodeQty[row.xPeriode] =
+        (groups[key].periodeQty[row.xPeriode] || 0) +
+        (row.xQty || 0);
     }
   });
 
-  return Object.values(groups).map(item => {
-    const total = activeHours.reduce((acc, h) => acc + (item.hourlyQty[h] || 0), 0);
-    return { ...item, totalQty: total };
-  }).filter(item => item.totalQty > 0);
+  return Object.values(groups)
+    .map(item => {
+      const total =
+        Object.values(item.periodeQty)
+          .reduce((a, b) => a + b, 0);
+
+      return {
+        ...item,
+        currentTotal: total
+      };
+    })
+    .filter(item => item.currentTotal > 0);
 };
 
-// --- FETCHING ---
+/* ==================================================
+   FETCH DATA
+================================================== */
 const fetchAllData = async () => {
   try {
-    const [resSum, resSewC, resSewD, resSewU, resLoC, resLoD, resLoU] = await Promise.all([
+    const [
+      resSum,
+
+      resSewC,
+      resSewD,
+      resSewU,
+
+      resLoC,
+      resLoD,
+      resLoU
+    ] = await Promise.all([
       axios.get(`${API_BASE_URL}/tv-target-linkinga/summary-linking`),
+
       axios.get(`${API_BASE_URL}/tv-target-linkinga/hasil-sewing`),
       axios.get(`${API_BASE_URL}/tv-target-linkinga/hasil-produksi-sewing`),
       axios.get(`${API_BASE_URL}/tv-target-linkinga/karayawansontexunder60persen`),
+
       axios.get(`${API_BASE_URL}/tv-target-linkinga/hasil-lo`),
       axios.get(`${API_BASE_URL}/tv-target-linkinga/hasil-produksi-lo`),
       axios.get(`${API_BASE_URL}/tv-target-linkinga/karayawansewinglounder60persen`)
     ]);
 
+    /* SUMMARY */
     if (resSum.data.success) {
       const depts = resSum.data.departments || [];
-      
-      // Filter Summary Line (Hanya STICK LINE untuk Sewing)
-      sewingData.value.summaryLines = (depts.find(d => d.deptName === "STICK")?.lines || [])
-        .filter(l => l.lineName.toUpperCase().includes("STICK"));
-      
-      loData.value.summaryLines = depts.find(d => d.deptName === "LO")?.lines || [];
-      
-      dateHeaders.value = resSum.data.meta?.dateHeaders || [];
-      dateRangeText.value = `PERIODE: ${resSum.data.meta?.sbDate} S/D ${resSum.data.meta?.seDate}`;
+
+      sewingData.value.summaryLines =
+        (depts.find(d => d.deptName === "STICK")?.lines || [])
+          .filter(l =>
+            (l.lineName || "")
+              .toUpperCase()
+              .includes("STICK")
+          );
+
+      loData.value.summaryLines =
+        depts.find(d => d.deptName === "LO")?.lines || [];
+
+      dateHeaders.value =
+        resSum.data.meta?.dateHeaders || [];
+
+      dateRangeText.value =
+        `PERIODE: ${resSum.data.meta?.sbDate} S/D ${resSum.data.meta?.seDate}`;
     }
 
-    // Data Sewing
+    /* SEWING */
     sewingData.value.cards = resSewC.data;
-    sewingData.value.operators = resSewD.data.data || [];
-    sewingData.value.under80 = (resSewU.data.data || []).filter(x => 
-      x.xJoinMonth > 4 && x.xTRealRate < 50 && (x.xGroup || "").toUpperCase().includes("STICK")
-    );
 
-    // Data LO
+    sewingData.value.operators =
+      resSewD.data.data || [];
+
+    sewingData.value.under80 =
+      (resSewU.data.data || [])
+        .filter(x =>
+          x.xJoinMonth > 4 &&
+          x.xTRealRate < 50 &&
+          isValidDeptRow(x.xGroup, 'SEWING')
+        );
+
+    /* LO */
     loData.value.cards = resLoC.data;
-    loData.value.operators = resLoD.data.data || [];
-    loData.value.under80 = (resLoU.data.data || []).filter(x => x.xJoinMonth > 4 && x.xTRealRate < 50);
+
+    loData.value.operators =
+      resLoD.data.data || [];
+
+    loData.value.under80 =
+      (resLoU.data.data || [])
+        .filter(x =>
+          x.xJoinMonth > 4 &&
+          x.xTRealRate < 50 &&
+          isValidDeptRow(x.xGroup, 'LO')
+        );
 
     isLoading.value = false;
-  } catch (e) {
-    console.error("Fetch Error:", e);
+
+  } catch (err) {
+    console.error("Fetch Error:", err);
   }
 };
 
-// --- LOOP LOGIC ---
-const animate = (time) => new Promise(res => {
-  const start = Date.now();
-  const int = setInterval(() => {
-    const elapsed = Date.now() - start;
-    scrollProgress.value = (elapsed / time) * 100;
-    if (elapsed >= time) { clearInterval(int); res(); }
-  }, 50);
-});
+/* ==================================================
+   LOOP VIEW
+================================================== */
+const animate = (time) =>
+  new Promise(resolve => {
+    const start = Date.now();
+
+    const int = setInterval(() => {
+      const elapsed = Date.now() - start;
+
+      scrollProgress.value =
+        (elapsed / time) * 100;
+
+      if (elapsed >= time) {
+        clearInterval(int);
+        resolve();
+      }
+    }, 50);
+  });
 
 const runCycle = async (dept) => {
   activeDept.value = dept;
-  const currentSet = dept === 'SEWING' ? sewingData.value : loData.value;
+
+  const currentSet =
+    dept === 'SEWING'
+      ? sewingData.value
+      : loData.value;
+
   const DURATION = 12000;
 
-  activeView.value = 'summary'; await animate(DURATION);
+  activeView.value = 'summary';
+  await animate(DURATION);
 
   activeView.value = 'under60';
-  const uPages = Math.ceil(currentSet.under80.length / itemsPerPage.value) || 1;
-  for (let p = 1; p <= uPages; p++) { currentUnderPage.value = p; await animate(DURATION); }
+
+  const uPages =
+    Math.ceil(
+      currentSet.under80.length /
+      itemsPerPage.value
+    ) || 1;
+
+  for (let p = 1; p <= uPages; p++) {
+    currentUnderPage.value = p;
+    await animate(DURATION);
+  }
 
   activeView.value = 'summary-table';
-  const sPages = Math.ceil(currentSet.summaryLines.length / itemsPerPage.value) || 1;
-  for (let p = 1; p <= sPages; p++) { currentSummaryPage.value = p; await animate(DURATION); }
+
+  const sPages =
+    Math.ceil(
+      currentSet.summaryLines.length /
+      itemsPerPage.value
+    ) || 1;
+
+  for (let p = 1; p <= sPages; p++) {
+    currentSummaryPage.value = p;
+    await animate(DURATION);
+  }
 
   activeView.value = 'table';
-  const ops = getFilteredOps(currentSet.operators, dept);
-  const tPages = Math.ceil(ops.length / itemsPerPage.value) || 1;
-  for (let p = 1; p <= tPages; p++) { currentPage.value = p; await animate(DURATION); }
+
+  const ops =
+    getFilteredOps(
+      currentSet.operators,
+      dept
+    );
+
+  const tPages =
+    Math.ceil(
+      ops.length /
+      itemsPerPage.value
+    ) || 1;
+
+  for (let p = 1; p <= tPages; p++) {
+    currentPage.value = p;
+    await animate(DURATION);
+  }
 };
 
 const startDisplayLoop = async () => {
-  while (true) { 
-    await runCycle('SEWING'); 
-    await runCycle('LO'); 
+  while (true) {
+    await runCycle('SEWING');
+    await runCycle('LO');
   }
 };
 
-// --- COMPUTED FOR VIEW ---
-const currentDeptSet = computed(() => activeDept.value === 'SEWING' ? sewingData.value : loData.value);
+/* ==================================================
+   COMPUTED
+================================================== */
+const currentDeptSet = computed(() =>
+  activeDept.value === 'SEWING'
+    ? sewingData.value
+    : loData.value
+);
+
 const summaryCards = computed(() => ({
-  "QTY Finish": { value: currentDeptSet.value.cards?.today_finish || 0, icon: "bi-check-circle-fill text-success" },
-  "Employee": { value: currentDeptSet.value.cards?.attendance || 0, icon: "bi-people-fill text-info" }
+  "QTY Finish": {
+    value:
+      currentDeptSet.value.cards?.today_finish || 0,
+    icon: "bi-check-circle-fill text-success"
+  },
+  "Employee": {
+    value:
+      currentDeptSet.value.cards?.attendance || 0,
+    icon: "bi-people-fill text-info"
+  }
 }));
+
 const paginatedUnder60 = computed(() => {
-  const start = (currentUnderPage.value - 1) * itemsPerPage.value;
-  return currentDeptSet.value.under80.slice(start, start + itemsPerPage.value);
-});
-const paginatedSummaryTable = computed(() => {
-  const start = (currentSummaryPage.value - 1) * itemsPerPage.value;
-  return currentDeptSet.value.summaryLines.slice(start, start + itemsPerPage.value);
-});
-const paginatedData = computed(() => {
-  const all = getFilteredOps(currentDeptSet.value.operators, activeDept.value);
-  const start = (currentPage.value - 1) * itemsPerPage.value;
-  return all.slice(start, start + itemsPerPage.value);
+  const start =
+    (currentUnderPage.value - 1) *
+    itemsPerPage.value;
+
+  return currentDeptSet.value.under80.slice(
+    start,
+    start + itemsPerPage.value
+  );
 });
 
+const paginatedSummaryTable = computed(() => {
+  const start =
+    (currentSummaryPage.value - 1) *
+    itemsPerPage.value;
+
+  return currentDeptSet.value.summaryLines.slice(
+    start,
+    start + itemsPerPage.value
+  );
+});
+
+const paginatedData = computed(() => {
+  const all =
+    getFilteredOps(
+      currentDeptSet.value.operators,
+      activeDept.value
+    );
+
+  const start =
+    (currentPage.value - 1) *
+    itemsPerPage.value;
+
+  return all.slice(
+    start,
+    start + itemsPerPage.value
+  );
+});
+
+/* ==================================================
+   INIT
+================================================== */
 onMounted(async () => {
   setInterval(() => {
     const now = new Date();
-    currentDateTime.value = `${now.toLocaleDateString('id-ID', {day:'2-digit', month:'long', year:'numeric'})} (time: ${now.toLocaleTimeString('id-ID')})`;
+
+    currentDateTime.value =
+      `${now.toLocaleDateString('id-ID', {
+        day: '2-digit',
+        month: 'long',
+        year: 'numeric'
+      })} (time: ${now.toLocaleTimeString('id-ID')})`;
   }, 1000);
 
   await fetchAllData();
+
   if (!isLoading.value) {
     startDisplayLoop();
   }
-  
+
   setInterval(fetchAllData, 3600000);
 });
 </script>

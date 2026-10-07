@@ -13,6 +13,8 @@
           marginTop: '56px',
         }"
       >
+      <!-- BUNGKUS DENGAN v-if="hasAccess" UNTUK UAC -->
+      <div v-if="hasAccess" class="container-fluid retur-page max-w-7xl mx-auto p-0">
         <h1>Edit Surat Jalan</h1>
 
         <form @submit.prevent="submitForm" novalidate>
@@ -66,6 +68,14 @@
             <router-link to="/suratjalan" class="btn btn-link">Batal</router-link>
           </div>
         </form>
+        </div>
+
+        <!-- OPSI TAMPILAN BLANK (JIKA TIDAK ADA AKSES) -->
+        <div v-else class="d-flex flex-column align-items-center justify-content-center h-100 pt-5 mt-5">
+           <!-- Halaman Blank, Jika ingin dibuat benar-benar kosong hapus komentar html ini. -->
+            <h1>hi anda tersesat nih, Mohon untuk Logout Segera </h1>
+            <a href="/logout" class="btn btn-primary">back to jungle</a>
+        </div>
       </main>
     </div>
 
@@ -83,6 +93,8 @@ import Footer from '../../components/Footer.vue'
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL
 const API2_BASE_URL = import.meta.env.VITE_API2_BASE_URL
+
+const hasAccess = ref(false);
 
 const router = useRouter()
 const route = useRoute()
@@ -106,6 +118,14 @@ onMounted(() => {
     user.value = userData ? JSON.parse(userData) : { name: 'Guest' }
   } catch {
     user.value = { name: 'Guest' }
+  }
+
+  try {
+    const pagesData = localStorage.getItem('pages') || localStorage.getItem('user_pages');
+    const pages = pagesData ? JSON.parse(pagesData) : [];
+    hasAccess.value = pages.includes('suratjalan');
+  } catch {
+    hasAccess.value = false;
   }
 })
 

@@ -434,8 +434,6 @@
                 <th colspan="16" class="grp-supply">Supply</th>
                 <th colspan="16" class="grp-ship">Kirim</th>
                 <th colspan="15" class="grp-size">Size</th>
-                <th colspan="17" class="grp-a1">A1</th>
-                <th colspan="17" class="grp-s1">SHORT</th>
               </tr>
               <tr>
                 <th class="col-check col-stub"></th>
@@ -457,14 +455,6 @@
                 <th class="grp-ship" v-for="n in 15" :key="`ship-${n}`">{{ n }}</th>
 
                 <th class="grp-size" v-for="n in 15" :key="`size-${n}`">{{ n }}</th>
-
-                <th class="grp-a1">Nama Kerja</th>
-                <th class="grp-a1" v-for="size in activeSizes" :key="`a1-${size.index}`">{{ size.label }}</th>
-                <th class="grp-a1">TTL</th>
-                <!-- TAMBAHKAN INI -->
-                <th class="grp-s1">Nama Kerja</th>
-                <th class="grp-s1" v-for="size in activeSizes" :key="`s1-${size.index}`">{{ size.label }}</th>
-                <th class="grp-s1">TTL</th>
               </tr>
             </thead>
             <tbody>
@@ -552,47 +542,6 @@
                 <td class="grp-size num">{{ row.xSize13 || '0' }}</td>
                 <td class="grp-size num">{{ row.xSize14 || '0' }}</td>
                 <td class="grp-size num">{{ row.xSize15 || '0' }}</td>
-
-                <!-- ===== INPUT MANUAL (A1) — bukan dari API, diisi tangan oleh user ===== -->
-                <td class="grp-a1">
-                  <select class="a1-input a1-input-name" v-model="row.a1workname"
-                    :disabled="busy"
-                    @change="fillDownSameColor(row, 'a1workname')"
-                  >
-                    <!-- Opsi dengan value kosong yang bisa dipilih kembali oleh user -->
-                    <option value="">- Kosong -</option>
-                    <option value="A1 LK Body">A1 LK Body</option>
-                    <option value="A1 Sambung Tangan">A1 Sambung Tangan</option>
-                    <option value="A1 Sambung Tangan C">A1 Sambung Tangan C</option>
-                    <option value="A1 Pinggiran C">A1 Pinggiran C</option>
-                  </select>
-                </td>
-                <td class="grp-a1" v-for="n in 15" :key="`a1cell-${index}-${n}`">
-                  <input
-                    type="number"
-                    class="a1-input"
-                    v-model.number="row[`A1TO${n}`]"
-                    :disabled="busy"
-                    min="0"
-                    @input="recalcA1Total(row); fillDownSameColor(row, `A1TO${n}`)"
-                  />
-                </td>
-                <td class="grp-a1 num a1-total-cell">{{ row.A1TOT || 0 }}</td>
-                <!-- ===== INPUT MANUAL (S1) — bukan dari API, otomatis terisi "SHORT" tanpa perlu dipilih manual ===== -->
-<td class="grp-s1">
-  <span class="a1-input a1-input-name a1-input-readonly">{{ row.s1workname || 'SHORT' }}</span>
-</td>
-<td class="grp-s1" v-for="n in 15" :key="`s1cell-${index}-${n}`">
-  <input
-    type="number"
-    class="a1-input"
-    v-model.number="row[`S1TO${n}`]"
-    :disabled="busy"
-    min="0"
-    @input="recalcS1Total(row); fillDownSameColor(row, `S1TO${n}`)"
-  />
-</td>
-<td class="grp-s1 num a1-total-cell">{{ row.S1TOT || 0 }}</td>
               </tr>
             </tbody>
           </table>
@@ -826,44 +775,6 @@ export default {
       this.selectedItems = [];
     },
 
-    // Hitung ulang A1TOT (total) tiap kali salah satu A1TO1-15 diketik user, sesuai baris yang bersangkutan.
-    recalcA1Total(row) {
-      let total = 0;
-      for (let i = 1; i <= 15; i++) {
-        total += Number(row[`A1TO${i}`]) || 0;
-      }
-      row.A1TOT = total;
-    },
-
-    // TAMBAHKAN INI
-recalcS1Total(row) {
-  let total = 0;
-  for (let i = 1; i <= 15; i++) {
-    total += Number(row[`S1TO${i}`]) || 0;
-  }
-  row.S1TOT = total;
-},
-
-    // Isi otomatis ke bawah: begitu user mengisi satu kolom (A1 workname / A1TO1-15 / S1TO1-15)
-    // pada satu baris, nilai yang sama langsung diterapkan ke baris-baris di bawahnya yang
-    // masih dalam kelompok Style + Warna yang sama. Berhenti begitu ketemu Warna/Style lain,
-    // supaya tidak "bocor" ke kelompok warna berikutnya.
-    fillDownSameColor(row, field) {
-      const list = this.daftarKombinasi;
-      const startIndex = list.indexOf(row);
-      if (startIndex === -1) return;
-
-      const value = row[field];
-
-      for (let i = startIndex + 1; i < list.length; i++) {
-        const target = list[i];
-        if (target.xMColor !== row.xMColor || target.xPO !== row.xPO) break;
-        target[field] = value;
-        if (field.startsWith('A1TO')) this.recalcA1Total(target);
-        if (field.startsWith('S1TO')) this.recalcS1Total(target);
-      }
-    },
-
     // ============ FILTER KOLOM (xNO, Style, Delivery, Buyer, Warna) ============
     uniqueValuesFor(key) {
       const values = this.daftarKombinasi
@@ -1006,8 +917,6 @@ recalcS1Total(row) {
     if (response && response.data && response.data.success) {
       const rawData = response.data.data || [];
       this.daftarKombinasi = rawData.map((row) => this.mapRawKombinasiRow(row));
-      // Auto-isi A1/S1 dari input terakhir (PO + Warna sama) untuk baris yang belum punya data di tanggal ini.
-      await this.applyLastInputAutofill(this.daftarKombinasi, this.searchPO.trim(), requestedDate);
     } else {
       this.daftarKombinasi = [];
       alert(response.data.message || 'Gagal memuat data kombinasi.');
@@ -1022,81 +931,11 @@ recalcS1Total(row) {
   }
 },
 
-    // Ubah satu baris mentah dari API menjadi bentuk yang dipakai tabel (A1TOT/S1TOT terhitung, nama kerja konsisten).
+    // Ubah satu baris mentah dari API menjadi bentuk yang dipakai tabel.
+    // Halaman Update tidak lagi menangani A1/S1 sama sekali -- itu penuh domain Edit2.
     // Diambil terpisah dari fetchDataKombinasi supaya bisa dipakai ulang oleh proses Sinkronisasi Massal.
     mapRawKombinasiRow(row) {
-      const a1Fields = {};
-      let totalA1 = 0;
-      const finalWorkName = row.a1workname || row.A1WORKNAME || row.a1workName || '';
-      for (let i = 1; i <= 15; i++) {
-        const apiValue = row[`A1TO${i}`] !== undefined ? row[`A1TO${i}`] :
-                         (row[`a1to${i}`] !== undefined ? row[`a1to${i}`] :
-                         (row[`A1to${i}`] !== undefined ? row[`A1to${i}`] : 0));
-        a1Fields[`A1TO${i}`] = apiValue ? Number(apiValue) : 0;
-        totalA1 += a1Fields[`A1TO${i}`];
-      }
-
-      const s1Fields = {};
-      let totalS1 = 0;
-      const finalS1WorkName = row.s1workname || row.S1WORKNAME || row.s1workName || 'SHORT';
-      for (let i = 1; i <= 15; i++) {
-        const apiS1Value = row[`S1TO${i}`] !== undefined ? row[`S1TO${i}`] :
-                         (row[`s1to${i}`] !== undefined ? row[`s1to${i}`] :
-                         (row[`S1to${i}`] !== undefined ? row[`S1to${i}`] : 0));
-        s1Fields[`S1TO${i}`] = apiS1Value ? Number(apiS1Value) : 0;
-        totalS1 += s1Fields[`S1TO${i}`];
-      }
-
-      return {
-        ...row,
-        a1workname: finalWorkName,
-        ...a1Fields,
-        A1TOT: totalA1,
-        s1workname: finalS1WorkName,
-        ...s1Fields,
-        S1TOT: totalS1,
-      };
-    },
-
-    // FITUR BARU: cek input A1/S1 TERAKHIR (tanggal sebelumnya, PO + Warna sama) dan otomatis
-    // isi baris yang belum punya data di tanggal ini, supaya user tidak perlu ngetik ulang.
-    // Baris yang sudah punya data tersimpan untuk tanggal yang sedang dibuka TIDAK ditimpa.
-    async applyLastInputAutofill(rows, po, dateForFetch) {
-      if (!rows || rows.length === 0 || !po) return rows;
-      try {
-        const response = await axios.get(`${API_BASE_URL}/poeks/lastinput`, {
-          params: { pPO: po, pDate: dateForFetch }
-        });
-        if (response.data && response.data.success) {
-          const lastMap = {};
-          (response.data.data || []).forEach((r) => { lastMap[r.xMColor] = r; });
-
-          rows.forEach((row) => {
-            const alreadyHasData =
-              (row.a1workname && row.a1workname.trim() !== '') ||
-              (Number(row.A1TOT) || 0) > 0 ||
-              (Number(row.S1TOT) || 0) > 0;
-            if (alreadyHasData) return;
-
-            const last = lastMap[row.xMColor];
-            if (!last) return;
-
-            row.a1workname = last.a1workname || '';
-            row.A1TOT = Number(last.A1TOT) || 0;
-            for (let i = 1; i <= 15; i++) {
-              row[`A1TO${i}`] = Number(last[`A1TO${i}`]) || 0;
-            }
-            row.s1workname = last.S1workname || row.s1workname;
-            row.S1TOT = Number(last.S1TOT) || 0;
-            for (let i = 1; i <= 15; i++) {
-              row[`S1TO${i}`] = Number(last[`S1TO${i}`]) || 0;
-            }
-          });
-        }
-      } catch (err) {
-        console.error('Gagal memuat input A1/S1 terakhir:', err);
-      }
-      return rows;
+      return { ...row };
     },
 
     formatDelivery(date) {
@@ -1109,31 +948,11 @@ recalcS1Total(row) {
       });
     },
 
-    // Bentuk 1 item payload siap-kirim ke /poeks/upsertpo, dipakai baik oleh simpan manual
-    // maupun oleh proses Sinkronisasi Massal.
+    // Bentuk 1 item payload siap-kirim ke /poeks/upserterp (khusus data ERP, TANPA A1/S1),
+    // dipakai baik oleh simpan manual maupun oleh proses Sinkronisasi Massal.
     buildUpsertPayload(item, dateForSave) {
-      const a1Fields = {};
-      let a1Total = 0;
-      for (let i = 1; i <= 15; i++) {
-        const val = Number(item[`A1TO${i}`]) || 0;
-        a1Fields[`A1TO${i}`] = val;
-        a1Total += val;
-      }
-      const s1Fields = {};
-      let s1Total = 0;
-      for (let i = 1; i <= 15; i++) {
-        const valS1 = Number(item[`S1TO${i}`]) || 0;
-        s1Fields[`S1TO${i}`] = valS1;
-        s1Total += valS1;
-      }
       return {
         ...item,
-        ...a1Fields,
-        A1TOT: a1Total,
-        a1workname: item.a1workname || '',
-        ...s1Fields,
-        S1TOT: s1Total,
-        s1workname: item.s1workname || '',
         xDateTime: dateForSave
       };
     },
@@ -1213,10 +1032,8 @@ recalcS1Total(row) {
         return { rowCount: rows.length, duplicate: true, filteredCount };
       }
 
-      await this.applyLastInputAutofill(rows, po, targetDate);
-
       const payloadItems = rows.map((item) => this.buildUpsertPayload(item, targetDate));
-      const saveResponse = await axios.post(`${API_BASE_URL}/poeks/upsertpo`, { items: payloadItems });
+      const saveResponse = await axios.post(`${API_BASE_URL}/poeks/upserterp`, { items: payloadItems });
 
       if (!saveResponse.data.success) {
         throw new Error(saveResponse.data.message || 'Gagal menyimpan data.');
@@ -1362,7 +1179,7 @@ recalcS1Total(row) {
 
       this.isSaving = true;
       try {
-        const response = await axios.post(`${API_BASE_URL}/poeks/upsertpo`, { items: payloadItems });
+        const response = await axios.post(`${API_BASE_URL}/poeks/upserterp`, { items: payloadItems });
         if (response.data.success) {
           alert('Sukses! Data berhasil disimpan.');
           this.selectedItems = [];

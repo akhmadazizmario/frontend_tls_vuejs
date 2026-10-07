@@ -100,8 +100,8 @@
             </button>
           </div>
 
-          <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
-            <div class="table-responsive bg-white custom-scrollbar">
+          <div class="card border-0 shadow-sm rounded-4">
+            <div class="table-responsive bg-white custom-scrollbar table-wrapper-rounded">
               <table id="stokTable" class="table table-hover align-middle mb-0 w-100 text-nowrap">
                 <thead class="bg-light sticky-header">
                   <tr>
@@ -375,7 +375,9 @@ const user = ref({});
 const sidebarOpen = ref(false);
 const windowWidth = ref(window.innerWidth);
 let table = null;
-let rawStockData = [];
+// 🔥 FIX: sebelumnya variabel biasa (let), jadi Vue tidak pernah tahu datanya berubah ->
+// tab kategori "All" macet di angka 0 walau tabel sudah terisi. Sekarang pakai ref agar reaktif.
+const rawStockData = ref([]);
 
 const selectedCategory = ref('All');
 const memoType = ref('tlsi');
@@ -391,13 +393,13 @@ const mainStyle = computed(() => ({
 const activeCategory = ref('All');
 
 const mainCategories = computed(() => {
-  const cats = rawStockData.map(r => r.kategori).filter(Boolean);
+  const cats = rawStockData.value.map(r => r.kategori).filter(Boolean);
   return ['All', ...new Set(cats)];
 });
 
 const categoryCount = (kat) => {
-  if (kat === 'All') return rawStockData.length;
-  return rawStockData.filter(r => r.kategori === kat).length;
+  if (kat === 'All') return rawStockData.value.length;
+  return rawStockData.value.filter(r => r.kategori === kat).length;
 };
 
 const categoryIcon = (kat) => {
@@ -415,16 +417,7 @@ const selectMainCategory = (kat) => {
   activeCategory.value = kat;
   if (!table) return;
   const colIndex = columnDefs.findIndex(c => c.data === 'kategori');
-  if (kat === 'All') {
-    table.column(colIndex).search('').draw();
-  } else {
-    table.column(colIndex).search(`^${$.fn.dataTable.util.escapeRegex(kat)}$`, true, false).draw();
-  }
-  $(`#label-filter-${colIndex}`).text(kat === 'All' ? 'Semua' : kat);
-  $(`.filter-checkbox[data-index="${colIndex}"]`).prop('checked', false);
-  if (kat !== 'All') {
-    $(`.filter-checkbox[data-index="${colIndex}"][value="${kat}"]`).prop('checked', true);
-  }
+  setColumnFilter(colIndex, kat === 'All' ? [] : [kat]);
 };
 
 // 🔥 DEFINISI KOLOM - DIUBAH MENJADI SISA STOK, MIN STOK, DAN MAX STOK
@@ -443,14 +436,119 @@ const columnDefs = [
   { title: 'Sisa Stok', data: 'stok_akhir', filterable: true },
 ];
 
+// ============== FILTER STATE (checkbox multi-select per kolom, saling terhubung) ==============
+// key = index kolom, value = array string nilai yang dicentang
+const activeFilters = ref({});
+const lowStockActive = ref(false);
+let searchPredicatePushed = false;
+
+const escapeHtml = (str) =>
+  String(str).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+const slugifyForId = (idx, val) =>
+  `filter-opt-${idx}-` + String(val).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || `filter-opt-${idx}-empty`;
+
+// Baris yang lolos SEMUA filter aktif kecuali kolom `excludeIdx` (untuk cascading options)
+// dan opsional lolos filter Stok Kritis juga, supaya opsi yang ditawarkan selalu relevan.
+const getRowsExcludingColumn = (excludeIdx) => {
+  return rawStockData.value.filter((row) => {
+    if (lowStockActive.value) {
+      const sisaStok = parseFloat(row.stok_akhir) || 0;
+      const minStok = parseFloat(row.min_qty) || 0;
+      if (!(minStok > 0 && sisaStok <= minStok)) return false;
+    }
+    return Object.entries(activeFilters.value).every(([idx, vals]) => {
+      if (Number(idx) === excludeIdx) return true;
+      if (!vals || vals.length === 0) return true;
+      const colDef = columnDefs[idx];
+      return vals.includes(String(row[colDef.data]));
+    });
+  });
+};
+
+// Bangun ulang daftar checkbox utk 1 kolom, berdasarkan data yang masih relevan (cascading)
+const renderFilterOptions = (index) => {
+  const colDef = columnDefs[index];
+  if (!colDef || !colDef.filterable) return;
+  const container = $(`#container-filter-${index}`);
+  const rows = getRowsExcludingColumn(index);
+
+  const uniqueVals = [...new Set(rows.map((r) => r[colDef.data]).filter((v) => v !== null && v !== undefined && v !== ''))]
+    .sort((a, b) => String(a).localeCompare(String(b), undefined, { numeric: true }));
+
+  const checkedSet = new Set(activeFilters.value[index] || []);
+
+  if (uniqueVals.length === 0) {
+    container.html('<div class="text-muted small text-center py-2">Tidak ada opsi untuk kombinasi filter ini</div>');
+    return;
+  }
+
+  container.html(
+    uniqueVals
+      .map((v) => {
+        const id = slugifyForId(index, v);
+        const safe = escapeHtml(v);
+        const isChecked = checkedSet.has(String(v)) ? 'checked' : '';
+        return `
+          <div class="form-check mb-1">
+            <input class="form-check-input filter-checkbox" type="checkbox" id="${id}" value="${safe}" data-index="${index}" ${isChecked}>
+            <label class="form-check-label small text-dark" for="${id}">${safe}</label>
+          </div>`;
+      })
+      .join('')
+  );
+};
+
+// Bangun ulang SEMUA dropdown filter kolom, supaya opsi antar kolom saling terhubung (cascading)
+const refreshAllFilterOptions = () => {
+  try {
+    columnDefs.forEach((col, idx) => {
+      if (col.filterable) renderFilterOptions(idx);
+    });
+    // Reapply pencarian teks yang sedang aktif di tiap dropdown (kalau ada)
+    $('.filter-search-input').each(function () {
+      if ($(this).val()) $(this).trigger('keyup');
+    });
+  } catch (err) {
+    // Kalau ada yang gagal, tampilkan di console daripada dropdown diam-diam kosong tanpa penjelasan
+    console.error('Gagal membangun opsi filter checkbox:', err);
+  }
+};
+
+const updateFilterLabel = (idx) => {
+  const count = (activeFilters.value[idx] || []).length;
+  $(`#label-filter-${idx}`).text(count > 0 ? `${count} Terpilih` : 'Semua');
+};
+
+// Set/replace nilai filter untuk 1 kolom sekaligus, lalu redraw + refresh semua dropdown lain
+const setColumnFilter = (idx, values) => {
+  activeFilters.value = { ...activeFilters.value, [idx]: [...values] };
+  if (!table) return;
+  table.draw();
+  refreshAllFilterOptions();
+  updateFilterLabel(idx);
+
+  const kategoriIdx = columnDefs.findIndex((c) => c.data === 'kategori');
+  if (Number(idx) === kategoriIdx) {
+    const vals = activeFilters.value[idx] || [];
+    activeCategory.value = vals.length === 1 ? vals[0] : 'All';
+  }
+};
+
 const initDataTable = (data) => {
-  rawStockData = data;
+  rawStockData.value = data;
+  activeFilters.value = {};
+  lowStockActive.value = false;
 
   if ($.fn.DataTable.isDataTable('#stokTable')) $('#stokTable').DataTable().destroy();
 
   table = $('#stokTable').DataTable({
     data,
     pageLength: 25,
+    // 🔥 FIX UTAMA: thead kita punya 2 baris (judul + filter). Tanpa orderCellsTop:true,
+    // DataTables memasang listener SORT ke baris TERAKHIR thead (baris filter),
+    // makanya klik checkbox/dropdown filter ikut ke-detect sebagai klik sort A-Z.
+    orderCellsTop: true,
     columns: [
       { data: null, render: (d, t, r, meta) => meta.row + 1 },
       { data: 'akses_code', render: d => `<span class="badge bg-secondary">${d || '-'}</span>` },
@@ -475,58 +573,58 @@ const initDataTable = (data) => {
       }
     ],
     initComplete: function () {
-      const api = this.api();
-
-      api.columns().every(function (index) {
-        const column = this;
-        const colDef = columnDefs[index];
-        if (colDef && colDef.filterable) {
-          const container = $(`#container-filter-${index}`);
-          container.empty();
-          column.data().unique().sort().each(function (d) {
-            if (d !== null && d !== "") {
-              container.append(`
-                <div class="form-check mb-1">
-                  <input class="form-check-input filter-checkbox" type="checkbox" value="${d}" data-index="${index}">
-                  <label class="form-check-label small text-dark">${d}</label>
-                </div>`);
-            }
-          });
-        }
-      });
+      // Opsi checkbox dibangun dari DATA MENTAH (rawStockData), bukan dari HTML hasil render,
+      // supaya nilainya selalu konsisten dengan predicate pencarian di bawah.
+      refreshAllFilterOptions();
     }
   });
 
-  $(document).off('change', '.filter-checkbox').on('change', '.filter-checkbox', function() {
-    const idx = $(this).data('index');
-    const selected = $(`.filter-checkbox[data-index="${idx}"]:checked`).map(function() {
-      return `^${$.fn.dataTable.util.escapeRegex($(this).val())}$`;
-    }).get();
-    table.column(idx).search(selected.length > 0 ? selected.join('|') : '', true, false).draw();
-    $(`#label-filter-${idx}`).text(selected.length > 0 ? `${selected.length} Terpilih` : 'Semua');
+  // 🔥 FIX UTAMA #2: dulu filter pakai table.column(idx).search(regex) yang dicocokkan ke
+  // HTML hasil render (mis. badge "<span class='badge'>Mekanik</span>"), jadi regex ^Mekanik$
+  // TIDAK PERNAH match -> hasil "tidak ada data" walau opsinya kelihatan di daftar filter.
+  // Sekarang kita pakai custom search predicate yang membandingkan LANGSUNG ke data mentah rowData,
+  // dan mendukung banyak kolom sekaligus (AND antar kolom, OR antar nilai dalam 1 kolom).
+  if (!searchPredicatePushed) {
+    $.fn.dataTable.ext.search.push((settings, data, dataIndex, rowData) => {
+      if (settings.nTable.id !== 'stokTable') return true;
 
-    const kategoriIdx = columnDefs.findIndex(c => c.data === 'kategori');
-    if (idx === kategoriIdx) {
-      if (selected.length === 1) {
-        const val = $(`.filter-checkbox[data-index="${idx}"]:checked`).val();
-        activeCategory.value = val;
-      } else {
-        activeCategory.value = 'All';
+      if (lowStockActive.value) {
+        const sisaStok = parseFloat(rowData.stok_akhir) || 0;
+        const minStok = parseFloat(rowData.min_qty) || 0;
+        if (!(minStok > 0 && sisaStok <= minStok)) return false;
       }
-    }
-  });
 
-  $(document).off('click', '.btn-reset-filter').on('click', '.btn-reset-filter', function(e) {
-    e.stopPropagation();
-    const idx = $(this).data('index');
-    $(`.filter-checkbox[data-index="${idx}"]`).prop('checked', false);
-    table.column(idx).search('').draw();
-    $(`#label-filter-${idx}`).text('Semua');
-
-    const kategoriIdx = columnDefs.findIndex(c => c.data === 'kategori');
-    if (idx === kategoriIdx) activeCategory.value = 'All';
-  });
+      for (const idxStr in activeFilters.value) {
+        const vals = activeFilters.value[idxStr];
+        if (!vals || vals.length === 0) continue;
+        const colDef = columnDefs[idxStr];
+        if (!colDef) continue;
+        if (!vals.includes(String(rowData[colDef.data]))) return false;
+      }
+      return true;
+    });
+    searchPredicatePushed = true;
+  }
 };
+
+// Checkbox filter kolom: toggle 1 nilai, lalu redraw tabel + refresh SEMUA dropdown lain (cascading)
+$(document).off('change', '.filter-checkbox').on('change', '.filter-checkbox', function () {
+  const idx = Number($(this).data('index'));
+  const val = String($(this).val());
+  const isChecked = $(this).is(':checked');
+
+  const current = new Set(activeFilters.value[idx] || []);
+  if (isChecked) current.add(val); else current.delete(val);
+
+  setColumnFilter(idx, [...current]);
+});
+
+// Reset filter 1 kolom saja
+$(document).off('click', '.btn-reset-filter').on('click', '.btn-reset-filter', function (e) {
+  e.stopPropagation();
+  const idx = Number($(this).data('index'));
+  setColumnFilter(idx, []);
+});
 
 $(document).off('keyup', '.filter-search-input').on('keyup', '.filter-search-input', function() {
   const val = $(this).val().toLowerCase();
@@ -775,18 +873,12 @@ const submitMemo = async () => {
 
 // --- FILTERS & EXPORTS ---
 const toggleLowStockFilter = (e) => {
-  if (e.target.checked) {
-    $.fn.dataTable.ext.search.push((settings, data, dataIndex, rowData) => {
-      const sisaStok = parseFloat(rowData.stok_akhir) || 0;
-      const minStok = parseFloat(rowData.min_qty) || 0;
-      
-      // Barang dianggap kritis jika min_qty > 0 dan sisa_stok berada di bawah min_qty
-      return minStok > 0 && sisaStok <= minStok;
-    });
-  } else {
-    $.fn.dataTable.ext.search.pop();
-  }
+  // Dulu ext.search.push/pop di sini, tapi itu bikin predicate ke-stack ganda kalau dipanggil
+  // berkali-kali dan bentrok dengan predicate filter kolom. Sekarang cukup toggle flag reaktif;
+  // predicate gabungan (dipasang sekali di initDataTable) yang membaca flag ini.
+  lowStockActive.value = e.target.checked;
   table.draw();
+  refreshAllFilterOptions();
 };
 
 const downloadExcel = async (type) => {
@@ -997,8 +1089,16 @@ onBeforeUnmount(() => { if (table) table.destroy(); });
 .pdf-menu-item:hover .pdf-menu-arrow { opacity: 1; transform: translateX(0); }
 
 /* ===================== FILTER HEADER TABEL (checkbox + search) ===================== */
+/* 🔥 FIX: dulu .card pakai overflow-hidden, jadi dropdown filter (position absolute) yang
+   melebihi tinggi card langsung KEPOTONG/tertutup - paling kentara saat data cuma 1-2 baris.
+   Sekarang overflow-hidden dipindah efeknya ke sini (radius saja, tanpa clip dropdown),
+   dan tabel dikasih min-height supaya selalu ada ruang buat dropdown terbuka penuh. */
+.table-wrapper-rounded {
+  border-radius: 16px;
+  min-height: 420px; /* tinggi minimum awal, biar data sedikit (bahkan 1 baris) tetap ada ruang */
+}
 .filter-trigger-btn { border-radius: 8px; font-weight: 600; }
-.filter-dropdown-panel { border-radius: 14px; }
+.filter-dropdown-panel { border-radius: 14px; z-index: 1055; }
 .filter-search-input:focus { box-shadow: none; border-color: #dee2e6; }
 .filter-options-container { scrollbar-width: thin; padding-right: 5px; }
 .filter-options-container::-webkit-scrollbar { width: 4px; }

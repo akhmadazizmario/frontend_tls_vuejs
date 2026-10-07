@@ -183,7 +183,7 @@
                   <td class="py-2 border text-dark">{{ getAccQty(m.Idp_PO, 'rib badan') }}</td>
                   <td class="py-2 border text-dark">{{ getAccQty(m.Idp_PO, 'ruffle') }}</td>
                   <td class="py-2 border text-dark">{{ getAccQty(m.Idp_PO, 'linking') }}</td>
-                  <td class="py-2 border text-dark">{{ getAccQty(m.Idp_PO, 'ppthread') }} kg</td>
+                  <td class="py-2 border text-dark">{{ getAccQty(m.Idp_PO, 'ppthread') }}</td>
                 </tr>
               </tbody>
             </table>

@@ -12,6 +12,8 @@
           marginTop: '56px'
         }"
       >
+      <!-- BUNGKUS DENGAN v-if="hasAccess" UNTUK UAC -->
+      <div v-if="hasAccess" class="container-fluid retur-page max-w-7xl mx-auto p-0">
         <div class="container-fluid uac-page">
 
           <!-- PAGE HEADER -->
@@ -117,6 +119,14 @@
           </div>
 
         </div>
+        </div>
+
+        <!-- OPSI TAMPILAN BLANK (JIKA TIDAK ADA AKSES) -->
+        <div v-else class="d-flex flex-column align-items-center justify-content-center h-100 pt-5 mt-5">
+           <!-- Halaman Blank, Jika ingin dibuat benar-benar kosong hapus komentar html ini. -->
+            <h1>hi anda tersesat nih, Mohon untuk Logout Segera </h1>
+            <a href="/logout" class="btn btn-primary">back to jungle</a>
+        </div>
       </main>
     </div>
 
@@ -134,6 +144,8 @@ import Sidebar from "../../components/Sidebar.vue";
 import Footer from "../../components/Footer.vue";
 
 const API = import.meta.env.VITE_API_BASE_URL
+
+const hasAccess = ref(false);
 
 // ============================
 // STATE
@@ -214,7 +226,24 @@ function logout() {
 }
 
 onMounted(() => {
-  loadPages();
+  const userData = localStorage.getItem("user");
+  if (userData) user.value = JSON.parse(userData);
+
+  // LOGIKA UAC 
+  try {
+    const pagesData = localStorage.getItem("pages");
+    const pages = pagesData ? JSON.parse(pagesData) : [];
+    // Periksa apakah user memiliki akses ke rute ini 
+    hasAccess.value = pages.includes("pages");
+  } catch (e) {
+    hasAccess.value = false;
+  }
+
+  // Hanya load item dari API jika user punya akses
+  if (hasAccess.value) {
+    loadPages();
+  }
+  //loadPages();
   window.addEventListener("resize", handleResize);
 });
 

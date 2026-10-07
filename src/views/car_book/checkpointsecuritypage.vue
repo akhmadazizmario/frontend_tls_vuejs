@@ -194,16 +194,9 @@ const getAuthHeaders = () => {
   return { headers }
 }
 
-// UAC: hanya dept Security yang boleh akses halaman ini.
-// deptLive diambil FRESH dari API /profile/:id (bukan hanya dari cache
-// localStorage), supaya kalau dept di DB berubah/typo, halaman ini
-// selalu cek data paling baru — sama seperti pola di halaman Profil.
 const deptLive = ref(user.value?.dept || '')
 const isSecurity = computed(() => isDeptMatch(deptLive.value, 'security'))
 
-// Toleransi typo kecil (maks 1 huruf beda) supaya salah ketik dept di
-// database (misal "Secuity") tidak bikin staff yang benar malah ke-block,
-// tapi dept yang jelas berbeda (Finance/Driver/dll) tetap ditolak.
 function levenshtein(a, b) {
   a = a.toLowerCase(); b = b.toLowerCase()
   const dp = Array.from({ length: a.length + 1 }, (_, i) => [i, ...Array(b.length).fill(0)])
@@ -221,7 +214,7 @@ function isDeptMatch(deptRaw, target) {
   const d = (deptRaw || '').toString().trim().toLowerCase()
   if (!d) return false
   if (d === target) return true
-  return levenshtein(d, target) <= 1 // toleransi 1 huruf typo
+  return levenshtein(d, target) <= 1 
 }
 
 const fetchLiveProfile = async () => {
@@ -237,7 +230,7 @@ const fetchLiveProfile = async () => {
 
 const listReady = ref([])
 const listTransit = ref([])
-const activeTab = ref('checkpoint') // 'checkpoint' | 'riwayat'
+const activeTab = ref('checkpoint') 
 const historyList = ref([])
 const loadingHistory = ref(false)
 const modal = reactive({
@@ -265,8 +258,6 @@ const fetchData = async () => {
   }
 }
 
-// Riwayat semua perjalanan untuk Security — HANYA info KM, tanpa kasbon/keuangan.
-// Pakai endpoint getAll yang sama (tanpa filter status) supaya semua histori muncul.
 const fetchHistoryList = async () => {
   if (!isSecurity.value) return
   loadingHistory.value = true
@@ -305,41 +296,68 @@ const openModal = async (booking, type) => {
   modal.show = true
   modal.type = type
   modal.booking = booking
-  modal.km_manual = ''
   modal.km_gps = ''
   modal.lastKm = null
   modal.lastKmKode = ''
 
-  // Jika mobil KELUAR, ambil KM Terakhir Completed KHUSUS mobil_id tersebut[cite: 1, 2]
-  if (type === 'out' && booking.mobil_id) {
+  const targetMobilId = booking.mobil_id || booking.mobil?.id;
+
+  if (type === 'out' && targetMobilId) {
     modal.lastKmLoading = true
+    modal.km_manual = '' 
+    
     try {
-      // Endpoint dipanggil spesifik berdasarkan ID mobil
-      const res = await axios.get(`${API_BASE_URL}/carbook/mobil/${booking.mobil_id}/last-km`, getAuthHeaders())
-      const data = res.data.data
-      modal.lastKm = data ? Number(data.km_terakhir) : null
-      modal.lastKmKode = data ? data.kode_booking : ''
+      // 🔥 PERBAIKAN: Gunakan API booking yang sudah PASTI JALAN, lalu filter dari riwayat
+      const res = await axios.get(`${API_BASE_URL}/carbook/booking`, {
+        ...getAuthHeaders(),
+        params: { mobil_id: targetMobilId, status: 'Completed' }
+      })
+      
+      const allCompleted = res.data.data || []
+      
+      // Filter yang ada KM masuknya, lalu urutkan dari yang paling baru
+      const validTrips = allCompleted
+        .filter(b => b.km_masuk_manual != null)
+        .sort((a, b) => new Date(b.waktu_masuk || b.updatedAt) - new Date(a.waktu_masuk || a.updatedAt))
+
+      if (validTrips.length > 0) {
+        const lastTrip = validTrips[0] // Ambil riwayat urutan pertama (paling terbaru)
+        modal.lastKm = Number(lastTrip.km_masuk_manual)
+        modal.lastKmKode = lastTrip.kode_booking
+        
+        // AUTO FILL: Langsung isi ke dalam kolom form!
+        modal.km_manual = lastTrip.km_masuk_manual 
+      } else {
+        modal.lastKm = null
+        modal.km_manual = ''
+      }
+
     } catch (err) {
-      console.error(err)
+      console.error('Gagal mengambil history mobil:', err)
       modal.lastKm = null
+      modal.km_manual = '' 
     } finally {
       modal.lastKmLoading = false
     }
+  } 
+  else if (type === 'in') {
+    modal.km_manual = booking.km_keluar_manual || ''
+  } 
+  else {
+    modal.km_manual = ''
   }
 }
+
 const closeModal = () => { modal.show = false }
 
-// Validasi KM di sisi frontend supaya security langsung dapat feedback
 const kmError = computed(() => {
   if (modal.km_manual === '' || modal.km_manual === null) return ''
   const kmInput = Number(modal.km_manual)
 
-  // 1. Mobil KELUAR: Cek KM terhadap KM Completed Terakhir spesifik ID Mobil ini[cite: 1, 2]
   if (modal.type === 'out' && modal.lastKm !== null && kmInput < modal.lastKm) {
     return `KM keluar tidak boleh kurang dari ${modal.lastKm} km (KM terakhir mobil ini).`
   }
 
-  // 2. Mobil MASUK: Cek KM real-time terhadap KM Keluar pada booking berjalan ID Mobil ini[cite: 1, 2]
   if (modal.type === 'in' && modal.booking.km_keluar_manual != null && kmInput < Number(modal.booking.km_keluar_manual)) {
     return `KM masuk tidak boleh kurang dari ${modal.booking.km_keluar_manual} km (KM berangkat tadi).`
   }

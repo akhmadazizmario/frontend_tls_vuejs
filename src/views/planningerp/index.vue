@@ -13,10 +13,12 @@
           marginTop: '56px',
         }"
       >
+      <!-- BUNGKUS DENGAN v-if="hasAccess" UNTUK UAC -->
+      <div v-if="hasAccess" class="container-fluid retur-page max-w-7xl mx-auto p-0">
         <div class="container-fluid">
           <!-- Header -->
           <div class="d-flex justify-content-between align-items-center mb-4">
-            <h2 class="fw-bolder text-dark-blue mb-0">📅 Manajemen Planning Office</h2>
+            <h2 class="fw-bolder text-dark-blue mb-0">📅 Manajemen Planning TV</h2>
             <button
               class="btn btn-primary btn-add-item"
               data-bs-toggle="modal"
@@ -88,6 +90,14 @@
             </div>
           </div>
         </div>
+         </div>
+
+        <!-- OPSI TAMPILAN BLANK (JIKA TIDAK ADA AKSES) -->
+        <div v-else class="d-flex flex-column align-items-center justify-content-center h-100 pt-5 mt-5">
+           <!-- Halaman Blank, Jika ingin dibuat benar-benar kosong hapus komentar html ini. -->
+            <h1>hi anda tersesat nih, Mohon untuk Logout Segera </h1>
+            <a href="/logout" class="btn btn-primary">back to jungle</a>
+        </div>
       </main>
     </div>
 
@@ -120,25 +130,32 @@
               <label class="form-label fw-bold">Kategori Gedung</label>
               <select v-model="form.kategori_gedung" class="form-select" required>
                 <option value="" disabled>-- Pilih Kategori --</option>
-                <option value="GDTTL">GDTTL</option>
-                <option value="A">A</option>
-                <option value="B">B</option>
-                <option value="C">C</option>
-                <option value="D">D</option>
-                <option value="A&B">A & B</option>
-                <option value="C&D">C & D</option>
+                <option value="linking_AB">linking_AB</option>
+                <!-- <option value="linking_A">linking_A</option>
+                <option value="linking_B">linking_B</option> -->
+                <option value="linking_C">linking_C</option>
+                <option value="linking_D">linking_D</option>
+                <!-- <option value="finishing_A">finishing_A</option>
+                <option value="finishing_B">finishing_B</option> -->
               </select>
             </div>
 
             <div class="mb-3">
               <label class="form-label fw-bold">Planning</label>
-              <textarea
+              <input
+                type="number"
+                v-model.number="form.planning"
+                class="form-control"
+                placeholder="Masukkan jumlah planning..."
+                required
+              />
+              <!-- <textarea
                 v-model="form.planning"
                 class="form-control"
                 rows="3"
                 placeholder="Masukkan jumlah atau detail planning..."
                 required
-              ></textarea>
+              ></textarea> -->
             </div>
 
             <div class="d-flex justify-content-end gap-2 mt-4">
@@ -167,6 +184,8 @@ import Sidebar from "../../components/Sidebar.vue";
 import Footer from "../../components/Footer.vue";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
+const hasAccess = ref(false);
 
 const items = ref([]);
 const user = ref({});
@@ -315,11 +334,21 @@ async function deletePlanning(id) {
 onMounted(() => {
   const userData = localStorage.getItem("user");
   if (userData) user.value = JSON.parse(userData);
-  loadPlanning();
-
-  window.addEventListener("resize", () => {
-    windowWidth.value = window.innerWidth;
-  });
+  // LOGIKA UAC 
+  try {
+    const pagesData = localStorage.getItem("pages");
+    const pages = pagesData ? JSON.parse(pagesData) : [];
+    // Periksa apakah user memiliki akses ke rute ini 
+    hasAccess.value = pages.includes("planningerp");
+  } catch (e) {
+    hasAccess.value = false;
+  }
+  // Hanya load item dari API jika user punya akses
+  if (hasAccess.value) {
+    loadPlanning();
+  }
+  window.addEventListener("resize", () => { windowWidth.value = window.innerWidth; });
+  //document.addEventListener("click", handleClickOutside);
 });
 
 onBeforeUnmount(() => {
